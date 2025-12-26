@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:6.0
+    container_name: swam-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - swam-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  resource-service:
+    build: ./resource-service
+    container_name: swam-resource
+    environment:
+      - SERVER_PORT=8081
+      - SPRING_DATA_MONGODB_URI=mongodb://swam-mongo:27017/resource_db
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - swam-network
+
+  pricing-service:
+    build: ./pricing-service
+    container_name: swam-pricing
+    environment:
+      - SERVER_PORT=8082
+      - SPRING_DATA_MONGODB_URI=mongodb://swam-mongo:27017/pricing_db
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - swam-network
+
+  booking-service:
+    build: ./booking-service
+    container_name: swam-booking
+    environment:
+      - SERVER_PORT=8083
+      - SPRING_DATA_MONGODB_URI=mongodb://swam-mongo:27017/booking_db
+      - APP_PRICING_SERVICE_URL=http://swam-pricing:8082
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      pricing-service:
+        condition: service_started
+    networks:
+      - swam-network
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: pg-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - SERVER_PORT=8080
+      - RESOURCE_URI=http://swam-resource:8081
+      - PRICING_URI=http://swam-pricing:8082
+      - BOOKING_URI=http://swam-booking:8083
+    depends_on:
+      - resource-service
+      - pricing-service
+      - booking-service
+    networks:
+      - swam-network
+
+networks:
+  pg-network:
+    driver: bridge
+
+volumes:
+  mongo_data:
