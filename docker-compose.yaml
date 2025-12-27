@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   mongodb:
     image: mongo:6.0
@@ -55,9 +53,9 @@ services:
     networks:
       - swam-network
 
-  api-gateway:
-    build: ./api-gateway
-    container_name: pg-gateway
+  gateway:
+    build: ./gateway
+    container_name: swam-gateway
     ports:
       - "8080:8080"
     environment:
@@ -73,7 +71,7 @@ services:
       - swam-network
 
 networks:
-  pg-network:
+  swam-network:
     driver: bridge
 
 volumes:
