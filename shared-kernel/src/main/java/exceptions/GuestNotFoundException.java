@@ -1,11 +1,14 @@
 package exceptions;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
-@ResponseStatus(HttpStatus.NOT_FOUND)
-public class GuestNotFoundException extends RuntimeException {
-    public GuestNotFoundException() {
-        super("Guest not found");
+public class GuestNotFoundException extends DomainException {
+
+    public GuestNotFoundException(String guestId) {
+        super(
+            String.format("Ospite non trovato con ID: %s", guestId),
+            "GUEST_NOT_FOUND",
+            HttpStatus.NOT_FOUND
+        );
     }
 }

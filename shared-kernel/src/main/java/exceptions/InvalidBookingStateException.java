@@ -1,11 +1,14 @@
 package exceptions;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
-@ResponseStatus(value = HttpStatus.BAD_REQUEST, reason = "Operation not valid for current booking state")
-public class InvalidBookingStateException extends RuntimeException {
-    public InvalidBookingStateException() {
-        super("Operation not valid for current booking state");
+public class InvalidBookingStateException extends DomainException {
+
+    public InvalidBookingStateException(String currentState, String operation) {
+        super(
+            String.format("Operazione '%s' non valida per lo stato corrente della prenotazione: %s", operation, currentState),
+            "INVALID_BOOKING_STATE",
+            HttpStatus.BAD_REQUEST
+        );
     }
 }

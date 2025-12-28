@@ -1,11 +1,14 @@
 package exceptions;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
-@ResponseStatus(HttpStatus.NOT_FOUND)
-public class ResourceNotFoundException extends RuntimeException {
-    public ResourceNotFoundException() {
-        super("Resource not found");
+public class ResourceNotFoundException extends DomainException {
+
+    public ResourceNotFoundException(String resourceId) {
+        super(
+            String.format("Risorsa non trovata con ID: %s", resourceId),
+            "RESOURCE_NOT_FOUND",
+            HttpStatus.NOT_FOUND
+        );
     }
 }

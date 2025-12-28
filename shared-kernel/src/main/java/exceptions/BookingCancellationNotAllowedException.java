@@ -1,11 +1,14 @@
 package exceptions;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
-@ResponseStatus(value = HttpStatus.FORBIDDEN, reason = "Cancellation not allowed for this booking state")
-public class BookingCancellationNotAllowedException extends RuntimeException {
-    public BookingCancellationNotAllowedException() {
-        super("Cancellation not allowed for this booking state");
+public class BookingCancellationNotAllowedException extends DomainException {
+
+    public BookingCancellationNotAllowedException(String bookingState) {
+        super(
+            String.format("Cancellazione non permessa per lo stato della prenotazione: %s", bookingState),
+            "BOOKING_CANCELLATION_NOT_ALLOWED",
+            HttpStatus.FORBIDDEN
+        );
     }
 }

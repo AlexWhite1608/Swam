@@ -1,11 +1,14 @@
 package exceptions;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
-@ResponseStatus(value = HttpStatus.BAD_REQUEST, reason = "Check-out must be after check-in")
-public class InvalidBookingDateException extends RuntimeException {
+public class InvalidBookingDateException extends DomainException {
+
     public InvalidBookingDateException() {
-        super("Check-out must be after check-in");
+        super(
+            "La data di check-out deve essere successiva alla data di check-in",
+            "INVALID_BOOKING_DATE",
+            HttpStatus.BAD_REQUEST
+        );
     }
 }

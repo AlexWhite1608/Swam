@@ -1,11 +1,14 @@
 package exceptions;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
-@ResponseStatus(value = HttpStatus.BAD_REQUEST, reason = "Invalid guest data")
-public class InvalidGuestDataException extends RuntimeException {
-    public InvalidGuestDataException() {
-        super("Invalid guest data");
+public class InvalidGuestDataException extends DomainException {
+
+    public InvalidGuestDataException(String fieldName, String reason) {
+        super(
+            String.format("Dato ospite non valido per il campo '%s': %s", fieldName, reason),
+            "INVALID_GUEST_DATA",
+            HttpStatus.BAD_REQUEST
+        );
     }
 }

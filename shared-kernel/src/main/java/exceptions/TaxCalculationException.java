@@ -1,11 +1,14 @@
 package exceptions;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
-@ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR, reason = "Error calculating tax")
-public class TaxCalculationException extends RuntimeException {
-    public TaxCalculationException() {
-        super("Error calculating tax");
+public class TaxCalculationException extends DomainException {
+
+    public TaxCalculationException(String reason) {
+        super(
+            String.format("Errore nel calcolo delle tasse: %s", reason),
+            "TAX_CALCULATION_ERROR",
+            HttpStatus.INTERNAL_SERVER_ERROR
+        );
     }
 }

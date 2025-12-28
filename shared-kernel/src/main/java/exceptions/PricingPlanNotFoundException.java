@@ -1,11 +1,14 @@
 package exceptions;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
-@ResponseStatus(HttpStatus.NOT_FOUND)
-public class PricingPlanNotFoundException extends RuntimeException {
-    public PricingPlanNotFoundException() {
-        super("Pricing plan not found");
+public class PricingPlanNotFoundException extends DomainException {
+
+    public PricingPlanNotFoundException(String planId) {
+        super(
+            String.format("Piano tariffario non trovato con ID: %s", planId),
+            "PRICING_PLAN_NOT_FOUND",
+            HttpStatus.NOT_FOUND
+        );
     }
 }
