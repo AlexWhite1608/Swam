@@ -1,7 +1,7 @@
 package com.swam.resource.dto;
 
-import enums.ResourceStatus;
-import enums.ResourceType;
+import com.swam.shared.enums.ResourceStatus;
+import com.swam.shared.enums.ResourceType;
 import lombok.Builder;
 import lombok.Data;
 

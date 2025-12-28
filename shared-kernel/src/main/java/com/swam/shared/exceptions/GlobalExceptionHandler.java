@@ -1,6 +1,6 @@
-package exceptions;
+package com.swam.shared.exceptions;
 
-import dto.ErrorResponse;
+import com.swam.shared.dto.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;

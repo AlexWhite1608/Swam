@@ -1,7 +1,6 @@
 package com.swam.resource.dto;
 
-import enums.ResourceStatus;
-import enums.ResourceType;
+import com.swam.shared.enums.ResourceType;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -17,6 +16,4 @@ public class CreateResourceRequest {
 
     @Min(value = 1)
     private int capacity;
-
-    private ResourceStatus status = ResourceStatus.AVAILABLE;
 }

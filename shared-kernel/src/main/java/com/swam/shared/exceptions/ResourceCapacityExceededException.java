@@ -1,4 +1,4 @@
-package exceptions;
+package com.swam.shared.exceptions;
 
 import org.springframework.http.HttpStatus;
 

@@ -1,4 +1,4 @@
-package enums;
+package com.swam.shared.enums;
 
 // Enum representing the status of a booking
 public enum BookingStatus {

@@ -1,4 +1,4 @@
-package exceptions;
+package com.swam.shared.exceptions;
 
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
@@ -13,5 +13,13 @@ public abstract class DomainException extends RuntimeException {
         super(message);
         this.errorCode = errorCode;
         this.httpStatus = httpStatus;
+    }
+
+    public String getErrorCode() {
+        return errorCode;
+    }
+
+    public HttpStatus getHttpStatus() {
+        return httpStatus;
     }
 }
