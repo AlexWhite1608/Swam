@@ -13,8 +13,8 @@ public interface ResourceRepository extends MongoRepository<Resource, String> {
 
     List<Resource> findByTypeAndStatus(ResourceType type, ResourceStatus status);
 
-    Optional<Resource> findByName(String name);
+    Optional<Resource> findByNameIgnoreCase(String name);
 
-    // check if a resource with the given name already exists
-    boolean existsByName(String name);
+    // check if a resource with the given name already exists (case-insensitive)
+    boolean existsByNameIgnoreCase(String name);
 }

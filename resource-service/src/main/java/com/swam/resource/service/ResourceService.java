@@ -27,7 +27,7 @@ public class ResourceService {
     public ResourceResponse createResource(CreateResourceRequest request) {
         log.info("Creating resource: {}", request.getName());
 
-        if (repository.existsByName(request.getName())) {
+        if (repository.existsByNameIgnoreCase(request.getName())) {
             throw new DuplicateResourceException(request.getName());
         }
 
@@ -71,7 +71,7 @@ public class ResourceService {
 
     // Get resource by name
     public ResourceResponse getResourceByName(String name) {
-        return repository.findByName(name)
+        return repository.findByNameIgnoreCase(name)
                 .map(this::mapToDto)
                 .orElseThrow(() -> new ResourceNotFoundException(name));
     }

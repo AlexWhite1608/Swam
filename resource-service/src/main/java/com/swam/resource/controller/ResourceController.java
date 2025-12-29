@@ -59,10 +59,10 @@ public class ResourceController {
         return ResponseEntity.ok(service.getAllResources());
     }
 
-    // Check resource availability by name
-    @GetMapping("/available")
-    public ResponseEntity<Boolean> resourceAvailable(@RequestParam String name) {
-        return ResponseEntity.ok(service.isResourceAvailable(name));
+    // Check resource availability
+    @GetMapping("/{id}/available")
+    public ResponseEntity<Boolean> isResourceAvailable(@PathVariable String id) {
+        return ResponseEntity.ok(service.isResourceAvailable(id));
     }
 
     // Update resource details
