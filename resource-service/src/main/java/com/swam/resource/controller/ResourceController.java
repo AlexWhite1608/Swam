@@ -3,6 +3,7 @@ package com.swam.resource.controller;
 import com.swam.resource.dto.CreateResourceRequest;
 import com.swam.resource.dto.ResourceResponse;
 import com.swam.resource.dto.UpdateResourceRequest;
+import com.swam.resource.dto.UpdateStatusRequest;
 import com.swam.resource.service.ResourceService;
 import com.swam.shared.enums.ResourceStatus;
 import com.swam.shared.enums.ResourceType;
@@ -73,8 +74,8 @@ public class ResourceController {
 
     // Update resource status
     @PatchMapping("/{id}/status")
-    public ResponseEntity<Void> updateStatus(@PathVariable String id, @RequestParam ResourceStatus status) {
-        service.updateStatus(id, status);
+    public ResponseEntity<Void> updateStatus(@PathVariable String id, @Valid @RequestBody UpdateStatusRequest request) {
+        service.updateStatus(id, request.getStatus());
         return ResponseEntity.noContent().build();
     }
 
