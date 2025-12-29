@@ -2,14 +2,11 @@ package com.swam.resource.domain;
 
 import com.swam.shared.enums.ResourceStatus;
 import com.swam.shared.enums.ResourceType;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-@Data
+@Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -19,9 +16,15 @@ public class Resource {
     @Id
     private String id;
 
+    @Setter
     private String name;
+
+    @Setter
     private ResourceType type;
+
+    @Setter
     private int capacity;
+
     private ResourceStatus status;
 
     public boolean isAvailable() {
