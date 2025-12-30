@@ -1,6 +1,6 @@
 package com.swam.booking;
 
-import exceptions.GlobalExceptionHandler;
+import com.swam.shared.exceptions.GlobalExceptionHandler;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Import;
