@@ -1,5 +1,6 @@
 package com.swam.resource.repository;
 
+import com.swam.resource.ResourceApplication;
 import com.swam.resource.domain.Resource;
 import com.swam.shared.enums.ResourceStatus;
 import com.swam.shared.enums.ResourceType;
@@ -8,12 +9,14 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
+import org.springframework.context.annotation.Import;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataMongoTest
+@Import(ResourceApplication.class)
 class ResourceRepositoryTest {
 
     @Autowired
