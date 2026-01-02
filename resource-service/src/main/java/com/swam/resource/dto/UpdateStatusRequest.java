@@ -2,10 +2,10 @@ package com.swam.resource.dto;
 
 import com.swam.shared.enums.ResourceStatus;
 import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
+import lombok.Data;
 
+@Data
 public class UpdateStatusRequest {
     @NotNull
-    @Getter
     private ResourceStatus status;
 }
