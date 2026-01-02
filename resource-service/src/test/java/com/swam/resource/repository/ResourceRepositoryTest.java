@@ -72,6 +72,18 @@ class ResourceRepositoryTest {
     }
 
     @Test
+    @DisplayName("Check: findByNameIgnoreCase ignores casing")
+    void findByNameIgnoreCase_ShouldReturnResource_EvenWithWeirdCasing() {
+        Resource r = Resource.builder().name("Mountain View").build();
+        repository.save(r);
+
+        Resource result = repository.findByNameIgnoreCase("mOuNtAiN vIeW").orElse(null);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getName()).isEqualTo("Mountain View");
+    }
+
+    @Test
     @DisplayName("Check: findByType returns list")
     void findByType_ShouldReturnAllResourcesOfThatType() {
         Resource r1 = Resource.builder().name("A").type(ResourceType.DOUBLE_ROOM).build();
