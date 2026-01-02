@@ -14,6 +14,7 @@ public class CreateResourceRequest {
     @NotNull
     private ResourceType type;
 
+    @NotNull
     @Min(value = 1)
-    private int capacity;
+    private Integer capacity;
 }
