@@ -31,12 +31,6 @@ jobs:
       - name: Build with Maven
         run: mvn -B clean verify
 
-      - name: Publish Test Report
-        if: always()
-        uses: mikepenz/action-junit-report@v4
-        with:
-          report_paths: '**/target/surefire-reports/TEST-*.xml'
-
       - name: Build Docker Images
         run: docker compose build
 
