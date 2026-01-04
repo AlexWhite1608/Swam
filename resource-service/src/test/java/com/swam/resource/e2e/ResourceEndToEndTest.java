@@ -46,7 +46,15 @@ class ResourceEndToEndTest {
     @Test
     @DisplayName("E2E: Create Resource -> Check DB -> Get Resource -> Update Resource -> Delete")
     void fullResourceLifecycle() {
-        // create resource (POST)
+        String resourceId = createResourceAndVerify();
+        verifyResourceExistsInDatabase(resourceId);
+        verifyGetResource(resourceId);
+        updateResourceAndVerify(resourceId);
+        deleteResourceAndVerify(resourceId);
+    }
+
+    // Create a resource and verify the response
+    private String createResourceAndVerify() {
         CreateResourceRequest createRequest = new CreateResourceRequest();
         createRequest.setName("E2E Test Suite");
         createRequest.setType(ResourceType.SUITE);
@@ -61,14 +69,21 @@ class ResourceEndToEndTest {
         // check that the resource was created successfully
         assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(createResponse.getBody()).isNotNull();
+
         String resourceId = createResponse.getBody().getId();
         assertThat(resourceId).isNotBlank();
 
-        // check in the database that the resource physically exists
+        return resourceId;
+    }
+
+    // Verify that the resource exists in the database with the correct status
+    private void verifyResourceExistsInDatabase(String resourceId) {
         assertThat(repository.existsById(resourceId)).isTrue();
         assertThat(repository.findById(resourceId).get().getStatus()).isEqualTo(ResourceStatus.AVAILABLE);
+    }
 
-        // get the resource (GET)
+    // Verify that the resource can be retrieved via GET request
+    private void verifyGetResource(String resourceId) {
         ResponseEntity<ResourceResponse> getResponse = restTemplate.getForEntity(
                 "/api/resources/" + resourceId,
                 ResourceResponse.class
@@ -76,8 +91,10 @@ class ResourceEndToEndTest {
 
         assertThat(getResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(getResponse.getBody().getName()).isEqualTo("E2E Test Suite");
+    }
 
-        // check for updated resource details
+    // Update the resource and verify the changes
+    private void updateResourceAndVerify(String resourceId) {
         UpdateResourceRequest updateRequest = new UpdateResourceRequest();
         updateRequest.setName("E2E Updated Name");
         updateRequest.setCapacity(10);
@@ -99,8 +116,10 @@ class ResourceEndToEndTest {
         var updatedResourceFromDb = repository.findById(resourceId).orElseThrow();
         assertThat(updatedResourceFromDb.getName()).isEqualTo("E2E Updated Name");
         assertThat(updatedResourceFromDb.getCapacity()).isEqualTo(10);
+    }
 
-        // delete resource (DELETE)
+    // Delete the resource and verify it no longer exists
+    private void deleteResourceAndVerify(String resourceId) {
         restTemplate.delete("/api/resources/" + resourceId);
 
         // check 404 on get after deletion
