@@ -13,8 +13,6 @@ public interface CustomerRepository extends MongoRepository<Customer, String> {
 
     Optional<Customer> findByEmail(String email);
 
-    boolean existsByEmail(String email);
-
     List<Customer> findByPhone(String phone);
 
     // specific method to find by firstName and lastName exact match (two different inputs for first and last name)
