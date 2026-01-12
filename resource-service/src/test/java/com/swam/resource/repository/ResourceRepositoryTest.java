@@ -8,13 +8,21 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.testcontainers.containers.MongoDBContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataMongoTest
+@Testcontainers
 class ResourceRepositoryTest {
+    @Container
+    @ServiceConnection
+    static MongoDBContainer mongoDBContainer = new MongoDBContainer("mongo:6.0");
 
     @Autowired
     private ResourceRepository repository;
@@ -27,7 +35,6 @@ class ResourceRepositoryTest {
     @Test
     @DisplayName("Check: findByTypeAndStatus returns correct resources")
     void findByTypeAndStatus_ShouldReturnMatchingResources() {
-        // target resource to be found
         Resource target = Resource.builder()
                 .name("Suite Royal")
                 .type(ResourceType.SUITE)
@@ -56,7 +63,6 @@ class ResourceRepositoryTest {
         List<Resource> results = repository.findByTypeAndStatus(ResourceType.SUITE, ResourceStatus.AVAILABLE);
 
         assertThat(results).hasSize(1);
-
         assertThat(results.get(0).getName()).isEqualTo("Suite Royal");
     }
 
