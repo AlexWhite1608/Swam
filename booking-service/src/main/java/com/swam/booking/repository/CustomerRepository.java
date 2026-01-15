@@ -1,6 +1,7 @@
 package com.swam.booking.repository;
 
 import com.swam.booking.domain.Customer;
+import com.swam.shared.enums.DocumentType;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -17,6 +18,9 @@ public interface CustomerRepository extends MongoRepository<Customer, String> {
 
     // specific method to find by firstName and lastName exact match (two different inputs for first and last name)
     List<Customer> findByFirstNameIgnoreCaseAndLastNameIgnoreCase(String firstName, String lastName);
+
+    // find by document type and document number
+    Optional<Customer> findByDocumentTypeAndDocumentNumber(DocumentType type, String number);
 
     // partial match search across firstName, lastName, and email (google-like search)
     @Query("{ '$or': [ " +

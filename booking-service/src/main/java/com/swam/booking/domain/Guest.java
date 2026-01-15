@@ -50,6 +50,8 @@ public class Guest {
     @NotNull(message = "Il tipo di ospite è obbligatorio")
     GuestType guestType;
 
+    String notes;
+
     public String getFullName() {
         return firstName + " " + lastName;
     }
