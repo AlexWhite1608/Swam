@@ -17,6 +17,7 @@ public class CustomerResponse {
     private String phone;
     private String address;
     private LocalDate birthDate;
+    private String country;
     private String documentNumber;
     private DocumentType documentType;
     private GuestType guestType;

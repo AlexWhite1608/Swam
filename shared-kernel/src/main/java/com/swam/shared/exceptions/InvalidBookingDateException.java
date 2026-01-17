@@ -4,9 +4,9 @@ import org.springframework.http.HttpStatus;
 
 public class InvalidBookingDateException extends DomainException {
 
-    public InvalidBookingDateException() {
+    public InvalidBookingDateException(String message) {
         super(
-            "La data di check-out deve essere successiva alla data di check-in",
+            message,
             "INVALID_BOOKING_DATE",
             HttpStatus.BAD_REQUEST
         );

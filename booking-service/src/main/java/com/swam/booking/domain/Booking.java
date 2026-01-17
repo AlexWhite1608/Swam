@@ -2,6 +2,7 @@ package com.swam.booking.domain;
 
 import com.swam.shared.dto.PriceBreakdown;
 import com.swam.shared.enums.BookingStatus;
+import com.swam.shared.enums.PaymentStatus;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.Future;
@@ -38,17 +39,15 @@ public class Booking {
     @Valid
     private Guest mainGuest;
 
-    @Valid
-    @Builder.Default
-    private List<Guest> companions = new ArrayList<>();
-
-    @NotNull(message = "La data di check-in è obbligatoria")
     @FutureOrPresent(message = "La data del check-in deve essere valida")
     private LocalDate checkIn;
 
-    @NotNull(message = "La data di check-out è obbligatoria")
     @Future(message = "La data di check-out deve essere valida")
     private LocalDate checkOut;
+
+    @Valid
+    @Builder.Default
+    private List<Guest> companions = new ArrayList<>();
 
     @Valid
     @Builder.Default
@@ -60,63 +59,11 @@ public class Booking {
     // snapshot of price breakdown at the time of booking to avoid issues if pricing rules change later
     private PriceBreakdown priceBreakdown;
 
+    private PaymentStatus paymentStatus;
+
     @CreatedDate
     private LocalDateTime createdAt;
 
     @LastModifiedDate
     private LocalDateTime updatedAt;
-
-    public void confirm() {
-        this.status = BookingStatus.CONFIRMED;
-    }
-
-    public void cancel() {
-        this.status = BookingStatus.CANCELLED;
-    }
-
-    public void checkIn() {
-        this.status = BookingStatus.CHECKED_IN;
-    }
-
-    public void checkOut() {
-        this.status = BookingStatus.CHECKED_OUT;
-    }
-
-    public void addCompanion(@Valid Guest guest) {
-        if (this.companions == null) {
-            this.companions = new ArrayList<>();
-        }
-        this.companions.add(guest);
-    }
-
-    public void removeCompanion(String guestId) {
-        if (this.companions != null) {
-            this.companions.removeIf(g -> Objects.equals(g.getId(), guestId));
-        }
-    }
-
-    public void editCompanion(String guestId, @NotNull Guest updatedGuest) {
-        if (this.companions != null) {
-            for (int i = 0; i < this.companions.size(); i++) {
-                if (this.companions.get(i).getId().equals(guestId)) {
-                    this.companions.set(i, updatedGuest);
-                    break;
-                }
-            }
-        }
-    }
-
-    public void addExtra(@Valid BookingExtra extra) {
-        if (this.extras == null) {
-            this.extras = new ArrayList<>();
-        }
-        this.extras.add(extra);
-    }
-
-    public void removeExtra(String extraOptionId) {
-        if (this.extras != null) {
-            this.extras.removeIf(e -> Objects.equals(e.getExtraOptionId(), extraOptionId));
-        }
-    }
-
 }

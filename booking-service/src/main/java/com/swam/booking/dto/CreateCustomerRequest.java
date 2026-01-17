@@ -44,6 +44,8 @@ public class CreateCustomerRequest {
     @NotNull(message = "Il tipo di documento è obbligatorio")
     private DocumentType documentType;
 
+    private String country;
+
     @NotNull(message = "Il tipo di ospite è obbligatorio")
     private GuestType guestType;
 

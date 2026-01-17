@@ -7,7 +7,6 @@ import com.swam.booking.dto.CustomerResponse;
 import com.swam.booking.repository.CustomerRepository;
 import com.swam.shared.exceptions.CustomerNotFoundException;
 import com.swam.shared.exceptions.DuplicateCustomerException;
-import com.swam.shared.exceptions.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -85,7 +84,7 @@ public class CustomerService {
     }
 
     // used to create a snapshot of the customer at the time of booking (Guest)
-    public Guest createGuestSnapshot(Customer customer) {
+    public Guest createGuestSnapshot(CustomerResponse customer) {
         return Guest.builder()
                 .customerId(customer.getId()) // Link fondamentale al CRM
                 .firstName(customer.getFirstName())
@@ -101,7 +100,7 @@ public class CustomerService {
                 .build();
     }
 
-    private Customer getCustomerEntityOrThrow(String id) {
+    public Customer getCustomerEntityOrThrow(String id) {
         return customerRepository.findById(id)
                 .orElseThrow(() -> new CustomerNotFoundException(id));
     }

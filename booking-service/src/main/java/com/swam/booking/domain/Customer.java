@@ -42,20 +42,17 @@ public class Customer {
     @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Il numero di telefono non è valido")
     private String phone;
 
-    @NotBlank(message = "L'indirizzo è obbligatorio")
     private String address;
 
-    @NotNull(message = "La data di nascita è obbligatoria")
-    @Past(message = "La data di nascita deve essere nel passato")
+    @Past(message = "La data di nascita deve essere valida")
     private LocalDate birthDate;
 
-    @NotBlank(message = "Il numero del documento è obbligatorio")
+    private String country;
+
     private String documentNumber;
 
-    @NotNull(message = "Il tipo di documento è obbligatorio")
     private DocumentType documentType;
 
-    @NotNull(message = "Il tipo di ospite è obbligatorio")
     private GuestType guestType;
 
     private String notes;
