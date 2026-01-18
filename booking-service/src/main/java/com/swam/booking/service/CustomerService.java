@@ -66,7 +66,7 @@ public class CustomerService {
         // find by email first
         Optional<Customer> existingByEmail = customerRepository.findByEmail(request.getEmail());
         if (existingByEmail.isPresent()) {
-            return updateCustomer(existingByEmail.get().getEmail(), request);
+            return updateCustomer(existingByEmail.get().getId(), request);
         }
 
         // find by document if provided
@@ -141,11 +141,13 @@ public class CustomerService {
         target.setFirstName(source.getFirstName());
         target.setLastName(source.getLastName());
         target.setPhone(source.getPhone());
+        target.setEmail(source.getEmail());
         target.setAddress(source.getAddress());
         target.setBirthDate(source.getBirthDate());
         target.setDocumentNumber(source.getDocumentNumber());
         target.setDocumentType(source.getDocumentType());
         target.setGuestType(source.getGuestType());
+        target.setCountry(source.getCountry());
         target.setNotes(source.getNotes());
     }
 }
