@@ -181,10 +181,15 @@ public class BookingService {
     }
 
     @Transactional
-    public BookingResponse confirmBooking(String bookingId) {
+    public BookingResponse confirmBooking(String bookingId, boolean hasPaidDeposit) {
         Booking booking = getBookingOrThrow(bookingId);
         if (booking.getStatus() != BookingStatus.PENDING)
             throw new IllegalStateException("Solo PENDING può essere confermata");
+
+        // update payment status if deposit has been paid
+        if(hasPaidDeposit) {
+            booking.setPaymentStatus(PaymentStatus.DEPOSIT_PAID);
+        }
 
         booking.setStatus(BookingStatus.CONFIRMED);
         booking.setUpdatedAt(LocalDateTime.now());
@@ -242,6 +247,20 @@ public class BookingService {
 
     // mapToResponse omesso per brevità (identico a prima)
     private BookingResponse mapToResponse(Booking booking) {
+        PriceBreakdown pbResponse = null;
+
+        if (booking.getPriceBreakdown() != null) {
+            pbResponse = PriceBreakdown.builder()
+                    .baseAmount(booking.getPriceBreakdown().getBaseAmount())
+                    .depositAmount(booking.getPriceBreakdown().getDepositAmount())
+                    .taxAmount(booking.getPriceBreakdown().getTaxAmount())
+                    .discountAmount(booking.getPriceBreakdown().getDiscountAmount())
+                    .extrasAmount(booking.getPriceBreakdown().getExtrasAmount())
+                    .finalTotal(booking.getPriceBreakdown().getFinalTotal())
+                    .taxDescription(booking.getPriceBreakdown().getTaxDescription())
+                    .build();
+        }
+
         return BookingResponse.builder()
                 .id(booking.getId())
                 .resourceId(booking.getResourceId())
@@ -249,15 +268,7 @@ public class BookingService {
                 .checkOut(booking.getCheckOut())
                 .status(booking.getStatus())
                 .paymentStatus(booking.getPaymentStatus())
-                .priceBreakdown(PriceBreakdown.builder()
-                        .baseAmount(booking.getPriceBreakdown().getBaseAmount())
-                        .depositAmount(booking.getPriceBreakdown().getDepositAmount())
-                        .taxAmount(booking.getPriceBreakdown().getTaxAmount())
-                        .discountAmount(booking.getPriceBreakdown().getDiscountAmount())
-                        .extrasAmount(booking.getPriceBreakdown().getExtrasAmount())
-                        .finalTotal(booking.getPriceBreakdown().getFinalTotal())
-                        .taxDescription(booking.getPriceBreakdown().getTaxDescription())
-                        .build())
+                .priceBreakdown(pbResponse)
                 .mainGuest(booking.getMainGuest())
                 .companions(booking.getCompanions())
                 .extras(booking.getExtras())

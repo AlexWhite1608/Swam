@@ -12,4 +12,7 @@ public interface ExtraOptionRepository extends MongoRepository<ExtraOption, Stri
 
     // find all active extra options
     List<ExtraOption> findByIsActiveTrue();
+
+    // find extra options by category
+    List<ExtraOption> findByCategory(ExtraCategory category);
 }
