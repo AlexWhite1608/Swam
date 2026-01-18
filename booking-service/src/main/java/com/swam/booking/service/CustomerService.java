@@ -24,6 +24,12 @@ public class CustomerService {
 
     private final CustomerRepository customerRepository;
 
+    public List<CustomerResponse> getAllCustomers() {
+        return customerRepository.findAll().stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
     public List<CustomerResponse> searchCustomers(String keyword) {
         return customerRepository.search(keyword).stream()
                 .map(this::mapToResponse)
