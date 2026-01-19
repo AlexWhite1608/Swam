@@ -8,7 +8,6 @@ import com.swam.shared.enums.PaymentStatus;
 import lombok.Builder;
 import lombok.Data;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -25,8 +24,13 @@ public class BookingResponse {
     private PaymentStatus paymentStatus;
 
     private Guest mainGuest;
+
+    @Builder.Default
     private List<Guest> companions;
+
+    @Builder.Default
     private List<BookingExtra> extras;
+
     private PriceBreakdown priceBreakdown;
 
     private LocalDateTime createdAt;
