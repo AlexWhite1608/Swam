@@ -54,6 +54,9 @@ public class Guest {
     }
 
     public Integer getAge() {
+        if (birthDate == null) {
+            return null;
+        }
         return Period.between(birthDate, LocalDate.now()).getYears();
     }
 }
