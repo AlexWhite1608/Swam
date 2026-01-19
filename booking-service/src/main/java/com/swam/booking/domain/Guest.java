@@ -27,8 +27,7 @@ public class Guest {
     @Size(min = 2, max = 50, message = "Il cognome deve essere tra 2 e 50 caratteri")
     String lastName;
 
-    @NotBlank(message = "L'email è obbligatoria")
-    @Email(message = "L'email deve essere valida")
+    @Email(message = "L'email non è valida")
     String email;
 
     @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Il numero di telefono non è valido")
@@ -41,14 +40,14 @@ public class Guest {
     @Past(message = "La data di nascita deve essere valida")
     LocalDate birthDate;
 
-    @NotNull(message = "Il tipo di documento è obbligatorio")
     DocumentType documentType;
 
-    @NotBlank(message = "Il numero del documento è obbligatorio")
     String documentNumber;
 
     @NotNull(message = "Il tipo di ospite è obbligatorio")
     GuestType guestType;
+
+    String notes;
 
     public String getFullName() {
         return firstName + " " + lastName;

@@ -21,6 +21,8 @@ public class PriceBreakdown {
 
     private BigDecimal discountAmount;
 
+    private BigDecimal depositAmount;
+
     private BigDecimal finalTotal;
 
     // textual description of the applied taxes
