@@ -48,6 +48,7 @@ public class CheckInRequest {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
+    @Builder
     public static class CompanionData {
         @NotBlank
         private String firstName;

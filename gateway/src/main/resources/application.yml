@@ -32,8 +32,8 @@ spring:
           predicates:
             - Path=/api/pricing/**
 
-        # --- Booking Service ---
-        - id: booking-service
-          uri: ${BOOKING_URI:http://localhost:8083}
+        # --- Resource Service ---
+        - id: resource-route
+          uri: ${RESOURCE_URI:http://localhost:8081}
           predicates:
-            - Path=/api/bookings/**
+            - Path=/api/resources/**
