@@ -4,20 +4,23 @@ server:
 spring:
   application:
     name: gateway
+
   cloud:
     gateway:
       globalcors:
         cors-configurations:
           '[/**]':
-            allowedOrigins: "*"
+            allowedOrigins:
+              - "http://localhost:3000"
             allowedMethods:
-              - GET
-              - POST
-              - PUT
-              - PATCH
-              - DELETE
-              - OPTIONS
+                - GET
+                - POST
+                - PUT
+                - PATCH
+                - DELETE
+                - OPTIONS
             allowedHeaders: "*"
+            allowCredentials: true
 
       routes:
         # --- Booking Service ---
