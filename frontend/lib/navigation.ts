@@ -1,30 +1,40 @@
-import { BedDouble, CalendarDays, Coins, Users } from "lucide-react";
+import { BedDouble, CalendarCheck, CalendarDays, Coins, HomeIcon, Users } from "lucide-react";
 
 export const NAV_ITEMS = [
-  { 
-    name: "Home", 
-    href: "/", 
-    icon: CalendarDays 
+  {
+    name: "Home",
+    href: "/",
+    icon: HomeIcon,
   },
-  { 
-    name: "Risorse", 
-    href: "/resources", 
-    icon: BedDouble 
+  {
+    name: "Calendario",
+    href: "/calendar",
+    icon: CalendarDays,
   },
-  { 
-    name: "Clienti", 
-    href: "/customers", 
-    icon: Users 
+  {
+    name: "Prenotazioni",
+    href: "/bookings",
+    icon: CalendarCheck,
   },
-  { 
-    name: "Prezzi", 
-    href: "/pricing", 
-    icon: Coins 
+  {
+    name: "Risorse",
+    href: "/resources",
+    icon: BedDouble,
+  },
+  {
+    name: "Clienti",
+    href: "/customers",
+    icon: Users,
+  },
+  {
+    name: "Prezzi",
+    href: "/pricing",
+    icon: Coins,
   },
 ];
 
 // Utility function to get nav item name by href
 export function getNavNameByHref(href: string): string | undefined {
-  const item = NAV_ITEMS.find(i => i.href === href);
+  const item = NAV_ITEMS.find((i) => i.href === href);
   return item?.name;
 }
