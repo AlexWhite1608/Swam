@@ -26,10 +26,10 @@ public class BookingResponse {
     private Guest mainGuest;
 
     @Builder.Default
-    private List<Guest> companions;
+    private List<Guest> companions = List.of();
 
     @Builder.Default
-    private List<BookingExtra> extras;
+    private List<BookingExtra> extras = List.of();
 
     private PriceBreakdown priceBreakdown;
 
