@@ -10,10 +10,10 @@ export function AppSidebar() {
   const pathname = usePathname();
 
   return (
-    <div className="hidden border-r bg-muted/40 md:block w-[240px] lg:w-[280px] h-screen sticky top-0">
+    <div className="hidden border-r bg-muted/40 md:block h-screen sticky top-0 shadow-sm">
       <div className="flex h-full max-h-screen flex-col gap-2">
         {/* Logo Area */}
-        <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
+        <div className="flex h-14 items-center px-4 lg:h-[60px] lg:px-6">
           <Logo />
         </div>
 
@@ -29,7 +29,7 @@ export function AppSidebar() {
                   className={cn(
                     "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary",
                     isActive
-                      ? "bg-muted text-primary"
+                      ? "bg-primary text-primary-foreground hover:text-white"
                       : "text-muted-foreground",
                   )}
                 >
