@@ -71,7 +71,21 @@ services:
     networks:
       - swam-network
 
-  # --- FRONTEND SERVICE (NUOVO) ---
+  frontend:
+    build: ./frontend
+    container_name: swam-frontend
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./frontend/.env
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    networks:
+      - swam-network
+    depends_on:
+      - gateway
 
 networks:
   swam-network:
