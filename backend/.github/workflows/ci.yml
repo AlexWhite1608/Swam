@@ -1,0 +1,68 @@
+name: Java CI with Maven
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+permissions:
+  contents: read
+  checks: write
+  id-token: write
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # download source code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      # builds and tests with maven
+      - name: Build with Maven
+        run: mvn -B clean verify
+
+      - name: Build Docker Images
+        run: docker compose build
+
+      - name: Start Containers
+        run: docker compose up -d
+
+      - name: Wait for services initialization
+        run: sleep 30     # waits 30 seconds for spring boot services to start
+
+      # check if containers are running
+      - name: Verify Containers are Running
+        run: |
+          echo "Checking container status..."
+          docker ps -a
+          
+          REQUIRED_CONTAINERS=("swam-gateway" "swam-booking" "swam-pricing" "swam-resource" "swam-mongo")
+          
+          for container in "${REQUIRED_CONTAINERS[@]}"; do
+            if [ "$(docker inspect -f '{{.State.Running}}' $container 2>/dev/null)" != "true" ]; then
+              echo "❌ Error: Container $container is NOT running."
+              echo "--- LOGS FOR $container ---"
+              docker logs $container
+              exit 1
+            else
+              echo "✅ Container $container is UP."
+            fi
+          done
+
+      - name: Dump all Docker logs on failure
+        if: failure()
+        run: docker compose logs
+
+      - name: Stop containers
+        if: always()
+        run: docker compose down
