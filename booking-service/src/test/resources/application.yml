@@ -1,6 +1,0 @@
-spring:
-  application:
-    name: booking-service-test
-  data:
-    mongodb:
-      auto-index-creation: true
