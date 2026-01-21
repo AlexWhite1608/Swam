@@ -129,13 +129,13 @@ export const columns: ColumnDef<Resource>[] = [
             <DropdownMenuItem
               onClick={() => console.log("Edit", row.original.id)}
             >
-              <Pencil className=" h-3.5 w-3.5 text-muted-foreground/70" />
+              <Pencil className=" h-3.5 w-3.5 hover:text-foreground" />
               Modifica
             </DropdownMenuItem>
 
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>
-                <Power className=" h-3.5 w-3.5 text-muted-foreground/70" />
+                <Power className=" h-3.5 w-3.5 hover:text-foreground" />
                 Stato
               </DropdownMenuSubTrigger>
               <DropdownMenuSubContent>
@@ -144,7 +144,7 @@ export const columns: ColumnDef<Resource>[] = [
                     key={s.value}
                     onClick={() => console.log("Set status", s.value)}
                   >
-                    <s.icon className=" h-3.5 w-3.5 text-muted-foreground/70" />
+                    <s.icon className=" h-3.5 w-3.5 hover:text-foreground" />
                     {s.label}
                   </DropdownMenuItem>
                 ))}

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Column } from "@tanstack/react-table";
-import { Check, PlusCircle } from "lucide-react";
+import { Check, Filter, PlusCircle } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -66,7 +66,7 @@ export function DataTableFacetedFilter<TData, TValue>({
     <Popover>
       <PopoverTrigger asChild>
         <Button variant="outline" size="sm" className="h-8 border-dashed">
-          <PlusCircle className="mr-2 h-4 w-4" />
+          <Filter className=" h-4 w-4" />
           {title}
 
           {/* badge selection counter */}
@@ -127,28 +127,23 @@ export function DataTableFacetedFilter<TData, TValue>({
                         filterValues.length ? filterValues : undefined,
                       );
                     }}
+                    className={cn(
+                      "flex justify-between items-center group [&:hover_.check-icon]:text-primary-foreground",
+                    )}
                   >
-                    <div
-                      className={cn(
-                        "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
-                        isSelected
-                          ? "bg-primary text-primary-foreground"
-                          : "opacity-50 [&_svg]:invisible",
+                    <div className="flex items-center gap-2">
+                      {option.icon && (
+                        <option.icon className="h-4 w-4 hover:text-foreground" />
                       )}
-                    >
-                      <Check className={cn("h-4 w-4")} />
+                      <span>{option.label}</span>
                     </div>
-                    {option.icon && (
-                      <option.icon className="mr-2 h-4 w-4 text-muted-foreground" />
-                    )}
-                    <span>{option.label}</span>
-
-                    {/* occurencies counter */}
-                    {facets?.get(option.value) && (
-                      <span className="ml-auto flex h-4 w-4 items-center justify-center font-mono text-xs">
-                        {facets.get(option.value)}
-                      </span>
-                    )}
+                    {/* //FIXME: bug su hover se esco dal dropdown */}
+                    <Check
+                      className={cn(
+                        "h-4 w-4 check-icon",
+                        isSelected ? "text-primary" : "invisible",
+                      )}
+                    />
                   </CommandItem>
                 );
               })}
