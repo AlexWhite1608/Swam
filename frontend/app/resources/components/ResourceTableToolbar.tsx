@@ -23,39 +23,14 @@ export function ResourceTableToolbar<TData>({
   return (
     <div className="flex items-center justify-between">
       <div className="flex flex-1 items-center space-x-2">
-        {/* //fixme: bulk actions logic */}
-        {isSelectionActive ? (
-          <div className="flex items-center gap-2 bg-red-50 text-red-900 px-3 py-1.5 rounded-md border border-red-100 animate-in fade-in slide-in-from-left-2">
-            <span className="text-sm font-medium">
-              {selectedRows.length} selezionati
-            </span>
-            <Button
-              variant="destructive"
-              size="sm"
-              className="h-7 px-2 ml-2"
-              onClick={() =>
-                console.log(
-                  "Bulk Delete",
-                  selectedRows.map((r) => r.original),
-                )
-              }
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              Cancella tutti
-            </Button>
-          </div>
-        ) : (
-          /* default search */
-          <Input
-            placeholder="Filtra risorse..."
-            value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-            onChange={(event) =>
-              table.getColumn("name")?.setFilterValue(event.target.value)
-            }
-            className="h-8 w-[150px] lg:w-[250px]"
-          />
-        )}
-
+        <Input
+          placeholder="Filtra risorse..."
+          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+          onChange={(event) =>
+            table.getColumn("name")?.setFilterValue(event.target.value)
+          }
+          className="h-8 w-[150px] lg:w-[250px]"
+        />
         {/* filters */}
         {table.getColumn("status") && (
           <DataTableFacetedFilter
@@ -71,7 +46,6 @@ export function ResourceTableToolbar<TData>({
             options={typeOptions}
           />
         )}
-
         {/* reset filters */}
         {isFiltered && (
           <Button
@@ -85,10 +59,25 @@ export function ResourceTableToolbar<TData>({
         )}
       </div>
 
-      {/* view options */}
-      {/* <div className="flex items-center gap-2">
-        <DataTableViewOptions table={table} />
-      </div> */}
+      {/* //TODO: implementa cancellazione bulk */}
+      {isSelectionActive && (
+        <div className="flex flex-1 justify-end">
+          <Button
+            variant="destructive"
+            size="sm"
+            className="px-2"
+            onClick={() =>
+              console.log(
+                "Bulk Delete",
+                selectedRows.map((r) => r.original),
+              )
+            }
+          >
+            <Trash2 className="h-4 w-4" />
+            Cancella selezionati
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,17 +1,10 @@
 "use client";
 
 import { Column } from "@tanstack/react-table";
-import { ArrowDown, ArrowUp, ChevronsUpDown, EyeOff } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, ChevronsUpDown, ChevronUp } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 interface DataTableColumnHeaderProps<
   TData,
@@ -22,11 +15,11 @@ interface DataTableColumnHeaderProps<
 }
 
 /**
- * Renders a column header for a data table with sorting and visibility controls.
+ * Renders a column header for a data table with sorting controls.
  *
- * Displays the column title and, if the column is sortable, provides a dropdown menu
- * for sorting (ascending/descending) and hiding the column. The sort status is indicated
- * by an icon next to the title.
+ * Displays the column title and, if the column is sortable, provides a button
+ * for cycling through sort states (none → ascending → descending → none).
+ * The sort status is indicated by an icon next to the title.
  *
  * @template TData - The type of the row data.
  * @template TValue - The type of the column value.
@@ -41,6 +34,8 @@ export function DataTableColumnHeader<TData, TValue>({
   title,
   className,
 }: DataTableColumnHeaderProps<TData, TValue>) {
+  const isSorted = column.getIsSorted();
+
   // if the column is not sortable, just render the title
   if (!column.getCanSort()) {
     return <div className={cn(className)}>{title}</div>;
@@ -48,40 +43,35 @@ export function DataTableColumnHeader<TData, TValue>({
 
   return (
     <div className={cn("flex items-center space-x-2", className)}>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="-ml-3 h-8 data-[state=open]:bg-accent data-[state=open]:text-accent-foreground"
-          >
-            <span>{title}</span>
-            {/* show icon based on sort status */}
-            {column.getIsSorted() === "desc" ? (
-              <ArrowDown className="h-4 w-4 hover:text-foreground" />
-            ) : column.getIsSorted() === "asc" ? (
-              <ArrowUp className="ml-2 h-4 w-4 hover:text-foreground" />
-            ) : (
-              <ChevronsUpDown className="ml-2 h-4 w-4 hover:text-foreground" />
-            )}
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
-          <DropdownMenuItem onClick={() => column.toggleSorting(false)}>
-            <ArrowUp className="mr-2 h-3.5 w-3.5 hover:text-foreground" />
-            Crescente
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => column.toggleSorting(true)}>
-            <ArrowDown className="mr-2 h-3.5 w-3.5 hover:text-foreground" />
-            Decrescente
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => column.toggleVisibility(false)}>
-            <EyeOff className="mr-2 h-3.5 w-3.5 hover:text-foreground" />
-            Nascondi
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <Button
+        variant="ghost"
+        size="sm"
+        className={cn(
+          "-ml-3 h-8",
+          isSorted && "underline"
+        )}
+        onClick={() => {
+          // Cycle through: none → asc → desc → none
+          const currentSort = column.getIsSorted();
+          if (currentSort === false) {
+            column.toggleSorting(false); // Set to ascending
+          } else if (currentSort === "asc") {
+            column.toggleSorting(true); // Set to descending
+          } else {
+            column.clearSorting();
+          }
+        }}
+      >
+        <span>{title}</span>
+        {/* show icon based on sort status */}
+        {column.getIsSorted() === "desc" ? (
+          <ChevronDown className="h-4 w-4 text-primary " />
+        ) : column.getIsSorted() === "asc" ? (
+          <ChevronUp className="h-4 w-4 text-primary" />
+        ) : (
+          <ChevronsUpDown className="h-4 w-4" />
+        )}
+      </Button>
     </div>
   );
 }
