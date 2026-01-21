@@ -127,7 +127,7 @@ export const columns: ColumnDef<Resource>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-[160px]">
             <DropdownMenuItem
-              onClick={() => console.log("Edit", row.original.id)}
+              onClick={() => console.log("Edit", row.original.id)} // TODO: implement edit action
             >
               <Pencil className=" h-3.5 w-3.5 hover:text-foreground" />
               Modifica
@@ -142,7 +142,7 @@ export const columns: ColumnDef<Resource>[] = [
                 {statusOptions.map((s) => (
                   <DropdownMenuItem
                     key={s.value}
-                    onClick={() => console.log("Set status", s.value)}
+                    onClick={() => console.log("Set status", s.value)} // TODO: implement status change action
                   >
                     <s.icon className=" h-3.5 w-3.5 hover:text-foreground" />
                     {s.label}
