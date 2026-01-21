@@ -65,7 +65,7 @@ export function DataTableFacetedFilter<TData, TValue>({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 border-dashed">
+        <Button variant="ghost" size="sm">
           <Filter className=" h-4 w-4" />
           {title}
 
@@ -137,11 +137,10 @@ export function DataTableFacetedFilter<TData, TValue>({
                       )}
                       <span>{option.label}</span>
                     </div>
-                    {/* //FIXME: bug su hover se esco dal dropdown */}
                     <Check
                       className={cn(
-                        "h-4 w-4 check-icon",
-                        isSelected ? "text-primary" : "invisible",
+                        "h-4 w-4",
+                        isSelected ? "opacity-100" : "opacity-0",
                       )}
                     />
                   </CommandItem>
