@@ -16,7 +16,6 @@ import { Error } from "@/components/common/Error";
 export default function ResourcesPage() {
   const { data: resources, isLoading, isError, refetch } = useResources();
 
-  // FIXME: componente dedicato
   if (isError) {
     return (
       <Error onRetry={() => refetch()} />

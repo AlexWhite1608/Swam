@@ -1,12 +1,11 @@
 "use client";
 
 import { Table } from "@tanstack/react-table";
-import { X, Trash2, Settings2 } from "lucide-react";
+import { Trash2, X } from "lucide-react";
 
+import { DataTableFacetedFilter } from "@/components/data-table/data-table-faceted-filter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { DataTableViewOptions } from "@/components/data-table/data-table-view-options";
-import { DataTableFacetedFilter } from "@/components/data-table/data-table-faceted-filter";
 import { statusOptions, typeOptions } from "@/schemas/resourcesSchema";
 
 interface ResourceTableToolbarProps<TData> {
@@ -63,13 +62,13 @@ export function ResourceTableToolbar<TData>({
       {isSelectionActive && (
         <div className="flex flex-1 justify-end">
           <Button
-            variant="destructive"
+            variant="ghost"
             size="sm"
-            className="px-2"
+            className="text-red-600 focus:text-red-600 focus:bg-red-50 hover:bg-red-50"
             onClick={() =>
               console.log(
                 "Bulk Delete",
-                selectedRows.map((r) => r.original),
+                selectedRows.map((r) => r.original)
               )
             }
           >
