@@ -19,8 +19,8 @@ import {
   HeaderGroup,
 } from "@tanstack/react-table";
 
+// IMPORTANTE: Nota che NON usiamo più 'Table' da ui/table qui dentro come wrapper
 import {
-  Table,
   TableBody,
   TableCell,
   TableHead,
@@ -36,20 +36,6 @@ interface DataTableProps<TData, TValue> {
   renderToolbar?: (table: TanStackTable<TData>) => React.ReactNode;
 }
 
-/**
- * DataTable is a generic React component for rendering tabular data using TanStack Table.
- * It supports features such as sorting, filtering, pagination, column visibility, and row selection.
- * The component allows injection of a custom toolbar and is highly customizable via props.
- *
- * @template TData - The type of data for each row.
- * @template TValue - The type of value for each column.
- *
- * @param columns - Array of column definitions for the table.
- * @param data - Array of data objects to display in the table.
- * @param renderToolbar - Optional function to render a custom toolbar above the table.
- *
- * @returns A styled table with advanced features and optional toolbar.
- */
 export function DataTable<TData, TValue>({
   columns,
   data,
@@ -86,63 +72,74 @@ export function DataTable<TData, TValue>({
   });
 
   return (
-    <div className="space-y-4 flex flex-col h-full">
+    <div className="flex flex-col h-full space-y-4">
       {/* toolbar injection */}
       {renderToolbar && renderToolbar(table)}
 
-      {/* table */}
-      <div className="rounded-md border flex-1 overflow-hidden flex flex-col">
-        <div className="overflow-auto max-h-full">
-          <Table>
-            <TableHeader className="sticky top-0 bg-background z-10">
-              {table.getHeaderGroups().map((headerGroup: HeaderGroup<TData>) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => {
-                    return (
-                      <TableHead key={header.id} colSpan={header.colSpan}>
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext(),
-                            )}
-                      </TableHead>
-                    );
-                  })}
+      <div className="flex-1 rounded-md border overflow-auto relative min-h-0">
+        <table className="w-full caption-bottom text-sm text-left">
+          <TableHeader className="sticky top-0 z-10 bg-background shadow-sm">
+            {table.getHeaderGroups().map((headerGroup: HeaderGroup<TData>) => (
+              <TableRow
+                key={headerGroup.id}
+                className="hover:bg-transparent border-b"
+              >
+                {headerGroup.headers.map((header, index) => {
+                  return (
+                    <TableHead
+                      key={header.id}
+                      colSpan={header.colSpan}
+                      className={index === 0 ? "w-12 pr-0" : ""}
+                      style={{
+                        width:
+                          header.getSize() !== 150
+                            ? header.getSize()
+                            : undefined,
+                      }}
+                    >
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
+                    </TableHead>
+                  );
+                })}
+              </TableRow>
+            ))}
+          </TableHeader>
+
+          <TableBody>
+            {table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && "selected"}
+                  className="border-b transition-colors hover:bg-muted/50"
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
+                    </TableCell>
+                  ))}
                 </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
-                    // TODO: gestire onClick per selezione riga
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={columns.length}
-                    className="h-24 text-center"
-                  >
-                    Nessun risultato
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
+                  Nessun risultato
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </table>
       </div>
 
       {/* pagination */}
