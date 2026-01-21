@@ -1,13 +1,15 @@
 "use client";
 
 import {
-    Breadcrumb,
-    BreadcrumbItem,
-    BreadcrumbLink,
-    BreadcrumbList,
-    BreadcrumbPage,
-    BreadcrumbSeparator,
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Separator } from "@/components/ui/separator";
 import { getNavNameByHref } from "@/lib/navigation";
 import { usePathname } from "next/navigation";
 import React from "react";
@@ -21,6 +23,8 @@ export function AppHeader() {
 
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6 sticky top-0 z-50 backdrop-blur-sm bg-white/80 shadow-sm">
+      <SidebarTrigger className="-ml-2" />
+
       <div className="w-full flex-1">
         <Breadcrumb>
           <BreadcrumbList>
@@ -51,7 +55,6 @@ export function AppHeader() {
         </Breadcrumb>
       </div>
 
-      {/* //TODO: User Menu */}
       <UserAvatar />
     </header>
   );
