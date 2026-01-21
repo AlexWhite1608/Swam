@@ -35,15 +35,15 @@ interface DataTableFacetedFilterProps<TData, TValue> {
 
 /**
  * A faceted filter component for data tables, allowing users to filter table rows by selecting multiple options.
- * 
+ *
  * @template TData - The type of the table data.
  * @template TValue - The type of the filter value.
- * 
+ *
  * @param {Object} props - The component props.
  * @param {Column<TData, TValue>} [props.column] - The table column to apply the filter to.
  * @param {string} [props.title] - The title displayed on the filter button.
  * @param {Array} props.options - The list of filter options, each with a label, value, and optional icon.
- * 
+ *
  * @example
  * <DataTableFacetedFilter
  *   column={column}
@@ -68,13 +68,13 @@ export function DataTableFacetedFilter<TData, TValue>({
         <Button variant="outline" size="sm" className="h-8 border-dashed">
           <PlusCircle className="mr-2 h-4 w-4" />
           {title}
-          
+
           {/* badge selection counter */}
           {selectedValues?.size > 0 && (
             <>
               <Separator orientation="vertical" className="mx-2 h-4" />
               <Badge
-                variant="secondary"
+                variant="outline"
                 className="rounded-sm px-1 font-normal lg:hidden"
               >
                 {selectedValues.size}
@@ -82,7 +82,7 @@ export function DataTableFacetedFilter<TData, TValue>({
               <div className="hidden space-x-1 lg:flex">
                 {selectedValues.size > 2 ? (
                   <Badge
-                    variant="secondary"
+                    variant="outline"
                     className="rounded-sm px-1 font-normal"
                   >
                     {selectedValues.size} selezionati
@@ -92,7 +92,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                     .filter((option) => selectedValues.has(option.value))
                     .map((option) => (
                       <Badge
-                        variant="secondary"
+                        variant="outline"
                         key={option.value}
                         className="rounded-sm px-1 font-normal"
                       >
@@ -124,7 +124,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                       }
                       const filterValues = Array.from(selectedValues);
                       column?.setFilterValue(
-                        filterValues.length ? filterValues : undefined
+                        filterValues.length ? filterValues : undefined,
                       );
                     }}
                   >
@@ -133,7 +133,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                         "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
                         isSelected
                           ? "bg-primary text-primary-foreground"
-                          : "opacity-50 [&_svg]:invisible"
+                          : "opacity-50 [&_svg]:invisible",
                       )}
                     >
                       <Check className={cn("h-4 w-4")} />
@@ -142,7 +142,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                       <option.icon className="mr-2 h-4 w-4 text-muted-foreground" />
                     )}
                     <span>{option.label}</span>
-                    
+
                     {/* occurencies counter */}
                     {facets?.get(option.value) && (
                       <span className="ml-auto flex h-4 w-4 items-center justify-center font-mono text-xs">
@@ -153,21 +153,6 @@ export function DataTableFacetedFilter<TData, TValue>({
                 );
               })}
             </CommandGroup>
-            
-            {/* clear filters section, only if something is selected */}
-            {selectedValues.size > 0 && (
-              <>
-                <CommandSeparator />
-                <CommandGroup>
-                  <CommandItem
-                    onSelect={() => column?.setFilterValue(undefined)}
-                    className="justify-center text-center"
-                  >
-                    Clear filters
-                  </CommandItem>
-                </CommandGroup>
-              </>
-            )}
           </CommandList>
         </Command>
       </PopoverContent>

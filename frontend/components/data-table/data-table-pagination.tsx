@@ -44,14 +44,17 @@ export function DataTablePagination<TData>({
       {/* left side: selected rows counter */}
       <div className="flex-1 text-sm text-muted-foreground">
         {table.getFilteredSelectedRowModel().rows.length} di{" "}
-        {table.getFilteredRowModel().rows.length} riga/e selezionata/e.
+        {table.getFilteredRowModel().rows.length}{" "}
+        {table.getFilteredSelectedRowModel().rows.length === 1
+          ? "elemento selezionato"
+          : "elementi selezionati"}
       </div>
 
       {/* right side: pagination controls */}
-      <div className="flex items-center space-x-6 lg:space-x-8">
+      <div className="flex items-center space-x-6">
         {/* row selector for page */}
         <div className="flex items-center space-x-2">
-          <p className="text-sm font-medium">Righe per pagina</p>
+          <p className="text-sm">Elementi per pagina</p>
           <Select
             value={`${table.getState().pagination.pageSize}`}
             onValueChange={(value) => {
@@ -72,8 +75,8 @@ export function DataTablePagination<TData>({
         </div>
 
         {/* current page indicator */}
-        <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-          Page {table.getState().pagination.pageIndex + 1} of{" "}
+        <div className="flex items-center justify-center text-sm">
+          Pagina {table.getState().pagination.pageIndex + 1} di{" "}
           {table.getPageCount()}
         </div>
 
