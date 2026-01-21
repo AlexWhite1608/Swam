@@ -1,4 +1,5 @@
 services:
+  # --- BACKEND SERVICES ---
   mongodb:
     image: mongo:6.0
     container_name: swam-mongo
@@ -15,7 +16,7 @@ services:
       retries: 5
 
   resource-service:
-    build: ./resource-service
+    build: ./backend/resource-service
     container_name: swam-resource
     environment:
       - SERVER_PORT=8081
@@ -27,7 +28,7 @@ services:
       - swam-network
 
   pricing-service:
-    build: ./pricing-service
+    build: ./backend/pricing-service
     container_name: swam-pricing
     environment:
       - SERVER_PORT=8082
@@ -39,7 +40,7 @@ services:
       - swam-network
 
   booking-service:
-    build: ./booking-service
+    build: ./backend/booking-service
     container_name: swam-booking
     environment:
       - SERVER_PORT=8083
@@ -54,7 +55,7 @@ services:
       - swam-network
 
   gateway:
-    build: ./gateway
+    build: ./backend/gateway
     container_name: swam-gateway
     ports:
       - "8080:8080"
@@ -69,6 +70,22 @@ services:
       - booking-service
     networks:
       - swam-network
+
+  frontend:
+    build: ./frontend
+    container_name: swam-frontend
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./frontend/.env
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    networks:
+      - swam-network
+    depends_on:
+      - gateway
 
 networks:
   swam-network:
