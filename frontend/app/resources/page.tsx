@@ -9,6 +9,8 @@ import { columns } from "./components/ResourceColumns";
 import { ResourceTableToolbar } from "./components/ResourceTableToolbar";
 import { EmptyState } from "@/components/common/EmptyState";
 import { Resource } from "@/schemas/resourcesSchema";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { NAV_ITEMS } from "@/lib/navigation";
 
 // Simuliamo la fetch (Sostituisci con la tua chiamata Axios)
 const fetchResources = async () => {
@@ -151,39 +153,38 @@ export default function ResourcesPage() {
   });
 
   return (
-    <div className="h-full flex-1 flex-col space-y-8 p-8 md:flex">
-      {/* HEADER */}
-      {/* //fixme: header generico per le pagine */}
-      <div className="flex items-center justify-between space-y-2">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Resources</h2>
-          <p className="text-muted-foreground">
-            Manage your rooms, apartments, and facilities here.
-          </p>
-        </div>
-        <div className="flex items-center space-x-2">
+    <div className="flex flex-col h-full space-y-4">
+      {/* header */}
+      <PageHeader
+        title="Risorse"
+        description="Gestisci le risorse disponibili nel tuo sistema"
+        action={
           <Button onClick={() => console.log("Open New Sheet")}>
-            <Plus className="mr-2 h-4 w-4" /> Add Resource
+            <Plus className="h-4 w-4" /> Aggiungi risorsa
           </Button>
-        </div>
-      </div>
+        }
+      />
 
       {/* CONTENT */}
       {isLoading ? (
         // Qui metteremo il TableSkeleton
         <div className="text-center py-10">Loading resources...</div>
       ) : resources && resources.length > 0 ? (
-        <DataTable
-          data={resources}
-          columns={columns}
-          renderToolbar={(table) => <ResourceTableToolbar table={table} />}
-        />
+        <div className="flex-1 overflow-hidden">
+          <DataTable
+            data={resources}
+            columns={columns}
+            renderToolbar={(table) => <ResourceTableToolbar table={table} />}
+          />
+        </div>
       ) : (
         <EmptyState
           title="Nessuna risorsa trovata"
           description="Crea la tua prima risorsa per iniziare a gestirla"
-          icon={BedDouble}
-          action={<Button>Aggiungi risorsa</Button>} //FIXME: aggiungi onClick
+          icon={
+            NAV_ITEMS.find((item) => item.href === "/resources")?.icon ||
+            BedDouble
+          }
         />
       )}
     </div>
