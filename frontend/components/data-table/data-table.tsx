@@ -78,7 +78,7 @@ export function DataTable<TData, TValue>({
       {renderToolbar && renderToolbar(table)}
 
       <div className="flex-1 rounded-md border overflow-auto relative min-h-0">
-        <table className="w-full caption-bottom text-sm text-left table-fixed">
+        <table className="w-full caption-bottom text-sm text-left lg:table-fixed">
           <TableHeader className="sticky top-0 z-10 bg-background shadow-sm">
             {table.getHeaderGroups().map((headerGroup: HeaderGroup<TData>) => (
               <TableRow

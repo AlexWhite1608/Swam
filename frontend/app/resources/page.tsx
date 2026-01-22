@@ -1,126 +1,48 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import { Plus, BedDouble } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/PageHeader";
-import {
-  useResources,
-  useDeleteResource,
-  useUpdateResourceStatus,
-  useBulkDeleteResources,
-} from "@/hooks/tanstack-query/useResources";
 import { EmptyState } from "@/components/common/EmptyState";
 import { Loading } from "@/components/common/Loading";
 import { Error } from "@/components/common/Error";
 import { DataTable } from "@/components/data-table/data-table";
-import { Resource, ResourceStatus } from "@/schemas/resourcesSchema";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { NAV_ITEMS } from "@/lib/navigation";
-import { getResourceColumns } from "./_components/ResourceColumns";
 import { ResourceTableToolbar } from "./_components/ResourceTableToolbar";
 import { ResourceDialog } from "./_components/ResourceDialog";
+import { useResourcesPage } from "@/hooks/pages/useResourcePage";
 
 export default function ResourcesPage() {
-  const { data: resources, isLoading, isError, refetch } = useResources();
-
-  const deleteResourceMutation = useDeleteResource();
-  const updateStatusMutation = useUpdateResourceStatus();
-  const bulkDeleteMutation = useBulkDeleteResources();
-
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
-
-  const [selectedResource, setSelectedResource] = useState<Resource | null>(
-    null,
-  );
-  const [resourceToDelete, setResourceToDelete] = useState<Resource | null>(
-    null,
-  );
-  const [resourcesToBulkDelete, setResourcesToBulkDelete] = useState<
-    Resource[]
-  >([]);
-
-  // create resource
-  const handleOpenCreate = () => {
-    setSelectedResource(null);
-    setIsDialogOpen(true);
-  };
-
-  // edit resource
-  const handleOpenEdit = (resource: Resource) => {
-    setSelectedResource(resource);
-    setIsDialogOpen(true);
-  };
-
-  // handle delete resource
-  const handleDeleteRequest = (resource: Resource) => {
-    setResourceToDelete(resource);
-    setIsDeleteDialogOpen(true);
-  };
-
-  // confirm delete resource dialog
-  const handleConfirmDelete = () => {
-    if (!resourceToDelete) return;
-
-    deleteResourceMutation.mutate(resourceToDelete.id, {
-      onSuccess: () => {
-        setResourceToDelete(null);
-        setIsDeleteDialogOpen(false);
-      },
-    });
-  };
-
-  // handle bulk delete request
-  const handleBulkDeleteRequest = (resources: Resource[]) => {
-    setResourcesToBulkDelete(resources);
-    setIsBulkDeleteDialogOpen(true);
-  };
-
-  // confirm bulk delete dialog
-  const handleConfirmBulkDelete = () => {
-    if (resourcesToBulkDelete.length === 0) return;
-
-    const ids = resourcesToBulkDelete.map((r) => r.id);
-
-    bulkDeleteMutation.mutate(ids, {
-      onSuccess: () => {
-        setIsBulkDeleteDialogOpen(false);
-        setResourcesToBulkDelete([]);
-      },
-    });
-  };
-
-  // handle status change
-  const handleStatusChange = (resource: Resource, status: ResourceStatus) => {
-    updateStatusMutation.mutate({ id: resource.id, status });
-  };
-
-  const columns = useMemo(
-    () =>
-      getResourceColumns({
-        onEdit: handleOpenEdit,
-        onDelete: handleDeleteRequest,
-        onStatusChange: handleStatusChange,
-      }),
-    [],
-  );
+  const {
+    resources,
+    isLoading,
+    isError,
+    refetch,
+    columns,
+    dialogs,
+    selections,
+    isDeleting,
+    isBulkDeleting,
+    actions,
+  } = useResourcesPage();
 
   if (isError) return <Error onRetry={() => refetch()} />;
 
   return (
     <div className="flex flex-col h-full space-y-4">
+      {/* page header */}
       <PageHeader
         title="Risorse"
         description="Gestisci le risorse disponibili nel tuo sistema"
         action={
-          <Button onClick={handleOpenCreate}>
+          <Button onClick={actions.openCreateDialog}>
             <Plus className="h-4 w-4" /> Aggiungi risorsa
           </Button>
         }
       />
 
+      {/* main content */}
       {isLoading ? (
         <Loading />
       ) : resources && resources.length > 0 ? (
@@ -131,10 +53,10 @@ export default function ResourcesPage() {
             renderToolbar={(table) => (
               <ResourceTableToolbar
                 table={table}
-                onDeleteSelected={handleBulkDeleteRequest}
+                onDeleteSelected={actions.requestBulkDelete}
               />
             )}
-            onRowClick={(row) => handleOpenEdit(row)}
+            onRowClick={actions.openEditDialog}
           />
         </div>
       ) : (
@@ -148,49 +70,49 @@ export default function ResourcesPage() {
         />
       )}
 
-      {/* create/edit resource dialog */}
+      {/* Create / Edit Form */}
       <ResourceDialog
-        open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-        resource={selectedResource}
+        open={dialogs.isCreateEditOpen}
+        onOpenChange={actions.setCreateEditOpen}
+        resource={selections.selectedResource}
       />
 
-      {/* confirm delete dialog */}
+      {/* Single Delete Confirmation */}
       <ConfirmDialog
-        key={resourceToDelete?.id || "delete"}
-        isOpen={isDeleteDialogOpen}
-        onClose={() => setIsDeleteDialogOpen(false)}
-        onConfirm={handleConfirmDelete}
+        key="single-delete"
+        isOpen={dialogs.isDeleteOpen}
+        onClose={() => actions.setDeleteOpen(false)}
+        onConfirm={actions.confirmDelete}
         title="Elimina Risorsa"
         description={
           <>
-            Sei sicuro di voler eliminare la risorsa "
-            <strong>{resourceToDelete?.name}</strong>"? Questa azione non può
-            essere annullata.
+            Sei sicuro di voler eliminare{" "}
+            <strong>{selections.resourceToDelete?.name}</strong>? Questa azione
+            è irreversibile.
           </>
         }
         variant="destructive"
         confirmText="Elimina"
-        isLoading={deleteResourceMutation.isPending}
+        isLoading={isDeleting}
       />
 
-      {/* confirm bulk delete dialog */}
+      {/* Bulk Delete Confirmation */}
       <ConfirmDialog
-        key={resourcesToBulkDelete.map((r) => r.id).join(",") || "bulk-delete"}
-        isOpen={isBulkDeleteDialogOpen}
-        onClose={() => setIsBulkDeleteDialogOpen(false)}
-        onConfirm={handleConfirmBulkDelete}
+        key="bulk-delete"
+        isOpen={dialogs.isBulkDeleteOpen}
+        onClose={() => actions.setBulkDeleteOpen(false)}
+        onConfirm={actions.confirmBulkDelete}
         title="Elimina risorse selezionate"
         description={
           <>
-            Sei sicuro di voler eliminare{" "}
-            <strong>{resourcesToBulkDelete.length}</strong> risorse? Questa
-            azione non può essere annullata.
+            Stai per eliminare{" "}
+            <strong>{selections.resourcesToBulkDelete.length}</strong> risorse.
+            Questa azione è irreversibile.
           </>
         }
         variant="destructive"
         confirmText="Elimina selezionati"
-        isLoading={bulkDeleteMutation.isPending}
+        isLoading={isBulkDeleting}
       />
     </div>
   );
