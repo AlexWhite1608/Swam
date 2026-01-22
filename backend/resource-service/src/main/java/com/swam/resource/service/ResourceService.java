@@ -122,6 +122,16 @@ public class ResourceService {
         repository.deleteById(id);
     }
 
+    // Bulk delete resources
+    public void deleteResources(List<String> ids) {
+        // if the list is null or empty, do nothing
+        if (ids == null || ids.isEmpty()) {
+            return;
+        }
+
+        repository.deleteAllById(ids);
+    }
+
     // Helper method to map Resource to ResourceResponse
     private ResourceResponse mapToDto(Resource resource) {
         return ResourceResponse.builder()

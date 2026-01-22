@@ -1,9 +1,6 @@
 package com.swam.resource.controller;
 
-import com.swam.resource.dto.CreateResourceRequest;
-import com.swam.resource.dto.ResourceResponse;
-import com.swam.resource.dto.UpdateResourceRequest;
-import com.swam.resource.dto.UpdateStatusRequest;
+import com.swam.resource.dto.*;
 import com.swam.resource.service.ResourceService;
 import com.swam.shared.enums.ResourceStatus;
 import com.swam.shared.enums.ResourceType;
@@ -83,6 +80,13 @@ public class ResourceController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable String id) {
         service.deleteResource(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    // Bulk Delete resources
+    @PostMapping("/bulk-delete")
+    public ResponseEntity<Void> bulkDelete(@RequestBody BulkDeleteRequest request) {
+        service.deleteResources(request.getIds());
         return ResponseEntity.noContent().build();
     }
 }
