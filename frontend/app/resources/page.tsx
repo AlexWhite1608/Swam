@@ -16,6 +16,7 @@ import { useResourcesPage } from "@/hooks/pages/useResourcePage";
 export default function ResourcesPage() {
   const {
     resources,
+    resetSelectionTrigger,
     isLoading,
     isError,
     refetch,
@@ -48,6 +49,7 @@ export default function ResourcesPage() {
       ) : resources && resources.length > 0 ? (
         <div className="flex-1 overflow-hidden">
           <DataTable
+            key={resetSelectionTrigger}
             data={resources}
             columns={columns}
             renderToolbar={(table) => (

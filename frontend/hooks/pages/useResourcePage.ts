@@ -28,6 +28,9 @@ export const useResourcesPage = () => {
   const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
   const [resourceToDelete, setResourceToDelete] = useState<Resource | null>(null);
   const [resourcesToBulkDelete, setResourcesToBulkDelete] = useState<Resource[]>([]);
+  
+  // table reset callback
+  const [resetSelectionTrigger, setResetSelectionTrigger] = useState(0);
 
   // Create / Edit
   const openCreateDialog = () => {
@@ -74,6 +77,7 @@ export const useResourcesPage = () => {
       onSuccess: () => {
         setResourcesToBulkDelete([]);
         setIsBulkDeleteDialogOpen(false);
+        setResetSelectionTrigger(prev => prev + 1);
       },
     });
   };
@@ -114,6 +118,9 @@ export const useResourcesPage = () => {
     // Loading States for Mutations
     isDeleting: deleteResourceMutation.isPending,
     isBulkDeleting: bulkDeleteMutation.isPending,
+    
+    // Reset trigger
+    resetSelectionTrigger,
 
     // Actions
     actions: {
