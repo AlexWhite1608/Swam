@@ -24,6 +24,7 @@ import {
 import {
   Resource,
   resourceSchema,
+  ResourceStatus,
   statusOptions,
   typeOptions,
 } from "@/schemas/resourcesSchema";
@@ -58,7 +59,7 @@ export function ResourceForm({
       name: "",
       capacity: 1,
       type: undefined,
-      status: undefined,
+      status: ResourceStatus.AVAILABLE,
     },
   });
 
