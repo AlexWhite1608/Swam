@@ -164,7 +164,7 @@ export function ResourceForm({
                     {statusOptions.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         <div className="flex items-center gap-2">
-                          {option.icon && <option.icon className="h-4 w-4" />}
+                          {option.icon && <option.icon className="h-4 w-4 hover:text-foreground" />}
                           {option.label}
                         </div>
                       </SelectItem>

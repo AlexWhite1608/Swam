@@ -12,13 +12,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
+import React from "react";
 
 interface ConfirmDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
   title: string;
-  description?: string;
+  description?: React.ReactNode;
   variant?: "default" | "destructive";
   confirmText?: string;
   cancelText?: string;
@@ -33,7 +34,7 @@ export function ConfirmDialog({
   description,
   variant = "default",
   confirmText = "Conferma",
-  cancelText = "Cancella",
+  cancelText = "Annulla",
   isLoading = false,
 }: ConfirmDialogProps) {
   const handleOpenChange = (open: boolean) => {
