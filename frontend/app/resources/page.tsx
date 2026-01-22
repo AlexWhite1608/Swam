@@ -8,6 +8,7 @@ import {
   useResources,
   useDeleteResource,
   useUpdateResourceStatus,
+  useBulkDeleteResources,
 } from "@/hooks/tanstack-query/useResources";
 import { EmptyState } from "@/components/common/EmptyState";
 import { Loading } from "@/components/common/Loading";
@@ -25,9 +26,11 @@ export default function ResourcesPage() {
 
   const deleteResourceMutation = useDeleteResource();
   const updateStatusMutation = useUpdateResourceStatus();
+  const bulkDeleteMutation = useBulkDeleteResources();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
 
   const [selectedResource, setSelectedResource] = useState<Resource | null>(
     null,
@@ -35,6 +38,9 @@ export default function ResourcesPage() {
   const [resourceToDelete, setResourceToDelete] = useState<Resource | null>(
     null,
   );
+  const [resourcesToBulkDelete, setResourcesToBulkDelete] = useState<
+    Resource[]
+  >([]);
 
   // create resource
   const handleOpenCreate = () => {
@@ -62,6 +68,26 @@ export default function ResourcesPage() {
       onSuccess: () => {
         setResourceToDelete(null);
         setIsDeleteDialogOpen(false);
+      },
+    });
+  };
+
+  // handle bulk delete request
+  const handleBulkDeleteRequest = (resources: Resource[]) => {
+    setResourcesToBulkDelete(resources);
+    setIsBulkDeleteDialogOpen(true);
+  };
+
+  // confirm bulk delete dialog
+  const handleConfirmBulkDelete = () => {
+    if (resourcesToBulkDelete.length === 0) return;
+
+    const ids = resourcesToBulkDelete.map((r) => r.id);
+
+    bulkDeleteMutation.mutate(ids, {
+      onSuccess: () => {
+        setIsBulkDeleteDialogOpen(false);
+        setResourcesToBulkDelete([]);
       },
     });
   };
@@ -102,7 +128,12 @@ export default function ResourcesPage() {
           <DataTable
             data={resources}
             columns={columns}
-            renderToolbar={(table) => <ResourceTableToolbar table={table} />}
+            renderToolbar={(table) => (
+              <ResourceTableToolbar
+                table={table}
+                onDeleteSelected={handleBulkDeleteRequest}
+              />
+            )}
             onRowClick={(row) => handleOpenEdit(row)}
           />
         </div>
@@ -126,6 +157,7 @@ export default function ResourcesPage() {
 
       {/* confirm delete dialog */}
       <ConfirmDialog
+        key={resourceToDelete?.id || "delete"}
         isOpen={isDeleteDialogOpen}
         onClose={() => setIsDeleteDialogOpen(false)}
         onConfirm={handleConfirmDelete}
@@ -140,6 +172,25 @@ export default function ResourcesPage() {
         variant="destructive"
         confirmText="Elimina"
         isLoading={deleteResourceMutation.isPending}
+      />
+
+      {/* confirm bulk delete dialog */}
+      <ConfirmDialog
+        key={resourcesToBulkDelete.map((r) => r.id).join(",") || "bulk-delete"}
+        isOpen={isBulkDeleteDialogOpen}
+        onClose={() => setIsBulkDeleteDialogOpen(false)}
+        onConfirm={handleConfirmBulkDelete}
+        title="Elimina risorse selezionate"
+        description={
+          <>
+            Sei sicuro di voler eliminare{" "}
+            <strong>{resourcesToBulkDelete.length}</strong> risorse? Questa
+            azione non può essere annullata.
+          </>
+        }
+        variant="destructive"
+        confirmText="Elimina selezionati"
+        isLoading={bulkDeleteMutation.isPending}
       />
     </div>
   );

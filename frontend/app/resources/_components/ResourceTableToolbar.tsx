@@ -10,10 +10,12 @@ import { statusOptions, typeOptions } from "@/schemas/resourcesSchema";
 
 interface ResourceTableToolbarProps<TData> {
   table: Table<TData>;
+  onDeleteSelected: (rows: TData[]) => void;
 }
 
 export function ResourceTableToolbar<TData>({
   table,
+  onDeleteSelected,
 }: ResourceTableToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0;
   const selectedRows = table.getFilteredSelectedRowModel().rows;
@@ -58,7 +60,7 @@ export function ResourceTableToolbar<TData>({
         )}
       </div>
 
-      {/* //TODO: implementa cancellazione bulk */}
+      {/* bulk delete action */}
       {isSelectionActive && (
         <div className="flex flex-1 justify-end">
           <Button
@@ -66,10 +68,7 @@ export function ResourceTableToolbar<TData>({
             size="sm"
             className="text-red-600 focus:text-red-600 focus:bg-red-50 hover:bg-red-50"
             onClick={() =>
-              console.log(
-                "Bulk Delete",
-                selectedRows.map((r) => r.original)
-              )
+              onDeleteSelected(selectedRows.map((r) => r.original))
             }
           >
             <Trash2 className="h-4 w-4" />

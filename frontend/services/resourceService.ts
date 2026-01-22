@@ -53,4 +53,9 @@ export const resourceService = {
   delete: async (id: string): Promise<void> => {
     await api.delete(`/api/resources/${id}`);
   },
+
+  // Bulk delete resources
+  bulkDelete: async (ids: string[]): Promise<void> => {
+    await api.post("/api/resources/bulk-delete", { ids });
+  },
 };

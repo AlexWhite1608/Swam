@@ -111,3 +111,21 @@ export const useDeleteResource = () => {
     },
   });
 };
+
+// Bulk delete resources
+export const useBulkDeleteResources = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: resourceService.bulkDelete,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: resourceKeys.all });
+      toast.success("Risorse selezionate eliminate con successo");
+    },
+    onError: (error: any) => {
+      toast.error("Impossibile eliminare le risorse selezionate", {
+        description: error?.response?.data?.message || "Qualcosa è andato storto",
+      });
+    },
+  });
+};
