@@ -19,7 +19,6 @@ import {
   HeaderGroup,
 } from "@tanstack/react-table";
 
-// IMPORTANTE: Nota che NON usiamo più 'Table' da ui/table qui dentro come wrapper
 import {
   TableBody,
   TableCell,
@@ -34,12 +33,14 @@ interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   renderToolbar?: (table: TanStackTable<TData>) => React.ReactNode;
+  onRowClick?: (row: TData) => void;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
   renderToolbar,
+  onRowClick,
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
   const [columnVisibility, setColumnVisibility] =
@@ -116,7 +117,10 @@ export function DataTable<TData, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
-                  className="border-b transition-colors hover:bg-muted/50"
+                  className={`border-b transition-colors hover:bg-muted/50 ${
+                    onRowClick ? "cursor-pointer" : ""
+                  }`}
+                  onClick={() => onRowClick?.(row.original)}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>

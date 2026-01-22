@@ -45,13 +45,13 @@ export const statusOptions = [
 
 export const resourceSchema = z.object({
   id: z.string(),
-  name: z.string().min(2, "Nome deve avere almeno 2 caratteri"),
-  type: z.enum(ResourceType),
+  name: z.string().min(2, "Il nome deve avere almeno 2 caratteri"),
+  type: z.enum(ResourceType, "Seleziona un tipo di risorsa valido"),
   capacity: z
     .number()
     .int()
     .positive("Capacità deve essere un numero positivo"),
-  status: z.enum(ResourceStatus),
+  status: z.enum(ResourceStatus, "Seleziona uno stato valido"),
 });
 
 export type Resource = z.infer<typeof resourceSchema>;

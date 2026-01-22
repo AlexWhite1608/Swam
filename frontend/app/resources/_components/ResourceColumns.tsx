@@ -2,7 +2,6 @@
 
 import { ResourceStatusBadge } from "@/components/common/ResourceStatusBadge";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -24,8 +23,18 @@ import {
 import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal, Pencil, Power, Trash } from "lucide-react";
 
-export const columns: ColumnDef<Resource>[] = [
-  // select checkbox
+interface GetColumnsProps {
+  onEdit: (resource: Resource) => void;
+  onDelete: (resource: Resource) => void;
+  onStatusChange: (resource: Resource, status: ResourceStatus) => void;
+}
+
+export const getResourceColumns = ({
+  onEdit,
+  onDelete,
+  onStatusChange,
+}: GetColumnsProps): ColumnDef<Resource>[] => [
+  // checkbox
   {
     id: "select",
     header: ({ table }) => (
@@ -118,7 +127,7 @@ export const columns: ColumnDef<Resource>[] = [
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
-              variant="ghost"
+              variant="outline"
               className="flex h-8 w-8 p-0 data-[state=open]:bg-muted"
             >
               <MoreHorizontal className="h-4 w-4" />
@@ -126,25 +135,25 @@ export const columns: ColumnDef<Resource>[] = [
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-[160px]">
-            <DropdownMenuItem
-              onClick={() => console.log("Edit", row.original.id)} // TODO: implement edit action
-            >
-              <Pencil className=" h-3.5 w-3.5 hover:text-foreground" />
+            {/* edit */}
+            <DropdownMenuItem onClick={() => onEdit(row.original)}>
+              <Pencil className="h-4 w-4 hover:text-foreground" />
               Modifica
             </DropdownMenuItem>
 
+            {/* change status */}
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>
-                <Power className=" h-3.5 w-3.5 hover:text-foreground" />
+                <Power className="h-4 w-4 hover:text-foreground" />
                 Stato
               </DropdownMenuSubTrigger>
               <DropdownMenuSubContent>
                 {statusOptions.map((s) => (
                   <DropdownMenuItem
                     key={s.value}
-                    onClick={() => console.log("Set status", s.value)} // TODO: implement status change action
+                    onClick={() => onStatusChange(row.original, s.value)}
                   >
-                    <s.icon className=" h-3.5 w-3.5 hover:text-foreground" />
+                    <s.icon className="h-4 w-4 hover:text-foreground" />
                     {s.label}
                   </DropdownMenuItem>
                 ))}
@@ -152,11 +161,13 @@ export const columns: ColumnDef<Resource>[] = [
             </DropdownMenuSub>
 
             <DropdownMenuSeparator />
+
+            {/* delete */}
             <DropdownMenuItem
-              onClick={() => console.log("Delete", row.original.id)}
+              onClick={() => onDelete(row.original)}
               className="text-red-600 focus:text-red-600 focus:bg-red-50"
             >
-              <Trash className=" h-3.5 w-3.5 text-red-600/70" />
+              <Trash className="h-4 w-4 text-red-600/70" />
               Cancella
             </DropdownMenuItem>
           </DropdownMenuContent>
