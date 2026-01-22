@@ -68,7 +68,7 @@ public class ResourceController {
 
     // Update resource details
     @PutMapping("/{id}")
-    public ResponseEntity<ResourceResponse> update(@PathVariable String id, @RequestBody UpdateResourceRequest request) {
+    public ResponseEntity<ResourceResponse> update(@PathVariable String id, @Valid @RequestBody UpdateResourceRequest request) {
         return ResponseEntity.ok(service.updateResource(id, request));
     }
 

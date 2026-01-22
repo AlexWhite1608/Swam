@@ -35,7 +35,7 @@ public class ResourceService {
                 .name(request.getName())
                 .type(request.getType())
                 .capacity(request.getCapacity())
-                .status(ResourceStatus.AVAILABLE)
+                .status(request.getStatus())
                 .build();
 
         return mapToDto(repository.save(resource));
@@ -78,14 +78,19 @@ public class ResourceService {
 
     // Update resource data
     public ResourceResponse updateResource(String id, UpdateResourceRequest request) {
+
         Resource resource = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(id));
+
 
         if (request.getName() != null) resource.setName(request.getName());
         if (request.getType() != null) resource.setType(request.getType());
         if (request.getCapacity() != null) resource.setCapacity(request.getCapacity());
+        if (request.getStatus() != null) resource.setStatus(request.getStatus());
 
-        return mapToDto(repository.save(resource));
+        Resource saved = repository.save(resource);
+
+        return mapToDto(saved);
     }
 
     // Update resource status
