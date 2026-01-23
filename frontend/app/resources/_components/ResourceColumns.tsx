@@ -1,6 +1,6 @@
 "use client";
 
-import { ResourceStatusBadge } from "@/components/common/ResourceStatusBadge";
+import { ResourceStatusBadge } from "@/components/common/badges/ResourceStatusBadge";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
