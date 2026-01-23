@@ -10,12 +10,10 @@ import { DataTable } from "@/components/data-table/data-table";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { NAV_ITEMS } from "@/lib/navigation";
 
-import {
-  BookingTableFilters,
-  BookingTableToolbar,
-} from "./_components/BookingTableToolbar";
+import { BookingTableToolbar } from "./_components/BookingTableToolbar";
 import { useBookingsPage } from "@/hooks/pages/useBookingPage";
 import { BookingDialog } from "./_components/BookingDialog";
+import { BookingTableFilters } from "./_components/BookingTableFilters";
 
 export default function BookingsPage() {
   const {

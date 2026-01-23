@@ -17,18 +17,10 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { SlidersHorizontal, X } from "lucide-react";
+import { X } from "lucide-react";
 import * as React from "react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import {
   TableBody,
   TableCell,
@@ -38,6 +30,7 @@ import {
 } from "@/components/ui/table";
 
 import { DataTablePagination } from "@/components/data-table/data-table-pagination";
+import { DataTableFiltersDialog } from "@/components/data-table/data-table-filters-dialog";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -145,52 +138,15 @@ export function DataTable<TData, TValue>({
 
         {/* Filters dialog */}
         {renderFilters && (
-          <Dialog open={isFilterOpen} onOpenChange={handleOpenChange}>
-            <DialogTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 shadow-sm border-dashed"
-              >
-                <SlidersHorizontal className="h-4 w-4" />
-                Filtri
-                {/* Usiamo activeFilterCount invece di .length */}
-                {activeFilterCount > 0 && (
-                  <span className="rounded-full bg-primary w-4 h-4 text-[10px] flex items-center justify-center text-primary-foreground">
-                    {activeFilterCount}
-                  </span>
-                )}
-              </Button>
-            </DialogTrigger>
-
-            <DialogContent className="sm:max-w-[425px] flex flex-col max-h-[90vh]">
-              <DialogHeader>
-                <DialogTitle className="text-primary">Filtri</DialogTitle>
-              </DialogHeader>
-
-              <div className="grid gap-4 py-4 flex-1 overflow-y-auto px-1">
-                {renderFilters(filterTable)}
-              </div>
-
-              <DialogFooter className="gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => filterTable.resetColumnFilters()}
-                  className="w-full sm:w-auto mt-2 sm:mt-0"
-                >
-                  Resetta
-                </Button>
-
-                <Button
-                  onClick={handleApplyFilters}
-                  className="w-full sm:w-auto"
-                >
-                  Applica filtri{" "}
-                  {draftFilterCount > 0 && `(${draftFilterCount})`}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <DataTableFiltersDialog
+            filterTable={filterTable}
+            renderFilters={renderFilters}
+            activeFilterCount={activeFilterCount}
+            draftFilterCount={draftFilterCount}
+            isOpen={isFilterOpen}
+            onOpenChange={handleOpenChange}
+            onApplyFilters={handleApplyFilters}
+          />
         )}
 
         {/* Global Reset Button */}
