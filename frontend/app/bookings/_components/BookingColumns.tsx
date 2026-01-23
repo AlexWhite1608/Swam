@@ -33,7 +33,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { formatCurrency } from "@/lib/utils";
+import { dateRangeFilterFn, formatCurrency } from "@/lib/utils";
 import { Booking } from "@/schemas/bookingsSchema";
 
 interface GetBookingColumnsProps {
@@ -147,6 +147,7 @@ export const getBookingColumns = ({
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Periodo" />
     ),
+    filterFn: dateRangeFilterFn,
     cell: ({ row }) => {
       const checkIn = parseISO(row.original.checkIn);
       const checkOut = parseISO(row.original.checkOut);
@@ -249,54 +250,6 @@ export const getBookingColumns = ({
       );
     },
   },
-
-  // extras
-  // {
-  //   accessorKey: "extras",
-  //   header: "Extra",
-  //   cell: ({ row }) => {
-  //     const extras = row.original.extras || [];
-
-  //     if (extras.length === 0)
-  //       return (
-  //         <span className="text-muted-foreground text-xs text-center block">
-  //           -
-  //         </span>
-  //       );
-
-  //     return (
-  //       <Popover>
-  //         <PopoverTrigger asChild>
-  //           <div
-  //             onClick={(e) => e.stopPropagation()}
-  //             className="cursor-pointer inline-flex items-center gap-1 px-2 py-1 rounded-md bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 transition-colors"
-  //           >
-  //             <Gift className="h-3.5 w-3.5" />
-  //             <span className="text-xs font-semibold">{extras.length}</span>
-  //           </div>
-  //         </PopoverTrigger>
-  //         <PopoverContent className="w-64 p-3" align="start">
-  //           <h4 className="font-semibold text-sm mb-2">Extra Inclusi</h4>
-  //           <div className="space-y-2">
-  //             {extras.map((extra, i) => (
-  //               <div
-  //                 key={i}
-  //                 className="flex justify-between text-sm border-b pb-1 last:border-0"
-  //               >
-  //                 <span className="text-muted-foreground">
-  //                   {extra.quantity}x {extra.nameSnapshot}
-  //                 </span>
-  //                 <span className="font-medium">
-  //                   {formatCurrency(extra.priceSnapshot * extra.quantity)}
-  //                 </span>
-  //               </div>
-  //             ))}
-  //           </div>
-  //         </PopoverContent>
-  //       </Popover>
-  //     );
-  //   },
-  // },
 
   // payment status
   {

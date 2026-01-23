@@ -1,13 +1,18 @@
 "use client";
 
 import { Table } from "@tanstack/react-table";
-import { Calendar as CalendarIcon, X } from "lucide-react";
+import { X } from "lucide-react";
 
 import { DataTableFacetedFilter } from "@/components/data-table/data-table-faceted-filter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import { bookingStatusOptions, paymentStatusOptions } from "@/schemas/bookingsSchema";
+import { CalendarDateRangePicker } from "@/components/common/CalendarDateRangePicker";
+import {
+    bookingStatusOptions,
+    paymentStatusOptions,
+} from "@/schemas/bookingsSchema";
+import { DateRange } from "react-day-picker";
 interface BookingTableToolbarProps<TData> {
   table: Table<TData>;
 }
@@ -16,6 +21,7 @@ export function BookingTableToolbar<TData>({
   table,
 }: BookingTableToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0;
+  const periodColumn = table.getColumn("period");
 
   return (
     <div className="flex items-center justify-between">
@@ -30,15 +36,13 @@ export function BookingTableToolbar<TData>({
           className="h-8 w-[150px] lg:w-[250px]"
         />
 
-        {/* //TODO: Date Range Picker Placeholder */}
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-8 border-dashed text-muted-foreground"
-        >
-          <CalendarIcon className="mr-2 h-4 w-4" />
-          Seleziona date
-        </Button>
+        {/* date range filter for period */}
+        {periodColumn && (
+          <CalendarDateRangePicker
+            date={periodColumn.getFilterValue() as DateRange | undefined}
+            setDate={(date) => periodColumn.setFilterValue(date)}
+          />
+        )}
 
         {/* booking status filter */}
         {table.getColumn("status") && (
@@ -61,12 +65,12 @@ export function BookingTableToolbar<TData>({
         {/* Reset */}
         {isFiltered && (
           <Button
-            variant="ghost"
+            variant="link"
             onClick={() => table.resetColumnFilters()}
             className="h-8 px-2 lg:px-3"
           >
             Cancella filtri
-            <X className="ml-2 h-4 w-4" />
+            <X className="h-4 w-4" />
           </Button>
         )}
       </div>

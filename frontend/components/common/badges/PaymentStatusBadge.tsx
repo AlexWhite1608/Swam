@@ -1,4 +1,3 @@
-// PaymentStatusBadge.tsx
 import { Badge } from "@/components/ui/badge";
 import { PaymentStatus } from "@/schemas/bookingsSchema";
 import { CheckCircle2, CircleDollarSign, XCircle, RefreshCw } from "lucide-react";

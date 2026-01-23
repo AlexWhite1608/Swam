@@ -1,4 +1,3 @@
-// BookingStatusBadge.tsx
 import { Badge } from "@/components/ui/badge";
 import { BookingStatus } from "@/schemas/bookingsSchema";
 import { Clock, CheckCircle2, LogIn, LogOut, XCircle } from "lucide-react";

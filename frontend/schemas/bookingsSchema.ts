@@ -85,7 +85,7 @@ export const priceBreakdownSchema = z.object({
   taxDescription: z.string().optional().nullable(),
 });
 
-// bookinSchema used to visualize data into the bookings table
+// bookingSchema used to visualize data into the bookings table
 export const bookingSchema = z.object({
   id: z.string(),
   resourceId: z.string(),
