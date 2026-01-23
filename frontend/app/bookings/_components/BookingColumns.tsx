@@ -4,13 +4,15 @@ import { ColumnDef } from "@tanstack/react-table";
 import { differenceInCalendarDays, format, parseISO } from "date-fns";
 import { it } from "date-fns/locale";
 import {
-    ArrowRight,
-    CalendarDays,
-    Gift,
-    LogIn,
-    LogOut,
-    MoreHorizontal,
-    Users,
+  ArrowRight,
+  CalendarDays,
+  Gift,
+  LogIn,
+  LogOut,
+  MoreHorizontal,
+  Pencil,
+  Trash,
+  Users,
 } from "lucide-react";
 
 import { Resource } from "@/schemas/resourcesSchema";
@@ -22,27 +24,25 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-    Booking
-} from "@/schemas/bookingsSchema";
+import { Booking } from "@/schemas/bookingsSchema";
 import { formatCurrency, getInitials } from "@/lib/utils";
 
 interface GetBookingColumnsProps {
@@ -90,12 +90,12 @@ export const getBookingColumns = ({
 
   // booking status
   {
-    accessorKey: "bookingStatus",
+    accessorKey: "status",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Stato Prenotazione" />
+      <DataTableColumnHeader column={column} title="Stato" />
     ),
     cell: ({ row }) => (
-      <BookingStatusBadge status={row.getValue("bookingStatus")} />
+      <BookingStatusBadge status={row.getValue("status")} />
     ),
     filterFn: (row, id, value) => value.includes(row.getValue(id)),
   },
@@ -110,13 +110,13 @@ export const getBookingColumns = ({
     cell: ({ row }) => {
       const guest = row.original.mainGuest;
       return (
-        <div className="flex items-center gap-3">
-          <Avatar className="h-8 w-8 border">
+        <div className="flex items-center gap-3 min-w-0">
+          <Avatar className="h-8 w-8 border flex-shrink-0">
             <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
               {getInitials(guest.firstName, guest.lastName)}
             </AvatarFallback>
           </Avatar>
-          <div className="flex flex-col">
+          <div className="flex flex-col min-w-0 flex-1">
             <span className="font-medium text-sm leading-none truncate">
               {guest.lastName} {guest.firstName}
             </span>
@@ -147,9 +147,9 @@ export const getBookingColumns = ({
       const resource = resources.find((r) => r.id === resId);
 
       return (
-        <div className="flex items-center gap-2">
+        <div className="truncate">
           <span className="font-medium text-sm">
-            {resource && resource.name ? resource.name : "Risorsa non trovata"}
+            {resource && resource.name ? resource.name : "-"}
           </span>
         </div>
       );
@@ -171,12 +171,11 @@ export const getBookingColumns = ({
       return (
         <div className="flex flex-col">
           <div className="flex items-center gap-1 text-sm font-medium">
-            <CalendarDays className="h-3.5 w-3.5 text-muted-foreground mr-1" />
             {format(checkIn, "d MMM", { locale: it })}
             <ArrowRight className="h-3 w-3 text-muted-foreground mx-1" />
             {format(checkOut, "d MMM", { locale: it })}
           </div>
-          <div className="mt-0.5">
+          <div className="mt-0.5 flex justify-center">
             <span className="text-[10px] text-muted-foreground bg-secondary px-1.5 py-0.5 rounded-sm">
               {nights} nott{nights > 1 ? "i" : "e"}
             </span>
@@ -189,7 +188,7 @@ export const getBookingColumns = ({
   // number of guests
   {
     id: "guests",
-    header: "Pax",
+    header: "Numero ospiti",
     cell: ({ row }) => {
       const companions = row.original.companions || [];
       const totalCount = 1 + companions.length;
@@ -226,52 +225,52 @@ export const getBookingColumns = ({
   },
 
   // extras
-  {
-    accessorKey: "extras",
-    header: "Extra",
-    cell: ({ row }) => {
-      const extras = row.original.extras || [];
+  // {
+  //   accessorKey: "extras",
+  //   header: "Extra",
+  //   cell: ({ row }) => {
+  //     const extras = row.original.extras || [];
 
-      if (extras.length === 0)
-        return (
-          <span className="text-muted-foreground text-xs text-center block">
-            -
-          </span>
-        );
+  //     if (extras.length === 0)
+  //       return (
+  //         <span className="text-muted-foreground text-xs text-center block">
+  //           -
+  //         </span>
+  //       );
 
-      return (
-        <Popover>
-          <PopoverTrigger asChild>
-            <div
-              onClick={(e) => e.stopPropagation()}
-              className="cursor-pointer inline-flex items-center gap-1 px-2 py-1 rounded-md bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 transition-colors"
-            >
-              <Gift className="h-3.5 w-3.5" />
-              <span className="text-xs font-semibold">{extras.length}</span>
-            </div>
-          </PopoverTrigger>
-          <PopoverContent className="w-64 p-3" align="start">
-            <h4 className="font-semibold text-sm mb-2">Extra Inclusi</h4>
-            <div className="space-y-2">
-              {extras.map((extra, i) => (
-                <div
-                  key={i}
-                  className="flex justify-between text-sm border-b pb-1 last:border-0"
-                >
-                  <span className="text-muted-foreground">
-                    {extra.quantity}x {extra.nameSnapshot}
-                  </span>
-                  <span className="font-medium">
-                    {formatCurrency(extra.priceSnapshot * extra.quantity)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </PopoverContent>
-        </Popover>
-      );
-    },
-  },
+  //     return (
+  //       <Popover>
+  //         <PopoverTrigger asChild>
+  //           <div
+  //             onClick={(e) => e.stopPropagation()}
+  //             className="cursor-pointer inline-flex items-center gap-1 px-2 py-1 rounded-md bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 transition-colors"
+  //           >
+  //             <Gift className="h-3.5 w-3.5" />
+  //             <span className="text-xs font-semibold">{extras.length}</span>
+  //           </div>
+  //         </PopoverTrigger>
+  //         <PopoverContent className="w-64 p-3" align="start">
+  //           <h4 className="font-semibold text-sm mb-2">Extra Inclusi</h4>
+  //           <div className="space-y-2">
+  //             {extras.map((extra, i) => (
+  //               <div
+  //                 key={i}
+  //                 className="flex justify-between text-sm border-b pb-1 last:border-0"
+  //               >
+  //                 <span className="text-muted-foreground">
+  //                   {extra.quantity}x {extra.nameSnapshot}
+  //                 </span>
+  //                 <span className="font-medium">
+  //                   {formatCurrency(extra.priceSnapshot * extra.quantity)}
+  //                 </span>
+  //               </div>
+  //             ))}
+  //           </div>
+  //         </PopoverContent>
+  //       </Popover>
+  //     );
+  //   },
+  // },
 
   // payment status
   {
@@ -353,30 +352,33 @@ export const getBookingColumns = ({
   // actions
   {
     id: "actions",
+    header: () => <span>Azioni</span>,
     cell: ({ row }) => (
       <div onClick={(e) => e.stopPropagation()}>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
+              <span className="sr-only">Apri menu</span>
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Azioni</DropdownMenuLabel>
             <DropdownMenuItem onClick={() => onEdit(row.original)}>
+              <Pencil className="h-4 w-4 hover:text-foreground" />
               Modifica
             </DropdownMenuItem>
 
             {row.original.status === "CONFIRMED" && (
               <DropdownMenuItem onClick={() => onCheckIn(row.original)}>
-                <LogIn className="mr-2 h-4 w-4" /> Check-in
+                <LogIn className="h-4 w-4 hover:text-foreground" /> Esegui
+                Check-in
               </DropdownMenuItem>
             )}
 
             {row.original.status === "CHECKED_IN" && (
               <DropdownMenuItem onClick={() => onCheckOut(row.original)}>
-                <LogOut className="mr-2 h-4 w-4" /> Check-out
+                <LogOut className="h-4 w-4 hover:text-foreground" /> Esegui
+                Check-out
               </DropdownMenuItem>
             )}
 
@@ -385,6 +387,7 @@ export const getBookingColumns = ({
               onClick={() => onDelete(row.original)}
               className="text-red-600 focus:text-red-600 focus:bg-red-50"
             >
+              <Trash className="h-4 w-4 text-red-600/70" />
               Cancella
             </DropdownMenuItem>
           </DropdownMenuContent>

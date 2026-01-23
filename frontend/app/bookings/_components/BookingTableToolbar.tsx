@@ -1,24 +1,13 @@
 "use client";
 
 import { Table } from "@tanstack/react-table";
-import { X, Calendar as CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon, X } from "lucide-react";
 
 import { DataTableFacetedFilter } from "@/components/data-table/data-table-faceted-filter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { BookingStatus, PaymentStatus } from "@/schemas/bookingsSchema";
 
-// transform enums into options for filters
-const bookingStatusOptions = Object.values(BookingStatus).map((s) => ({
-  label: s,
-  value: s,
-}));
-
-const paymentStatusOptions = Object.values(PaymentStatus).map((s) => ({
-  label: s,
-  value: s,
-}));
-
+import { bookingStatusOptions, paymentStatusOptions } from "@/schemas/bookingsSchema";
 interface BookingTableToolbarProps<TData> {
   table: Table<TData>;
 }
@@ -52,10 +41,10 @@ export function BookingTableToolbar<TData>({
         </Button>
 
         {/* booking status filter */}
-        {table.getColumn("bookingStatus") && (
+        {table.getColumn("status") && (
           <DataTableFacetedFilter
-            column={table.getColumn("bookingStatus")}
-            title="Stato Prenotazione"
+            column={table.getColumn("status")}
+            title="Stato"
             options={bookingStatusOptions}
           />
         )}

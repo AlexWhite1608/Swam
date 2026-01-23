@@ -8,12 +8,27 @@ export const BookingStatus = {
   CANCELLED: "CANCELLED",
 } as const;
 
+export const bookingStatusOptions = [
+  { label: "In attesa", value: BookingStatus.PENDING },
+  { label: "Confermata", value: BookingStatus.CONFIRMED },
+  { label: "Check-in", value: BookingStatus.CHECKED_IN },
+  { label: "Check-out", value: BookingStatus.CHECKED_OUT },
+  { label: "Cancellata", value: BookingStatus.CANCELLED },
+];
+
 export const PaymentStatus = {
   UNPAID: "UNPAID",
   DEPOSIT_PAID: "DEPOSIT_PAID",
   PAID_IN_FULL: "PAID_IN_FULL",
   REFUNDED: "REFUNDED",
 } as const;
+
+export const paymentStatusOptions = [
+  { label: "Non pagato", value: PaymentStatus.UNPAID },
+  { label: "Acconto", value: PaymentStatus.DEPOSIT_PAID },
+  { label: "Pagato", value: PaymentStatus.PAID_IN_FULL },
+  { label: "Rimborsato", value: PaymentStatus.REFUNDED },
+];
 
 export const DocumentType = {
   ID_CARD: "ID_CARD",
@@ -84,8 +99,8 @@ export const bookingSchema = z.object({
   companions: z.array(guestReadSchema).default([]),
   extras: z.array(bookingExtraSchema).default([]),
   
-  status: z.nativeEnum(BookingStatus),
-  paymentStatus: z.nativeEnum(PaymentStatus),
+  status: z.enum(BookingStatus),
+  paymentStatus: z.enum(PaymentStatus),
   priceBreakdown: priceBreakdownSchema.optional(),
   
   createdAt: z.string().optional(),

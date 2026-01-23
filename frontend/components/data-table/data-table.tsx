@@ -78,7 +78,7 @@ export function DataTable<TData, TValue>({
       {renderToolbar && renderToolbar(table)}
 
       <div className="flex-1 rounded-md border overflow-auto relative min-h-0">
-        <table className="w-full caption-bottom text-sm text-left lg:table-fixed">
+        <table className="w-full caption-bottom text-sm text-left">
           <TableHeader className="sticky top-0 z-10 bg-background shadow-sm">
             {table.getHeaderGroups().map((headerGroup: HeaderGroup<TData>) => (
               <TableRow
@@ -123,7 +123,7 @@ export function DataTable<TData, TValue>({
                   onClick={() => onRowClick?.(row.original)}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell key={cell.id} className="truncate max-w-0">
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext(),
