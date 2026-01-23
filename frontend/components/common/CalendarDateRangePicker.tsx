@@ -17,6 +17,7 @@ import {
 
 interface CalendarDateRangePickerProps {
   className?: string;
+  buttonClassName?: string;
   date?: DateRange;
   setDate: (date?: DateRange) => void;
 }
@@ -25,6 +26,7 @@ export function CalendarDateRangePicker({
   className,
   date,
   setDate,
+  buttonClassName,
 }: CalendarDateRangePickerProps) {
   return (
     <div className={cn("grid gap-2", className)}>
@@ -35,11 +37,11 @@ export function CalendarDateRangePicker({
             variant={"outline"}
             size="sm"
             className={cn(
-              "h-8 justify-start text-left font-normal border-dashed",
+              "h-8 justify-start text-left",
               !date && "text-muted-foreground",
+              buttonClassName,
             )}
           >
-            <CalendarIcon className="h-4 w-4" />
             {date?.from ? (
               date.to ? (
                 <>

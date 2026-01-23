@@ -12,6 +12,7 @@ import { NAV_ITEMS } from "@/lib/navigation";
 
 import { BookingTableToolbar } from "./_components/BookingTableToolbar";
 import { useBookingsPage } from "@/hooks/pages/useBookingPage";
+import { BookingDialog } from "./_components/BookingDialog";
 
 export default function BookingsPage() {
   const {
@@ -50,7 +51,8 @@ export default function BookingsPage() {
             data={bookings}
             columns={columns}
             renderToolbar={(table) => <BookingTableToolbar table={table} />}
-            // onRowClick={actions.openEditDialog} //todo: GESTIONE EDIT con un altro dialog ancora??
+            // Gestiamo il click sulla riga per aprire l'Edit mode
+            // onRowClick={(row) => actions.openEditDialog(row)} 
           />
         </div>
       ) : (
@@ -64,7 +66,13 @@ export default function BookingsPage() {
         />
       )}
 
-      {/* //todo: dialog create/edit */}
+      {/* booking dialog with mode */}
+      <BookingDialog
+        open={dialogs.isOpen}
+        onOpenChange={actions.setIsOpen}
+        mode={dialogs.mode}
+        booking={selections.selectedBooking}
+      />
 
       {/* Single Delete Confirmation */}
       <ConfirmDialog
@@ -83,8 +91,6 @@ export default function BookingsPage() {
         confirmText="Cancella"
         isLoading={isDeleting}
       />
-
-      {/* //TODO: dialog bulk delete */}
     </div>
   );
 }

@@ -51,18 +51,18 @@ export const GuestType = {
 export const guestReadSchema = z.object({
   id: z.string().optional(),
   customerId: z.string().optional(),
-  
+
   firstName: z.string(),
   lastName: z.string(),
   email: z.string().optional().or(z.literal("")),
   phone: z.string().optional().or(z.literal("")),
-  
+
   // will be filled during check in phase
   address: z.string().optional().nullable(),
   birthDate: z.string().optional().nullable(),
   documentType: z.enum(DocumentType).optional().nullable(),
   documentNumber: z.string().optional().nullable(),
-  
+
   guestType: z.enum(GuestType).default(GuestType.ADULT),
   notes: z.string().optional().nullable(),
 });
@@ -89,46 +89,38 @@ export const priceBreakdownSchema = z.object({
 export const bookingSchema = z.object({
   id: z.string(),
   resourceId: z.string(),
-  
+
   // main guest during PENDING will have only name/email/phone
   mainGuest: guestReadSchema,
-  
+
   checkIn: z.string(),
   checkOut: z.string(),
-  
+
   companions: z.array(guestReadSchema).default([]),
   extras: z.array(bookingExtraSchema).default([]),
-  
+
   status: z.enum(BookingStatus),
   paymentStatus: z.enum(PaymentStatus),
   priceBreakdown: priceBreakdownSchema.optional(),
-  
+
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
 });
 
 // create booking form schema with essential fields only
 export const createBookingFormSchema = z.object({
-  resourceId: z.string({ error: "Seleziona una risorsa" }).min(1),
-  
-  checkIn: z.date({ error: "Data check-in richiesta" }),
-  checkOut: z.date({ error: "Data check-out richiesta" }),
-  
+  resourceId: z.string().min(1, "Seleziona una risorsa"),
+
+  checkIn: z.date("Data check-in richiesta"),
+  checkOut: z.date("Data check-out richiesta"),
+
   guestFirstName: z.string().min(2, "Nome richiesto"),
   guestLastName: z.string().min(2, "Cognome richiesto"),
   guestEmail: z.email("Email non valida").optional().or(z.literal("")),
   guestPhone: z.string().optional().or(z.literal("")),
-  
-  // deposit amount (if any)
-  depositAmount: z.coerce.number().min(0).optional(),
-  
-  // expected number of guests to eventually compute preventive pricing
-  expectedGuestsCount: z.coerce.number().min(1).default(1),
-}).refine((data) => data.checkOut > data.checkIn, {
-  message: "La data di partenza deve essere successiva all'arrivo",
-  path: ["checkOut"],
-});
 
+  depositAmount: z.number().min(0).optional(),
+});
 
 export type Booking = z.infer<typeof bookingSchema>;
 export type BookingGuest = z.infer<typeof guestReadSchema>;

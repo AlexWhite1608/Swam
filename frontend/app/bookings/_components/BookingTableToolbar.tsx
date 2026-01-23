@@ -9,8 +9,8 @@ import { Input } from "@/components/ui/input";
 
 import { CalendarDateRangePicker } from "@/components/common/CalendarDateRangePicker";
 import {
-    bookingStatusOptions,
-    paymentStatusOptions,
+  bookingStatusOptions,
+  paymentStatusOptions,
 } from "@/schemas/bookingsSchema";
 import { DateRange } from "react-day-picker";
 interface BookingTableToolbarProps<TData> {
@@ -39,6 +39,7 @@ export function BookingTableToolbar<TData>({
         {/* date range filter for period */}
         {periodColumn && (
           <CalendarDateRangePicker
+            buttonClassName="border-dashed"
             date={periodColumn.getFilterValue() as DateRange | undefined}
             setDate={(date) => periodColumn.setFilterValue(date)}
           />

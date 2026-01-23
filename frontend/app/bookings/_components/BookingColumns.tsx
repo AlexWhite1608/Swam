@@ -111,11 +111,10 @@ export const getBookingColumns = ({
         </div>
       );
     },
-    // custom filter to search in firstName, lastName, email
+    // custom filter to search in firstName, lastName
     filterFn: (row, columnId, filterValue) => {
       const guest = row.original.mainGuest;
-      const searchStr =
-        `${guest.firstName} ${guest.lastName} ${guest.email ?? ""}`.toLowerCase();
+      const searchStr = `${guest.firstName} ${guest.lastName}`.toLowerCase();
       return searchStr.includes(String(filterValue).toLowerCase());
     },
   },
