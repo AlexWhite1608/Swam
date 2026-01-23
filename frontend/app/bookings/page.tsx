@@ -10,7 +10,10 @@ import { DataTable } from "@/components/data-table/data-table";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { NAV_ITEMS } from "@/lib/navigation";
 
-import { BookingTableToolbar } from "./_components/BookingTableToolbar";
+import {
+  BookingTableFilters,
+  BookingTableToolbar,
+} from "./_components/BookingTableToolbar";
 import { useBookingsPage } from "@/hooks/pages/useBookingPage";
 import { BookingDialog } from "./_components/BookingDialog";
 
@@ -51,10 +54,10 @@ export default function BookingsPage() {
           <DataTable
             data={bookings}
             columns={columns}
-            renderToolbar={(table) => (
-              <BookingTableToolbar table={table} resources={resources} />
+            renderToolbar={(table) => <BookingTableToolbar table={table} />} // search bar
+            renderFilters={(table) => (
+              <BookingTableFilters table={table} resources={resources} />
             )}
-            // Gestiamo il click sulla riga per aprire l'Edit mode
             // onRowClick={(row) => actions.openEditDialog(row)}
           />
         </div>

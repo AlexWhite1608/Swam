@@ -1,7 +1,7 @@
 "use client";
 
 import { Table } from "@tanstack/react-table";
-import { Trash2, X } from "lucide-react";
+import { Trash2 } from "lucide-react";
 
 import { DataTableFacetedFilter } from "@/components/data-table/data-table-faceted-filter";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,6 @@ export function ResourceTableToolbar<TData>({
   table,
   onDeleteSelected,
 }: ResourceTableToolbarProps<TData>) {
-  const isFiltered = table.getState().columnFilters.length > 0;
   const selectedRows = table.getFilteredSelectedRowModel().rows;
   const isSelectionActive = selectedRows.length > 0;
 
@@ -35,6 +34,7 @@ export function ResourceTableToolbar<TData>({
         {/* filters */}
         {table.getColumn("status") && (
           <DataTableFacetedFilter
+            hasIcon
             column={table.getColumn("status")}
             title="Stato"
             options={statusOptions}
@@ -42,27 +42,18 @@ export function ResourceTableToolbar<TData>({
         )}
         {table.getColumn("type") && (
           <DataTableFacetedFilter
+            hasIcon
             column={table.getColumn("type")}
             title="Tipo"
             options={typeOptions}
           />
         )}
-        {/* reset filters */}
-        {isFiltered && (
-          <Button
-            variant="link"
-            onClick={() => table.resetColumnFilters()}
-            className="h-8 px-2 lg:px-3"
-          >
-            Cancella filtri
-            <X className="h-4 w-4" />
-          </Button>
-        )}
       </div>
 
       {/* bulk delete action */}
+      {/* //fixme: deve stare nella data-table? */}
       {isSelectionActive && (
-        <div className="flex flex-1 justify-end">
+        <div className="flex flex-1 justify-end ml-2">
           <Button
             variant="ghost"
             size="sm"

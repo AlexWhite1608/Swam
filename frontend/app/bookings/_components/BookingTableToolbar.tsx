@@ -1,10 +1,9 @@
 "use client";
 
 import { Table } from "@tanstack/react-table";
-import { X } from "lucide-react";
+// Rimosso import X e Button inutilizzati per il reset qui
 
 import { DataTableFacetedFilter } from "@/components/data-table/data-table-faceted-filter";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 import { CalendarDateRangePicker } from "@/components/common/CalendarDateRangePicker";
@@ -14,6 +13,7 @@ import {
 } from "@/schemas/bookingsSchema";
 import { DateRange } from "react-day-picker";
 import { Resource } from "@/schemas/resourcesSchema";
+
 interface BookingTableToolbarProps<TData> {
   table: Table<TData>;
   resources?: Resource[];
@@ -21,70 +21,84 @@ interface BookingTableToolbarProps<TData> {
 
 export function BookingTableToolbar<TData>({
   table,
+}: BookingTableToolbarProps<TData>) {
+  return (
+    <div className="flex items-center space-x-2">
+      <Input
+        placeholder="Cerca ospite principale..."
+        value={(table.getColumn("guest")?.getFilterValue() as string) ?? ""}
+        onChange={(event) =>
+          table.getColumn("guest")?.setFilterValue(event.target.value)
+        }
+        className="h-8 w-[150px] lg:w-[250px]"
+      />
+    </div>
+  );
+}
+
+export function BookingTableFilters<TData>({
+  table,
   resources,
 }: BookingTableToolbarProps<TData>) {
-  const isFiltered = table.getState().columnFilters.length > 0;
   const periodColumn = table.getColumn("period");
 
   return (
-    <div className="flex items-center justify-between">
-      <div className="flex flex-1 items-center space-x-2">
-        {/* filter for name and email for main guest */}
-        <Input
-          placeholder="Cerca ospite principale..."
-          value={(table.getColumn("guest")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("guest")?.setFilterValue(event.target.value)
-          }
-          className="h-8 w-[150px] lg:w-[250px]"
-        />
-        {/* date range filter for period */}
-        {periodColumn && (
+    <>
+      {/* Date Range Filter */}
+      {periodColumn && (
+        <div className="flex flex-col gap-2">
+          <span className="text-xs font-medium text-muted-foreground">
+            Periodo
+          </span>
           <CalendarDateRangePicker
-            buttonClassName="border-dashed"
+            buttonClassName="w-full justify-start text-left font-normal"
             date={periodColumn.getFilterValue() as DateRange | undefined}
             setDate={(date) => periodColumn.setFilterValue(date)}
           />
-        )}
+        </div>
+      )}
 
-        {/* resource filter */}
-        {table.getColumn("resourceId") && resources && (
+      {/* Resource Filter */}
+      {table.getColumn("resourceId") && resources && (
+        <div className="flex flex-col gap-2">
+          <span className="text-xs font-medium text-muted-foreground">
+            Risorsa
+          </span>
           <DataTableFacetedFilter
             column={table.getColumn("resourceId")}
-            title="Risorsa"
+            title="Seleziona risorsa"
             options={resources.map((r) => ({ label: r.name, value: r.id }))}
           />
-        )}
-        {/* booking status filter */}
-        {table.getColumn("status") && (
+        </div>
+      )}
+
+      {/* Booking Status Filter */}
+      {table.getColumn("status") && (
+        <div className="flex flex-col gap-2">
+          <span className="text-xs font-medium text-muted-foreground">
+            Stato Prenotazione
+          </span>
           <DataTableFacetedFilter
             column={table.getColumn("status")}
-            title="Stato"
+            title="Seleziona stato"
             options={bookingStatusOptions}
           />
-        )}
-        {/* payment status filter */}
-        {table.getColumn("paymentStatus") && (
+        </div>
+      )}
+
+      {/* Payment Status Filter */}
+      {table.getColumn("paymentStatus") && (
+        <div className="flex flex-col gap-2">
+          <span className="text-xs font-medium text-muted-foreground">
+            Stato Pagamento
+          </span>
           <DataTableFacetedFilter
             column={table.getColumn("paymentStatus")}
-            title="Pagamento"
+            title="Seleziona pagamento"
             options={paymentStatusOptions}
           />
-        )}
-        {/* Reset */}
-        {isFiltered && (
-          <Button
-            variant="link"
-            onClick={() => table.resetColumnFilters()}
-            className="h-8 px-2 lg:px-3"
-          >
-            Cancella filtri
-            <X className="h-4 w-4" />
-          </Button>
-        )}
-      </div>
-
-      {/* //TODO: Qui potremmo mettere azioni globali come "Export Excel" oppure backup */}
-    </div>
+        </div>
+      )}
+    </>
   );
 }
