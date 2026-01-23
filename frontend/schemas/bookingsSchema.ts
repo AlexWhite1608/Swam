@@ -24,9 +24,9 @@ export const PaymentStatus = {
 } as const;
 
 export const paymentStatusOptions = [
-  { label: "Non pagato", value: PaymentStatus.UNPAID },
+  { label: "Non Saldato", value: PaymentStatus.UNPAID },
   { label: "Acconto", value: PaymentStatus.DEPOSIT_PAID },
-  { label: "Pagato", value: PaymentStatus.PAID_IN_FULL },
+  { label: "Saldato", value: PaymentStatus.PAID_IN_FULL },
   { label: "Rimborsato", value: PaymentStatus.REFUNDED },
 ];
 

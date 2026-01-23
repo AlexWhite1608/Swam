@@ -5,8 +5,6 @@ import { differenceInCalendarDays, format, parseISO } from "date-fns";
 import { it } from "date-fns/locale";
 import {
   ArrowRight,
-  CalendarDays,
-  Gift,
   LogIn,
   LogOut,
   MoreHorizontal,
@@ -20,30 +18,23 @@ import { Resource } from "@/schemas/resourcesSchema";
 import { BookingStatusBadge } from "@/components/common/badges/BookingStatusBadge";
 import { PaymentStatusBadge } from "@/components/common/badges/PaymentStatusBadge";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { formatCurrency } from "@/lib/utils";
 import { Booking } from "@/schemas/bookingsSchema";
-import { formatCurrency, getInitials } from "@/lib/utils";
 
 interface GetBookingColumnsProps {
   resources: Resource[];
@@ -94,9 +85,7 @@ export const getBookingColumns = ({
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Stato" />
     ),
-    cell: ({ row }) => (
-      <BookingStatusBadge status={row.getValue("status")} />
-    ),
+    cell: ({ row }) => <BookingStatusBadge status={row.getValue("status")} />,
     filterFn: (row, id, value) => value.includes(row.getValue(id)),
   },
 
@@ -111,11 +100,6 @@ export const getBookingColumns = ({
       const guest = row.original.mainGuest;
       return (
         <div className="flex items-center gap-3 min-w-0">
-          <Avatar className="h-8 w-8 border flex-shrink-0">
-            <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
-              {getInitials(guest.firstName, guest.lastName)}
-            </AvatarFallback>
-          </Avatar>
           <div className="flex flex-col min-w-0 flex-1">
             <span className="font-medium text-sm leading-none truncate">
               {guest.lastName} {guest.firstName}
@@ -191,7 +175,15 @@ export const getBookingColumns = ({
     header: "Numero ospiti",
     cell: ({ row }) => {
       const companions = row.original.companions || [];
-      const totalCount = 1 + companions.length;
+      const mainGuest = row.original.mainGuest;
+
+      const allGuests = [mainGuest, ...companions];
+
+      const adults = allGuests.filter((g) => g.guestType === "ADULT");
+      const children = allGuests.filter((g) => g.guestType === "CHILD");
+      const infants = allGuests.filter((g) => g.guestType === "INFANT");
+
+      const totalCount = allGuests.length;
 
       return (
         <TooltipProvider>
@@ -203,19 +195,53 @@ export const getBookingColumns = ({
               </div>
             </TooltipTrigger>
             <TooltipContent>
-              <div className="text-xs">
-                <p className="font-semibold border-b pb-1 mb-1">
-                  Lista Ospiti:
-                </p>
-                <p>
-                  1. {row.original.mainGuest.firstName}{" "}
-                  {row.original.mainGuest.lastName}
-                </p>
-                {companions.map((c, idx) => (
-                  <p key={idx}>
-                    {idx + 2}. {c.firstName} {c.lastName}
-                  </p>
-                ))}
+              <div className="text-xs space-y-2">
+                <p className="font-semibold border-b pb-1">Lista Ospiti:</p>
+
+                {adults.length > 0 && (
+                  <div>
+                    <p className="font-medium text-muted-foreground mb-1">
+                      Adulti ({adults.length})
+                    </p>
+                    <ul className="list-disc list-inside pl-2">
+                      {adults.map((guest, idx) => (
+                        <li key={idx}>
+                          {guest.firstName} {guest.lastName}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {children.length > 0 && (
+                  <div>
+                    <p className="font-medium text-muted-foreground mb-1">
+                      Bambini ({children.length})
+                    </p>
+                    <ul className="list-disc list-inside pl-2">
+                      {children.map((guest, idx) => (
+                        <li key={idx}>
+                          {guest.firstName} {guest.lastName}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {infants.length > 0 && (
+                  <div>
+                    <p className="font-medium text-muted-foreground mb-1">
+                      Neonati ({infants.length})
+                    </p>
+                    <ul className="list-disc list-inside pl-2">
+                      {infants.map((guest, idx) => (
+                        <li key={idx}>
+                          {guest.firstName} {guest.lastName}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             </TooltipContent>
           </Tooltip>
