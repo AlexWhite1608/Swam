@@ -160,7 +160,7 @@ export const getBookingColumns = ({
             <ArrowRight className="h-3 w-3 text-muted-foreground mx-1" />
             {format(checkOut, "d MMM", { locale: it })}
           </div>
-          <div className="mt-0.5 flex justify-center">
+          <div className="mt-0.5 flex">
             <span className="text-[10px] text-muted-foreground bg-secondary px-1.5 py-0.5 rounded-sm">
               {nights} nott{nights > 1 ? "i" : "e"}
             </span>
