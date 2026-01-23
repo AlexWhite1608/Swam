@@ -75,7 +75,11 @@ export function DataTable<TData, TValue>({
   return (
     <div className="flex flex-col h-full space-y-4">
       {/* toolbar injection */}
-      {renderToolbar && renderToolbar(table)}
+      {renderToolbar && (
+        <div className="overflow-x-auto">
+          <div className="min-w-max">{renderToolbar(table)}</div>
+        </div>
+      )}
 
       <div className="flex-1 rounded-md border overflow-auto relative min-h-0">
         <table className="w-full caption-bottom text-sm text-left">

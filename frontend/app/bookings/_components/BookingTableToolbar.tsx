@@ -13,12 +13,15 @@ import {
   paymentStatusOptions,
 } from "@/schemas/bookingsSchema";
 import { DateRange } from "react-day-picker";
+import { Resource } from "@/schemas/resourcesSchema";
 interface BookingTableToolbarProps<TData> {
   table: Table<TData>;
+  resources?: Resource[];
 }
 
 export function BookingTableToolbar<TData>({
   table,
+  resources,
 }: BookingTableToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0;
   const periodColumn = table.getColumn("period");
@@ -35,7 +38,6 @@ export function BookingTableToolbar<TData>({
           }
           className="h-8 w-[150px] lg:w-[250px]"
         />
-
         {/* date range filter for period */}
         {periodColumn && (
           <CalendarDateRangePicker
@@ -45,6 +47,14 @@ export function BookingTableToolbar<TData>({
           />
         )}
 
+        {/* resource filter */}
+        {table.getColumn("resourceId") && resources && (
+          <DataTableFacetedFilter
+            column={table.getColumn("resourceId")}
+            title="Risorsa"
+            options={resources.map((r) => ({ label: r.name, value: r.id }))}
+          />
+        )}
         {/* booking status filter */}
         {table.getColumn("status") && (
           <DataTableFacetedFilter
@@ -53,7 +63,6 @@ export function BookingTableToolbar<TData>({
             options={bookingStatusOptions}
           />
         )}
-
         {/* payment status filter */}
         {table.getColumn("paymentStatus") && (
           <DataTableFacetedFilter
@@ -62,7 +71,6 @@ export function BookingTableToolbar<TData>({
             options={paymentStatusOptions}
           />
         )}
-
         {/* Reset */}
         {isFiltered && (
           <Button

@@ -17,6 +17,7 @@ import { BookingDialog } from "./_components/BookingDialog";
 export default function BookingsPage() {
   const {
     bookings,
+    resources,
     isLoading,
     isError,
     refetch,
@@ -50,9 +51,11 @@ export default function BookingsPage() {
           <DataTable
             data={bookings}
             columns={columns}
-            renderToolbar={(table) => <BookingTableToolbar table={table} />}
+            renderToolbar={(table) => (
+              <BookingTableToolbar table={table} resources={resources} />
+            )}
             // Gestiamo il click sulla riga per aprire l'Edit mode
-            // onRowClick={(row) => actions.openEditDialog(row)} 
+            // onRowClick={(row) => actions.openEditDialog(row)}
           />
         </div>
       ) : (

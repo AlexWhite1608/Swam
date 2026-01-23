@@ -122,6 +122,7 @@ export const getBookingColumns = ({
   // resource name
   {
     accessorKey: "resourceId",
+    filterFn: (row, id, value) => value.includes(row.getValue(id)),
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Risorsa" />
     ),
