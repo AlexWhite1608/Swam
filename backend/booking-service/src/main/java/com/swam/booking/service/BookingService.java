@@ -1,10 +1,12 @@
 package com.swam.booking.service;
 
+import com.swam.booking.client.PricingServiceClient;
 import com.swam.booking.domain.*;
 import com.swam.booking.dto.*;
 import com.swam.booking.repository.BookingRepository;
 import com.swam.shared.dto.PriceBreakdown;
 import com.swam.shared.enums.BookingStatus;
+import com.swam.shared.enums.GuestType;
 import com.swam.shared.enums.PaymentStatus;
 import com.swam.shared.exceptions.InvalidBookingDateException;
 import com.swam.shared.exceptions.ResourceNotFoundException;
@@ -14,10 +16,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,14 +31,15 @@ public class BookingService {
     private final BookingRepository bookingRepository;
     private final CustomerService customerService;
     private final ExtraOptionService extraOptionService;
+    private final PricingServiceClient pricingClient;
 
     @Transactional
     public BookingResponse createBooking(CreateBookingRequest request) {
 
-        // validate input dates
+        // Validazione date
         validateDates(request.getResourceId(), request.getCheckIn(), request.getCheckOut());
 
-        // creates a first partial customer record to be completed at check-in
+        // Creazione Customer
         CreateCustomerRequest partialCustomer = CreateCustomerRequest.builder()
                 .firstName(request.getGuestFirstName())
                 .lastName(request.getGuestLastName())
@@ -48,7 +51,21 @@ public class BookingService {
         CustomerResponse customer = customerService.registerOrUpdateCustomer(partialCustomer);
         Guest snapshot = customerService.createGuestSnapshot(customer);
 
-        // create starting booking record with PENDING status
+        // CHIAMATA AL PRICING SERVICE
+        PriceCalculationRequest pricingRequest = PriceCalculationRequest.builder()
+                .resourceId(request.getResourceId())
+                .checkIn(request.getCheckIn())
+                .checkOut(request.getCheckOut())
+                .numAdults(1) // Default 1 adulto
+                .numChildren(0)
+                .numInfants(0)
+                .depositAmount(request.getDepositAmount()) // Passiamo l'acconto
+                .extras(Collections.emptyList()) // Nessun extra alla creazione
+                .build();
+
+        PriceBreakdown initialPrice = pricingClient.calculateQuote(pricingRequest);
+
+        // Salvataggio Booking
         Booking booking = Booking.builder()
                 .resourceId(request.getResourceId())
                 .checkIn(request.getCheckIn())
@@ -58,15 +75,7 @@ public class BookingService {
                 .mainGuest(snapshot)
                 .companions(new ArrayList<>())
                 .extras(new ArrayList<>())
-                .priceBreakdown(PriceBreakdown.builder()
-                        .baseAmount(BigDecimal.ZERO)
-                        .depositAmount(request.getDepositAmount())
-                        .taxAmount(BigDecimal.ZERO)
-                        .discountAmount(BigDecimal.ZERO)
-                        .extrasAmount(BigDecimal.ZERO)
-                        .finalTotal(BigDecimal.ZERO)
-                        .taxDescription(null)
-                        .build())
+                .priceBreakdown(initialPrice)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(null)
                 .build();
@@ -79,18 +88,13 @@ public class BookingService {
         Booking booking = getBookingOrThrow(bookingId);
 
         LocalDate today = LocalDate.now();
-        if (booking.getCheckIn().isAfter(today)) {
-            throw new InvalidBookingDateException("Check-in non ancora disponibile");
-        }
 
         if (booking.getStatus() != BookingStatus.CONFIRMED && booking.getStatus() != BookingStatus.PENDING) {
             throw new InvalidBookingDateException("Check-in non valido per lo stato attuale.");
         }
 
-        // fills the customer record with complete data
+        // Aggiornamento Customer
         Customer customerEntity = customerService.getCustomerEntityOrThrow(booking.getMainGuest().getCustomerId());
-
-        // creates a full customer record merging existing and new data
         CreateCustomerRequest fullData = CreateCustomerRequest.builder()
                 .firstName(customerEntity.getFirstName())
                 .lastName(customerEntity.getLastName())
@@ -105,11 +109,9 @@ public class BookingService {
                 .build();
 
         CustomerResponse updatedCustomer = customerService.registerOrUpdateCustomer(fullData);
-
-        // updates guest snapshot
         booking.setMainGuest(customerService.createGuestSnapshot(updatedCustomer));
 
-        // adds companions if any
+        // Aggiunta Compagni
         if (request.getCompanions() != null) {
             List<Guest> companions = request.getCompanions().stream()
                     .map(c -> Guest.builder()
@@ -118,9 +120,9 @@ public class BookingService {
                             .birthDate(c.getBirthDate())
                             .guestType(c.getGuestType())
                             .address(booking.getMainGuest().getAddress())
-                            .email("") // FIXME: da richiedere?
-                            .phone("") // FIXME: da richiedere?
-                            .documentNumber("") // FIXME: da richiedere?
+                            .email("")
+                            .phone("")
+                            .documentNumber("")
                             .build())
                     .collect(Collectors.toList());
             booking.setCompanions(companions);
@@ -140,23 +142,45 @@ public class BookingService {
             throw new InvalidBookingDateException("Il Check-out richiede stato CHECKED_IN.");
         }
 
-        // add extras
+        // Gestione Extra: Salvataggio locale (Snapshot)
         List<BookingExtra> finalExtras = processExtras(request.getExtras());
         booking.setExtras(finalExtras);
 
-        // TODO: calcola prezzo finale nel pricing service
-        PriceBreakdown finalPrice = PriceBreakdown.builder()
-                .baseAmount(BigDecimal.ZERO)      // TODO: calcolare;
+        // Mappiamo gli extra del booking nel formato che il Pricing si aspetta per il calcolo
+        List<PriceCalculationRequest.BillableExtraItem> billableExtras = finalExtras.stream()
+                .map(extra -> new PriceCalculationRequest.BillableExtraItem(
+                        extra.getPriceSnapshot(), // Usiamo il prezzo congelato nello snapshot
+                        extra.getQuantity()
+                ))
+                .collect(Collectors.toList());
+
+        // Calcolo ospiti reali
+        int adults = (booking.getMainGuest().getGuestType() == GuestType.ADULT ? 1 : 0) +
+                (int) booking.getCompanions().stream().filter(c -> c.getGuestType() == GuestType.ADULT).count();
+
+        int children = (booking.getMainGuest().getGuestType() == GuestType.CHILD ? 1 : 0) +
+                (int) booking.getCompanions().stream().filter(c -> c.getGuestType() == GuestType.CHILD).count();
+
+        int infants = (booking.getMainGuest().getGuestType() == GuestType.INFANT ? 1 : 0) +
+                (int) booking.getCompanions().stream().filter(c -> c.getGuestType() == GuestType.INFANT).count();
+
+        PriceCalculationRequest pricingRequest = PriceCalculationRequest.builder()
+                .resourceId(booking.getResourceId())
+                .checkIn(booking.getCheckIn())
+                .checkOut(booking.getCheckOut())
+                .numAdults(adults)
+                .numChildren(children)
+                .numInfants(infants)
+                .taxExempt(booking.getMainGuest().isTaxExempt())
                 .depositAmount(booking.getPriceBreakdown().getDepositAmount())
-                .taxAmount(BigDecimal.ZERO)       // TODO: calcolare
-                .discountAmount(BigDecimal.ZERO)  // TODO: calcolare
-                .extrasAmount(finalExtras.stream()
-                        .map(extra -> extra.getPriceSnapshot().multiply(BigDecimal.valueOf(extra.getQuantity())))
-                        .reduce(BigDecimal.ZERO, BigDecimal::add))
-                .finalTotal(BigDecimal.ZERO)      // TODO: calcolare
-                .taxDescription(null)             // TODO: aggiungere descrizione tasse
+                .extras(billableExtras)
                 .build();
-        booking.setPriceBreakdown(finalPrice);
+
+
+        // Il Pricing Service ci restituisce un oggetto completo: Base + Tasse + Extra - Acconto
+        PriceBreakdown finalPriceBreakdown = pricingClient.calculateQuote(pricingRequest);
+
+        booking.setPriceBreakdown(finalPriceBreakdown);
 
         booking.setStatus(BookingStatus.CHECKED_OUT);
         booking.setUpdatedAt(LocalDateTime.now());
@@ -186,7 +210,6 @@ public class BookingService {
         if (booking.getStatus() != BookingStatus.PENDING)
             throw new IllegalStateException("Solo PENDING può essere confermata");
 
-        // update payment status if deposit has been paid
         if(hasPaidDeposit) {
             booking.setPaymentStatus(PaymentStatus.DEPOSIT_PAID);
         }
@@ -196,7 +219,6 @@ public class BookingService {
         return mapToResponse(bookingRepository.save(booking));
     }
 
-    // check date validity and availability
     private void validateDates(String resourceId, LocalDate in, LocalDate out) {
         if (!out.isAfter(in))
             throw new InvalidBookingDateException("La data di check-out deve essere successiva alla data di check-in.");
@@ -227,12 +249,9 @@ public class BookingService {
     @Transactional
     public BookingResponse updatePaymentStatus(String bookingId, PaymentStatus newStatus) {
         Booking booking = getBookingOrThrow(bookingId);
-
         validatePaymentStatusTransition(booking.getPaymentStatus(), newStatus);
-
         booking.setPaymentStatus(newStatus);
         booking.setUpdatedAt(LocalDateTime.now());
-
         return mapToResponse(bookingRepository.save(booking));
     }
 
@@ -240,12 +259,8 @@ public class BookingService {
         if (current == PaymentStatus.PAID_IN_FULL && next == PaymentStatus.DEPOSIT_PAID) {
             throw new IllegalStateException("Non puoi tornare a DEPOSIT_PAID da PAID_IN_FULL");
         }
-
-        // TODO: Aggiungere altre regole di transizione se necessario
     }
 
-
-    // mapToResponse omesso per brevità (identico a prima)
     private BookingResponse mapToResponse(Booking booking) {
         PriceBreakdown pbResponse = null;
 

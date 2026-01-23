@@ -1,8 +1,9 @@
-package com.swam.pricing.dto;
+package com.swam.booking.dto;
+
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Builder;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -30,6 +31,6 @@ public class PriceCalculationRequest {
     @AllArgsConstructor
     public static class BillableExtraItem {
         private BigDecimal unitPrice; // Prezzo al momento del consumo
-        private int quantity;         // Quanti extras sono stati aggiunti
+        private int quantity;         // Quante extras sono stati aggiunti
     }
 }

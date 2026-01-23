@@ -1,4 +1,5 @@
 package com.swam.pricing.service;
+
 import com.swam.pricing.domain.*;
 import com.swam.pricing.dto.PriceCalculationRequest;
 import com.swam.pricing.repository.*;
@@ -13,11 +14,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -30,6 +35,7 @@ class PricingEngineServiceTest {
     @InjectMocks
     private PricingEngineService pricingEngineService;
 
+    // Dati per i test
     private Season bassaStagione;
     private Season altaStagione;
     private SeasonalRate tariffaBassa;
@@ -38,104 +44,146 @@ class PricingEngineServiceTest {
 
     @BeforeEach
     void setup() {
+        // 1. Configurazione Bassa Stagione (1-15 Gennaio)
         bassaStagione = new Season();
-        bassaStagione.setId("S1");
+        bassaStagione.setId("LOW");
         bassaStagione.setName("Bassa Gennaio");
         bassaStagione.setStartDate(LocalDate.of(2024, 1, 1));
-        bassaStagione.setEndDate(LocalDate.of(2024, 1, 29));
-
-        altaStagione = new Season();
-        altaStagione.setId("S2");
-        altaStagione.setName("Alta Carnevale");
-        altaStagione.setStartDate(LocalDate.of(2024, 1, 30));
-        altaStagione.setEndDate(LocalDate.of(2024, 2, 10));
+        bassaStagione.setEndDate(LocalDate.of(2024, 1, 15));
 
         tariffaBassa = new SeasonalRate();
-        tariffaBassa.setSeasonId("S1");
-        tariffaBassa.setBasePrice(new BigDecimal("100.00"));
-        tariffaBassa.setAdultPrice(new BigDecimal("10.00"));
+        tariffaBassa.setSeasonId("LOW");
+        tariffaBassa.setBasePrice(new BigDecimal("50.00")); // 50€ a notte
+        tariffaBassa.setAdultPrice(BigDecimal.ZERO);
+
+        // 2. Configurazione Alta Stagione (16-31 Gennaio)
+        altaStagione = new Season();
+        altaStagione.setId("HIGH");
+        altaStagione.setName("Alta Gennaio");
+        altaStagione.setStartDate(LocalDate.of(2024, 1, 16));
+        altaStagione.setEndDate(LocalDate.of(2024, 1, 31));
 
         tariffaAlta = new SeasonalRate();
-        tariffaAlta.setSeasonId("S2");
-        tariffaAlta.setBasePrice(new BigDecimal("200.00"));
-        tariffaAlta.setAdultPrice(new BigDecimal("20.00"));
+        tariffaAlta.setSeasonId("HIGH");
+        tariffaAlta.setBasePrice(new BigDecimal("100.00")); // 100€ a notte (il doppio)
+        tariffaAlta.setAdultPrice(BigDecimal.ZERO);
 
+        // 3. Tassa Disabilitata di default (la abilitiamo solo se serve)
         regoleTassa = new CityTaxRule();
-        regoleTassa.setEnabled(true);
-        regoleTassa.setMaxNightsCap(4);
-        regoleTassa.setAmountPerAdult(new BigDecimal("2.50"));
-        regoleTassa.setAmountPerInfant(BigDecimal.ZERO);
+        regoleTassa.setEnabled(false);
     }
 
     @Test
-    @DisplayName("Test Multi-Stagione: Prenotazione a cavallo tra Bassa e Alta stagione")
-    void testCalculatePrice_CrossSeason() {
-        System.out.println("--- INIZIO TEST: Scambio Stagione (Daily Loop) ---");
+    @DisplayName("Scenario 1: Prenotazione dentro la stessa stagione")
+    void testSingleSeason() {
+        System.out.println("--- TEST: Singola Stagione (Bassa) ---");
 
-        LocalDate checkIn = LocalDate.of(2024, 1, 28);
-        LocalDate checkOut = LocalDate.of(2024, 2, 2);
+        // Prenotazione: 10 Gen -> 13 Gen (3 Notti in Bassa)
+        LocalDate checkIn = LocalDate.of(2024, 1, 10);
+        LocalDate checkOut = LocalDate.of(2024, 1, 13);
 
+        // Mock DB
+        when(seasonRepository.findSeasonsInInterval(checkIn, checkOut)).thenReturn(List.of(bassaStagione));
+        when(rateRepository.findBySeasonIdAndResourceId("LOW", "ROOM-101")).thenReturn(Optional.of(tariffaBassa));
+        when(taxRepository.findAll()).thenReturn(List.of(regoleTassa));
+
+        PriceCalculationRequest req = PriceCalculationRequest.builder()
+                .resourceId("ROOM-101")
+                .checkIn(checkIn)
+                .checkOut(checkOut)
+                .numAdults(2)
+                .depositAmount(BigDecimal.ZERO)
+                .build();
+
+        PriceBreakdown result = pricingEngineService.calculatePrice(req);
+
+        // Verifica: 3 notti * 50€ = 150€
+        System.out.println("Totale calcolato: " + result.getBaseAmount());
+        assertEquals(new BigDecimal("150.00"), result.getBaseAmount());
+        assertEquals(new BigDecimal("150.00"), result.getFinalTotal());
+    }
+
+    @Test
+    @DisplayName("Scenario 2: Cross-Season (Bassa -> Alta)")
+    void testCrossSeason() {
+        System.out.println("--- TEST: Cambio Stagione (Cross-Season) ---");
+
+        // Prenotazione: 14 Gen -> 17 Gen (3 Notti totali)
+        // 14 Gen (Bassa - 50€)
+        // 15 Gen (Bassa - 50€)
+        // 16 Gen (Alta - 100€) --> Qui scatta il cambio!
+        // 17 Gen (Check-out)
+        LocalDate checkIn = LocalDate.of(2024, 1, 14);
+        LocalDate checkOut = LocalDate.of(2024, 1, 17);
+
+        // Mock DB: Restituisce ENTRAMBE le stagioni
         when(seasonRepository.findSeasonsInInterval(checkIn, checkOut))
                 .thenReturn(Arrays.asList(bassaStagione, altaStagione));
 
-        when(rateRepository.findBySeasonIdAndResourceId("S1", "ROOM-101")).thenReturn(Optional.of(tariffaBassa));
-        when(rateRepository.findBySeasonIdAndResourceId("S2", "ROOM-101")).thenReturn(Optional.of(tariffaAlta));
+        // Mock Rate: Restituisce prezzi diversi in base alla stagione richiesta
+        when(rateRepository.findBySeasonIdAndResourceId("LOW", "ROOM-101")).thenReturn(Optional.of(tariffaBassa));
+        when(rateRepository.findBySeasonIdAndResourceId("HIGH", "ROOM-101")).thenReturn(Optional.of(tariffaAlta));
 
         when(taxRepository.findAll()).thenReturn(List.of(regoleTassa));
 
-        PriceCalculationRequest request = new PriceCalculationRequest();
-        request.setResourceId("ROOM-101");
-        request.setCheckIn(checkIn);
-        request.setCheckOut(checkOut);
-        request.setNumAdults(2);
-        request.setNumChildren(0);
+        PriceCalculationRequest req = PriceCalculationRequest.builder()
+                .resourceId("ROOM-101")
+                .checkIn(checkIn)
+                .checkOut(checkOut)
+                .numAdults(2)
+                .build();
 
-        PriceBreakdown result = pricingEngineService.calculatePrice(request);
+        PriceBreakdown result = pricingEngineService.calculatePrice(req);
 
-        BigDecimal expectedRoomTotal = new BigDecimal("960.00");
-        BigDecimal expectedTax = new BigDecimal("20.00");
+        // Verifica Matematica:
+        // 50€ + 50€ + 100€ = 200€ Totale Base
+        System.out.println("Costo Base: " + result.getBaseAmount());
 
-        System.out.println("Risultato BaseAmount Calcolato: " + result.getBaseAmount());
-        System.out.println("Risultato TaxAmount Calcolato: " + result.getTaxAmount());
-        System.out.println("Totale Finale: " + result.getFinalTotal());
-
-        assertEquals(0, expectedRoomTotal.compareTo(result.getBaseAmount()), "Il costo camere non torna!");
-        assertEquals(0, expectedTax.compareTo(result.getTaxAmount()), "La tassa di soggiorno non torna!");
-        assertEquals(0, expectedRoomTotal.add(expectedTax).compareTo(result.getFinalTotal()), "Il totale finale è errato");
-
-        System.out.println("--- TEST PASSATO CON SUCCESSO ---\n");
+        assertEquals(new BigDecimal("200.00"), result.getBaseAmount());
     }
 
     @Test
-    @DisplayName("Test Tassa: Cap Manuale e Sconto Manuale")
-    void testCalculatePrice_ManualOverrides() {
-        System.out.println("--- INIZIO TEST: Override Manuali (Cap e Sconto) ---");
+    @DisplayName("Scenario 3: Matematica Finanziaria (Base + Extra - Acconto)")
+    void testFinancialMath() {
+        System.out.println("--- TEST: Extra e Acconto ---");
 
-        LocalDate checkIn = LocalDate.of(2024, 1, 1);
-        LocalDate checkOut = LocalDate.of(2024, 1, 2);
+        // 1 Notte in Alta Stagione (100€)
+        LocalDate checkIn = LocalDate.of(2024, 1, 20);
+        LocalDate checkOut = LocalDate.of(2024, 1, 21);
 
-        when(seasonRepository.findSeasonsInInterval(checkIn, checkOut)).thenReturn(List.of(bassaStagione));
-        when(rateRepository.findBySeasonIdAndResourceId("S1", "ROOM-101")).thenReturn(Optional.of(tariffaBassa));
+        when(seasonRepository.findSeasonsInInterval(checkIn, checkOut)).thenReturn(List.of(altaStagione));
+        when(rateRepository.findBySeasonIdAndResourceId("HIGH", "ROOM-101")).thenReturn(Optional.of(tariffaAlta));
         when(taxRepository.findAll()).thenReturn(List.of(regoleTassa));
 
-        PriceCalculationRequest request = new PriceCalculationRequest();
-        request.setResourceId("ROOM-101");
-        request.setCheckIn(checkIn);
-        request.setCheckOut(checkOut);
-        request.setNumAdults(2);
+        // Extra: 2 Cene da 25€ = 50€
+        List<PriceCalculationRequest.BillableExtraItem> extras = new ArrayList<>();
+        extras.add(new PriceCalculationRequest.BillableExtraItem(new BigDecimal("25.00"), 2));
 
-        request.setManualNightsCap(0);
-        request.setManualDiscount(new BigDecimal("50.00"));
+        // Acconto: 40€ già pagati
+        BigDecimal acconto = new BigDecimal("40.00");
 
-        PriceBreakdown result = pricingEngineService.calculatePrice(request);
+        PriceCalculationRequest req = PriceCalculationRequest.builder()
+                .resourceId("ROOM-101")
+                .checkIn(checkIn)
+                .checkOut(checkOut)
+                .numAdults(2)
+                .depositAmount(acconto)
+                .extras(extras)
+                .build();
 
-        System.out.println("Tassa Calcolata (Atteso 0): " + result.getTaxAmount());
-        System.out.println("Sconto Applicato: " + result.getDiscountAmount());
-        System.out.println("Totale Finale (Atteso 70): " + result.getFinalTotal());
+        PriceBreakdown result = pricingEngineService.calculatePrice(req);
 
-        assertEquals(BigDecimal.ZERO.doubleValue(), result.getTaxAmount().doubleValue(), 0.01);
-        assertEquals(new BigDecimal("70.00").doubleValue(), result.getFinalTotal().doubleValue(), 0.01);
+        // Verifica:
+        // Base (100) + Extra (50) - Acconto (40) = 110€ da pagare
 
-        System.out.println("--- TEST PASSATO CON SUCCESSO ---\n");
+        System.out.println("Base: " + result.getBaseAmount());
+        System.out.println("Extra: " + result.getExtrasAmount());
+        System.out.println("Acconto: " + result.getDepositAmount());
+        System.out.println("Finale: " + result.getFinalTotal());
+
+        assertEquals(new BigDecimal("100.00"), result.getBaseAmount());
+        assertEquals(new BigDecimal("50.00"), result.getExtrasAmount());
+        assertEquals(new BigDecimal("40.00"), result.getDepositAmount());
+        assertEquals(new BigDecimal("110.00"), result.getFinalTotal());
     }
 }

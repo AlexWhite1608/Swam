@@ -49,6 +49,8 @@ public class Guest {
 
     String notes;
 
+    boolean taxExempt;
+
     public String getFullName() {
         return firstName + " " + lastName;
     }

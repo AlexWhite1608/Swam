@@ -58,14 +58,30 @@ public class PricingEngineService {
 
         BigDecimal taxAmount = calculateCityTax(request, nights);
 
+        BigDecimal extrasTotal = BigDecimal.ZERO;
+        if (request.getExtras() != null) {
+            for (PriceCalculationRequest.BillableExtraItem item : request.getExtras()) {
+                if (item.getUnitPrice() != null && item.getQuantity() > 0) {
+                    BigDecimal itemCost = item.getUnitPrice()
+                            .multiply(BigDecimal.valueOf(item.getQuantity()));
+                    extrasTotal = extrasTotal.add(itemCost);
+                }
+            }
+        }
+
         BigDecimal discount = BigDecimal.ZERO;
         if (request.getManualDiscount() != null) {
             discount = request.getManualDiscount();
         }
 
-        BigDecimal subTotal = baseAmount.add(taxAmount);
+        BigDecimal deposit = BigDecimal.ZERO;
+        if (request.getDepositAmount() != null) {
+            deposit = request.getDepositAmount();
+        }
 
-        BigDecimal finalTotal = subTotal.subtract(discount);
+        BigDecimal subTotal = baseAmount.add(taxAmount).add(extrasTotal);
+
+        BigDecimal finalTotal = subTotal.subtract(discount).subtract(deposit);
 
         if (finalTotal.compareTo(BigDecimal.ZERO) < 0) {
             finalTotal = BigDecimal.ZERO;
@@ -74,9 +90,9 @@ public class PricingEngineService {
         return PriceBreakdown.builder()
                 .baseAmount(baseAmount)
                 .taxAmount(taxAmount)
-                .extrasAmount(BigDecimal.ZERO)
+                .extrasAmount(extrasTotal)
                 .discountAmount(discount)
-                .depositAmount(BigDecimal.ZERO)
+                .depositAmount(deposit)
                 .finalTotal(finalTotal)
                 .taxDescription(taxAmount.compareTo(BigDecimal.ZERO) > 0
                         ? "Tassa di soggiorno applicata"
