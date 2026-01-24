@@ -12,27 +12,28 @@ import { CalendarDateRangePicker } from "@/components/common/CalendarDateRangePi
 import { Button } from "@/components/ui/button";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { PHONE_PREFIXES } from "@/lib/utils";
 import {
-    createBookingFormSchema,
-    CreateBookingFormValues,
+  createBookingFormSchema,
+  CreateBookingFormValues,
 } from "@/schemas/bookingsSchema";
+import { PhoneInput } from "@/components/ui/phone-input";
+import italialLabels from "react-phone-number-input/locale/it.json";
 
 interface BookingFormProps {
   onSuccess: () => void;
@@ -60,14 +61,8 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
   });
 
   const onSubmit = (values: CreateBookingFormValues) => {
-    // combines phone prefix and number
-    const fullPhone = values.guestPhone
-      ? `${phonePrefix} ${values.guestPhone}`
-      : "";
-
     const payload = {
       ...values,
-      guestPhone: fullPhone,
       checkIn: values.checkIn.toISOString(),
       checkOut: values.checkOut.toISOString(),
     };
@@ -215,42 +210,25 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
               control={form.control}
               name="guestPhone"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Telefono</FormLabel>
-                  <div className="flex gap-2">
-                    {/* prefix */}
-                    <div className="w-[103px] flex-shrink-0">
-                      <Select
-                        value={phonePrefix}
-                        onValueChange={setPhonePrefix}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="+39" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {PHONE_PREFIXES.map((p) => (
-                            <SelectItem key={p.value} value={p.value}>
-                              {p.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* numeric input for phone number */}
-                    <FormControl>
-                      <Input
-                        placeholder="Inserisci telefono"
-                        {...field}
-                        onChange={(e) => {
-                          const val = e.target.value.replace(/[^0-9\s]/g, "");
-                          field.onChange(val);
-                        }}
-                      />
-                    </FormControl>
-                  </div>
-                  <FormMessage />
-                </FormItem>
+                <FormField
+                  control={form.control}
+                  name="guestPhone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Telefono</FormLabel>
+                      <FormControl>
+                        <PhoneInput
+                          placeholder="Inserisci telefono"
+                          value={field.value}
+                          onChange={field.onChange}
+                          defaultCountry="IT"
+                          labels={italialLabels}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               )}
             />
           </div>

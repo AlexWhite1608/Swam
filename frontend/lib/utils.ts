@@ -48,12 +48,3 @@ export const dateRangeFilterFn = (
     { inclusive: true },
   );
 };
-
-export const PHONE_PREFIXES = [
-  { value: "+39", label: "🇮🇹 +39" },
-  { value: "+1", label: "🇺🇸 +1" },
-  { value: "+44", label: "🇬🇧 +44" },
-  { value: "+49", label: "🇩🇪 +49" },
-  { value: "+33", label: "🇫🇷 +33" },
-  { value: "+34", label: "🇪🇸 +34" },
-];
