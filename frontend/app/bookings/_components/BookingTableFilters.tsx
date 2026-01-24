@@ -1,11 +1,16 @@
+import { Table } from "@tanstack/react-table";
+import * as React from "react";
+import { DateRange } from "react-day-picker";
+
 import { CalendarDateRangePicker } from "@/components/common/CalendarDateRangePicker";
-import { DataTableFacetedFilter } from "@/components/data-table/data-table-faceted-filter";
+import {
+  DataTableFacetedFilter,
+  FilterSection,
+} from "@/components/data-table/data-table-faceted-filter";
 import {
   bookingStatusOptions,
   paymentStatusOptions,
 } from "@/schemas/bookingsSchema";
-import { Table } from "@tanstack/react-table";
-import { DateRange } from "react-day-picker";
 
 export interface BookingTableFiltersProps<TData> {
   table: Table<TData>;
@@ -17,64 +22,58 @@ export function BookingTableFilters<TData>({
   resources,
 }: BookingTableFiltersProps<TData>) {
   const periodColumn = table.getColumn("period");
+  const resourceColumn = table.getColumn("resourceId");
+  const statusColumn = table.getColumn("status");
+  const paymentColumn = table.getColumn("paymentStatus");
 
   return (
-    <>
+    <div className="space-y-6">
       {/* Date Range Filter */}
       {periodColumn && (
-        <div className="flex flex-col gap-2">
-          <span className="text-xs font-medium text-muted-foreground">
-            Periodo
-          </span>
+        <FilterSection label="Periodo Soggiorno">
           <CalendarDateRangePicker
-            buttonClassName="w-full justify-start text-left font-normal"
+            buttonClassName="w-full justify-between font-normal h-9"
             date={periodColumn.getFilterValue() as DateRange | undefined}
             setDate={(date) => periodColumn.setFilterValue(date)}
           />
-        </div>
+        </FilterSection>
       )}
 
       {/* Resource Filter */}
-      {table.getColumn("resourceId") && resources && (
-        <div className="flex flex-col gap-2">
-          <span className="text-xs font-medium text-muted-foreground">
-            Risorsa
-          </span>
+      {resourceColumn && resources && (
+        <FilterSection label="Risorsa / Camera">
           <DataTableFacetedFilter
-            column={table.getColumn("resourceId")}
-            title="Seleziona risorsa"
+            column={resourceColumn}
+            title="Tutte le risorse"
             options={resources.map((r) => ({ label: r.name, value: r.id }))}
+            className="w-full justify-between"
           />
-        </div>
+        </FilterSection>
       )}
 
       {/* Booking Status Filter */}
-      {table.getColumn("status") && (
-        <div className="flex flex-col gap-2">
-          <span className="text-xs font-medium text-muted-foreground">
-            Stato Prenotazione
-          </span>
+      {statusColumn && (
+        <FilterSection label="Stato Prenotazione">
           <DataTableFacetedFilter
-            column={table.getColumn("status")}
-            title="Seleziona stato"
+            column={statusColumn}
+            title="Tutti gli stati"
             options={bookingStatusOptions}
+            className="w-full justify-between"
           />
-        </div>
+        </FilterSection>
       )}
 
       {/* Payment Status Filter */}
-      {table.getColumn("paymentStatus") && (
-        <div className="flex flex-col gap-2">
-          <span className="text-xs font-medium text-muted-foreground">
-            Stato Pagamento
-          </span>
+      {paymentColumn && (
+        <FilterSection label="Stato Pagamento">
           <DataTableFacetedFilter
-            column={table.getColumn("paymentStatus")}
-            title="Seleziona pagamento"
+            column={paymentColumn}
+            title="Tutti i pagamenti"
             options={paymentStatusOptions}
+            className="w-full justify-between"
           />
-        </div>
+        </FilterSection>
       )}
-    </>
+    </div>
   );
 }

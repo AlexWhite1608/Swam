@@ -1,7 +1,7 @@
 "use client";
 
 import { Column } from "@tanstack/react-table";
-import { Check, Filter } from "lucide-react";
+import { Check, ChevronDown, Filter } from "lucide-react";
 import * as React from "react";
 
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +23,7 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
 interface DataTableFacetedFilterProps<TData, TValue> {
+  className?: string;
   column?: Column<TData, TValue>;
   hasIcon?: boolean;
   title?: string;
@@ -56,18 +57,18 @@ interface DataTableFacetedFilterProps<TData, TValue> {
  * />
  */
 export function DataTableFacetedFilter<TData, TValue>({
+  className,
   column,
   title,
   options,
   hasIcon = false,
 }: DataTableFacetedFilterProps<TData, TValue>) {
-  const facets = column?.getFacetedUniqueValues();
   const selectedValues = new Set(column?.getFilterValue() as string[]);
 
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="sm">
+        <Button variant="outline" size="sm" className={cn("h-9", className)}>
           {hasIcon && <Filter className=" h-4 w-4" />}
           {title}
 
@@ -104,6 +105,10 @@ export function DataTableFacetedFilter<TData, TValue>({
                 )}
               </div>
             </>
+          )}
+
+          {selectedValues?.size === 0 && (
+            <ChevronDown className="ml-auto h-4 w-4 opacity-50 shrink-0" />
           )}
         </Button>
       </PopoverTrigger>
@@ -153,5 +158,26 @@ export function DataTableFacetedFilter<TData, TValue>({
         </Command>
       </PopoverContent>
     </Popover>
+  );
+}
+
+// Helper layout component for filter sections
+export function FilterSection({
+  icon: Icon,
+  label,
+  children,
+}: {
+  icon?: React.ElementType;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+        {Icon && <Icon className="h-4 w-4" />}
+        <span>{label}</span>
+      </div>
+      {children}
+    </div>
   );
 }
