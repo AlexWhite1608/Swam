@@ -17,7 +17,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { X } from "lucide-react";
+import { X, Trash2 } from "lucide-react";
 import * as React from "react";
 
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,7 @@ interface DataTableProps<TData, TValue> {
   renderToolbar?: (table: TanStackTable<TData>) => React.ReactNode;
   renderFilters?: (table: TanStackTable<TData>) => React.ReactNode;
   onRowClick?: (row: TData) => void;
+  onBulkDelete?: (rows: TData[]) => void;
 }
 
 export function DataTable<TData, TValue>({
@@ -46,6 +47,7 @@ export function DataTable<TData, TValue>({
   renderToolbar,
   renderFilters,
   onRowClick,
+  onBulkDelete,
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
   const [columnVisibility, setColumnVisibility] =
@@ -114,6 +116,10 @@ export function DataTable<TData, TValue>({
     getFacetedUniqueValues: getFacetedUniqueValues(),
   });
 
+  // selection state
+  const selectedRows = table.getFilteredSelectedRowModel().rows;
+  const isSelectionActive = selectedRows.length > 0;
+
   const handleOpenChange = (open: boolean) => {
     if (open) {
       setDraftFilters([...columnFilters]);
@@ -126,38 +132,56 @@ export function DataTable<TData, TValue>({
     setIsFilterOpen(false);
   };
 
+  const handleBulkDelete = () => {
+    if (onBulkDelete && isSelectionActive) {
+      onBulkDelete(selectedRows.map((r) => r.original));
+    }
+  };
+
   return (
     <div className="flex flex-col h-full space-y-4">
       {/* toolbar area */}
-      <div className="flex flex-wrap items-center gap-2">
-        {renderToolbar && (
-          <div className="flex flex-wrap items-center gap-2">
-            {renderToolbar(table)}
-          </div>
-        )}
+      <div className="flex items-center justify-between gap-2">
+        {/* Left side: custom toolbar + filters */}
+        <div className="flex flex-wrap items-center gap-2">
+          {renderToolbar && renderToolbar(table)}
 
-        {/* Filters dialog */}
-        {renderFilters && (
-          <DataTableFiltersDialog
-            filterTable={filterTable}
-            renderFilters={renderFilters}
-            activeFilterCount={activeFilterCount}
-            draftFilterCount={draftFilterCount}
-            isOpen={isFilterOpen}
-            onOpenChange={handleOpenChange}
-            onApplyFilters={handleApplyFilters}
-          />
-        )}
+          {/* Filters dialog */}
+          {renderFilters && (
+            <DataTableFiltersDialog
+              filterTable={filterTable}
+              renderFilters={renderFilters}
+              activeFilterCount={activeFilterCount}
+              draftFilterCount={draftFilterCount}
+              isOpen={isFilterOpen}
+              onOpenChange={handleOpenChange}
+              onApplyFilters={handleApplyFilters}
+            />
+          )}
 
-        {/* Global Reset Button */}
-        {activeFilterCount > 0 && (
+          {/* Global Reset Button */}
+          {activeFilterCount > 0 && (
+            <Button
+              variant="link"
+              onClick={() => table.resetColumnFilters()}
+              className="h-8 px-2 lg:px-3"
+            >
+              Cancella filtri
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+
+        {/* bulk delete button */}
+        {onBulkDelete && isSelectionActive && (
           <Button
-            variant="link"
-            onClick={() => table.resetColumnFilters()}
-            className="h-8 px-2 lg:px-3"
+            variant="ghost"
+            size="sm"
+            className="text-red-600 focus:text-red-600 focus:bg-red-50 hover:bg-red-50"
+            onClick={handleBulkDelete}
           >
-            Cancella filtri
-            <X className="h-4 w-4" />
+            <Trash2 className="h-4 w-4" />
+            Cancella ({selectedRows.length})
           </Button>
         )}
       </div>

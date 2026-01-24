@@ -59,6 +59,7 @@ export default function ResourcesPage() {
               />
             )}
             onRowClick={actions.openEditDialog}
+            onBulkDelete={actions.requestBulkDelete}
           />
         </div>
       ) : (
@@ -108,12 +109,13 @@ export default function ResourcesPage() {
         description={
           <>
             Stai per eliminare{" "}
-            <strong>{selections.resourcesToBulkDelete.length}</strong> risorse.
-            Questa azione è irreversibile.
+            <strong>{selections.resourcesToBulkDelete.length}</strong> risors
+            {selections.resourcesToBulkDelete.length > 1 ? "e" : "a"}. Questa
+            azione è irreversibile.
           </>
         }
         variant="destructive"
-        confirmText="Elimina selezionati"
+        confirmText="Elimina"
         isLoading={isBulkDeleting}
       />
     </div>
