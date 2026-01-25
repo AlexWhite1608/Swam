@@ -1,8 +1,9 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { resourceService } from "@/services/resourceService";
-import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/api";
 import { resourceKeys } from "@/lib/query-keys";
-import { Resource, ResourceStatus } from "@/schemas/resourcesSchema";
+import { ResourceStatus } from "@/schemas/resourcesSchema";
+import { resourceService } from "@/services/resourceService";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 // Get all resources
 export const useResources = () => {
@@ -45,8 +46,7 @@ export const useCreateResource = () => {
     },
     onError: (error: any) => {
       toast.error("Impossibile creare la risorsa", {
-        description:
-          error?.response?.data?.message || "Qualcosa è andato storto",
+        description: getErrorMessage(error),
       });
     },
   });
@@ -65,8 +65,7 @@ export const useUpdateResource = () => {
     },
     onError: (error: any) => {
       toast.error("Impossibile modificare la risorsa", {
-        description:
-          error?.response?.data?.message || "Qualcosa è andato storto",
+        description: getErrorMessage(error),
       });
     },
   });
@@ -81,13 +80,14 @@ export const useUpdateResourceStatus = () => {
       resourceService.updateStatus(id, status),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: resourceKeys.all });
-      queryClient.invalidateQueries({ queryKey: resourceKeys.detail(variables.id) });
+      queryClient.invalidateQueries({
+        queryKey: resourceKeys.detail(variables.id),
+      });
       toast.success("Stato risorsa aggiornato con successo");
     },
     onError: (error: any) => {
       toast.error("Impossibile aggiornare lo stato della risorsa", {
-        description:
-          error?.response?.data?.message || "Qualcosa è andato storto",
+        description: getErrorMessage(error),
       });
     },
   });
@@ -105,8 +105,7 @@ export const useDeleteResource = () => {
     },
     onError: (error: any) => {
       toast.error("Impossibile eliminare la risorsa", {
-        description:
-          error?.response?.data?.message || "Qualcosa è andato storto",
+        description: getErrorMessage(error),
       });
     },
   });
@@ -124,7 +123,7 @@ export const useBulkDeleteResources = () => {
     },
     onError: (error: any) => {
       toast.error("Impossibile eliminare le risorse selezionate", {
-        description: error?.response?.data?.message || "Qualcosa è andato storto",
+        description: getErrorMessage(error),
       });
     },
   });

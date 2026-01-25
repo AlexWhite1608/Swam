@@ -101,10 +101,10 @@ export const getBookingColumns = ({
       return (
         <div className="flex items-center gap-3 min-w-0">
           <div className="flex flex-col min-w-0 flex-1">
-            <span className="font-medium text-sm leading-none truncate">
+            <span className="font-medium text-sm leading-tight truncate mb-0.5">
               {guest.lastName} {guest.firstName}
             </span>
-            <span className="text-xs text-muted-foreground truncate mt-0.5">
+            <span className="text-xs text-muted-foreground truncate ">
               {guest.email || guest.phone || "-"}
             </span>
           </div>

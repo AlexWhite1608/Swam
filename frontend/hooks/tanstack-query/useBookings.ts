@@ -7,6 +7,7 @@ import {
 } from "@/services/bookingService";
 import { toast } from "sonner";
 import { bookingKeys } from "@/lib/query-keys";
+import { getErrorMessage } from "@/lib/api";
 
 // Get all bookings
 export const useBookings = () => {
@@ -36,9 +37,9 @@ export const useCreateBooking = () => {
       queryClient.invalidateQueries({ queryKey: bookingKeys.all });
       toast.success("Prenotazione creata con successo");
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       toast.error("Errore creazione prenotazione", {
-        description: error?.response?.data?.message || "Impossibile creare la prenotazione",
+        description: getErrorMessage(error),
       });
     },
   });
@@ -55,9 +56,9 @@ export const useConfirmBooking = () => {
       queryClient.invalidateQueries({ queryKey: bookingKeys.detail(data.id) });
       toast.success("Prenotazione confermata");
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       toast.error("Errore conferma", {
-        description: error?.response?.data?.message,
+        description: getErrorMessage(error),
       });
     },
   });
@@ -75,9 +76,9 @@ export const useCheckInBooking = () => {
       queryClient.invalidateQueries({ queryKey: bookingKeys.detail(data.id) });
       toast.success("Check-in effettuato");
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       toast.error("Errore Check-in", {
-        description: error?.response?.data?.message,
+        description: getErrorMessage(error),
       });
     },
   });
@@ -95,9 +96,9 @@ export const useCheckOutBooking = () => {
       queryClient.invalidateQueries({ queryKey: bookingKeys.detail(data.id) });
       toast.success("Check-out completato");
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       toast.error("Errore Check-out", {
-        description: error?.response?.data?.message,
+        description: getErrorMessage(error),
       });
     },
   });
@@ -113,9 +114,9 @@ export const useDeleteBooking = () => {
       queryClient.invalidateQueries({ queryKey: bookingKeys.all });
       toast.success("Prenotazione cancellata");
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       toast.error("Errore cancellazione", {
-        description: error?.response?.data?.message || "Impossibile cancellare la prenotazione",
+        description: getErrorMessage(error),
       });
     },
   });
