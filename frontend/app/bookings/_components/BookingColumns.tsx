@@ -111,7 +111,6 @@ export const getBookingColumns = ({
         </div>
       );
     },
-    // custom filter to search in firstName, lastName
     filterFn: (row, columnId, filterValue) => {
       const guest = row.original.mainGuest;
       const searchStr = `${guest.firstName} ${guest.lastName}`.toLowerCase();
@@ -131,11 +130,9 @@ export const getBookingColumns = ({
       const resource = resources.find((r) => r.id === resId);
 
       return (
-        <div className="truncate">
-          <span className="font-medium text-sm">
-            {resource && resource.name ? resource.name : "-"}
-          </span>
-        </div>
+        <span className="font-medium text-sm truncate block">
+          {resource && resource.name ? resource.name : "-"}
+        </span>
       );
     },
   },
@@ -154,14 +151,18 @@ export const getBookingColumns = ({
       const nights = differenceInCalendarDays(checkOut, checkIn);
 
       return (
-        <div className="flex flex-col">
-          <div className="flex items-center gap-1 text-sm font-medium">
-            {format(checkIn, "d MMM", { locale: it })}
-            <ArrowRight className="h-3 w-3 text-muted-foreground mx-1" />
-            {format(checkOut, "d MMM", { locale: it })}
+        <div className="flex flex-col min-w-0">
+          <div className="flex items-center gap-1 text-sm font-medium truncate">
+            <span className="truncate">
+              {format(checkIn, "d MMM", { locale: it })}
+            </span>
+            <ArrowRight className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+            <span className="truncate">
+              {format(checkOut, "d MMM", { locale: it })}
+            </span>
           </div>
           <div className="mt-0.5 flex">
-            <span className="text-[10px] text-muted-foreground bg-secondary px-1.5 py-0.5 rounded-sm">
+            <span className="text-[10px] text-muted-foreground bg-secondary px-1.5 py-0.5 rounded-sm whitespace-nowrap">
               {nights} nott{nights > 1 ? "i" : "e"}
             </span>
           </div>
@@ -273,7 +274,7 @@ export const getBookingColumns = ({
 
       if (!breakdown || breakdown.finalTotal === 0) {
         return (
-          <span className="text-xs text-muted-foreground italic">
+          <span className="text-xs text-muted-foreground italic truncate block">
             Da calcolare
           </span>
         );
@@ -283,7 +284,7 @@ export const getBookingColumns = ({
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="font-bold text-sm cursor-help">
+              <div className="font-bold text-sm cursor-help truncate">
                 {formatCurrency(breakdown.finalTotal)}
               </div>
             </TooltipTrigger>

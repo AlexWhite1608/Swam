@@ -119,7 +119,7 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
           />
 
           {/* Date Range Picker */}
-          {/* //fixme: andrebbero disattivate le date non disponibili per la risorsa selezionata? */}
+          {/* //fixme: andrebbero disattivate le date non disponibili per la risorsa selezionata (quindi anche quelle precedenti ad oggi)? */}
           <FormField
             control={form.control}
             name="checkIn"

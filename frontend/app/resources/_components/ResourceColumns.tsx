@@ -69,7 +69,9 @@ export const getResourceColumns = ({
       <DataTableColumnHeader column={column} title="Nome" />
     ),
     cell: ({ row }) => (
-      <div className="font-medium">{row.getValue("name")}</div>
+      <div className="min-w-0">
+        <div className="font-medium truncate">{row.getValue("name")}</div>
+      </div>
     ),
   },
 
@@ -84,8 +86,8 @@ export const getResourceColumns = ({
       if (!type) return null;
 
       return (
-        <div className="flex items-center">
-          <span className="capitalize">{type.label}</span>
+        <div className="flex items-center min-w-0">
+          <span className="capitalize truncate">{type.label}</span>
         </div>
       );
     },
@@ -100,7 +102,11 @@ export const getResourceColumns = ({
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Capacità" />
     ),
-    cell: ({ row }) => <div>👤 {row.getValue("capacity")}</div>,
+    cell: ({ row }) => (
+      <div className="min-w-0">
+        <div className="truncate">👤 {row.getValue("capacity")}</div>
+      </div>
+    ),
   },
 
   // status
@@ -111,7 +117,11 @@ export const getResourceColumns = ({
     ),
     cell: ({ row }) => {
       const statusValue = row.getValue("status") as string;
-      return <ResourceStatusBadge status={statusValue} />;
+      return (
+        <div className="min-w-0">
+          <ResourceStatusBadge status={statusValue} />
+        </div>
+      );
     },
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
@@ -123,7 +133,7 @@ export const getResourceColumns = ({
     id: "actions",
     header: () => <span>Azioni</span>,
     cell: ({ row }) => (
-      <div onClick={(e) => e.stopPropagation()}>
+      <div onClick={(e) => e.stopPropagation()} className="min-w-0">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
