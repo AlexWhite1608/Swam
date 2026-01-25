@@ -21,7 +21,6 @@ import java.util.List;
 @AllArgsConstructor
 public class CheckInRequest {
 
-    @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Il numero di telefono non è valido")
     private String phone;
 
     @NotBlank(message = "Indirizzo obbligatorio")

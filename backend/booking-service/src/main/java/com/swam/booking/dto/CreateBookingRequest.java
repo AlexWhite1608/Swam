@@ -39,6 +39,5 @@ public class CreateBookingRequest {
     @Email
     private String guestEmail;
 
-    @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Il numero di telefono non è valido")
     private String guestPhone;
 }

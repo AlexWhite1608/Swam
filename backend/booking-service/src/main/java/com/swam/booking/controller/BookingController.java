@@ -33,18 +33,12 @@ public class BookingController {
     }
 
     @GetMapping
-    public ResponseEntity<List<BookingResponse>> searchBookings(
-            @RequestParam(required = false) String resourceId,
-            @RequestParam(required = false) String customerId) {
-
-        if (resourceId != null) {
-            return ResponseEntity.ok(bookingService.getBookingsByResource(resourceId));
-        } else if (customerId != null) {
-            return ResponseEntity.ok(bookingService.getBookingsByMainGuest(customerId));
+    public ResponseEntity<List<BookingResponse>> getAllBookings() {
+        List<BookingResponse> bookings = bookingService.getAllBookings();
+        if (bookings.isEmpty()) {
+            return ResponseEntity.ok(Collections.emptyList());
         }
-
-        // if no filters, return empty list to avoid heavy data load
-        return ResponseEntity.ok(Collections.emptyList());
+        return ResponseEntity.ok(bookings);
     }
 
     // confirms a pending booking

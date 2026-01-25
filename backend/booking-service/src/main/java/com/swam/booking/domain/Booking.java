@@ -35,7 +35,6 @@ public class Booking {
     @NotNull
     private String resourceId;
 
-    @NotNull(message = "Il capogruppo è obbligatorio")
     @Valid
     private Guest mainGuest;
 
