@@ -9,10 +9,10 @@ import { toast } from "sonner";
 import { bookingKeys } from "@/lib/query-keys";
 
 // Get all bookings
-export const useBookings = (params?: { resourceId?: string; customerId?: string }) => {
+export const useBookings = () => {
   return useQuery({
     queryKey: bookingKeys.all,
-    queryFn: () => bookingService.getAll(params),
+    queryFn: () => bookingService.getAll(),
     staleTime: 1000 * 60 * 1,
   });
 };

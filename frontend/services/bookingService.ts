@@ -37,8 +37,8 @@ export interface BookingSearchParams {
 
 export const bookingService = {
   // Get all bookings
-  getAll: async (params?: BookingSearchParams): Promise<Booking[]> => {
-    const { data } = await api.get("/api/bookings", { params });
+  getAll: async (): Promise<Booking[]> => {
+    const { data } = await api.get("/api/bookings");
     return data;
   },
 
@@ -55,30 +55,58 @@ export const bookingService = {
   },
 
   // Confirm Booking (Switch from PENDING to CONFIRMED)
-  confirm: async ({ id, hasPaidDeposit }: { id: string; hasPaidDeposit: boolean }): Promise<Booking> => {
+  confirm: async ({
+    id,
+    hasPaidDeposit,
+  }: {
+    id: string;
+    hasPaidDeposit: boolean;
+  }): Promise<Booking> => {
     const { data } = await api.patch(`/api/bookings/${id}/confirm`, null, {
-      params: { hasPaidDeposit }
+      params: { hasPaidDeposit },
     });
     return data;
   },
 
   // Check-in
-  checkIn: async ({ id, payload }: { id: string; payload: CheckInPayload }): Promise<Booking> => {
+  checkIn: async ({
+    id,
+    payload,
+  }: {
+    id: string;
+    payload: CheckInPayload;
+  }): Promise<Booking> => {
     const { data } = await api.post(`/api/bookings/${id}/check-in`, payload);
     return data;
   },
 
   // Check-out
-  checkOut: async ({ id, payload }: { id: string; payload: CheckOutPayload }): Promise<Booking> => {
+  checkOut: async ({
+    id,
+    payload,
+  }: {
+    id: string;
+    payload: CheckOutPayload;
+  }): Promise<Booking> => {
     const { data } = await api.post(`/api/bookings/${id}/check-out`, payload);
     return data;
   },
 
   // Update Payment Status
-  updatePaymentStatus: async ({ id, status }: { id: string; status: PaymentStatus }): Promise<Booking> => {
-    const { data } = await api.patch(`/api/bookings/${id}/payment-status`, null, {
-      params: { status }
-    });
+  updatePaymentStatus: async ({
+    id,
+    status,
+  }: {
+    id: string;
+    status: PaymentStatus;
+  }): Promise<Booking> => {
+    const { data } = await api.patch(
+      `/api/bookings/${id}/payment-status`,
+      null,
+      {
+        params: { status },
+      },
+    );
     return data;
   },
 

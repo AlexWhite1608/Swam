@@ -34,6 +34,7 @@ import {
 } from "@/schemas/bookingsSchema";
 import { PhoneInput } from "@/components/ui/phone-input";
 import italialLabels from "react-phone-number-input/locale/it.json";
+import { format } from "date-fns";
 
 interface BookingFormProps {
   onSuccess: () => void;
@@ -61,8 +62,8 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
   const onSubmit = (values: CreateBookingFormValues) => {
     const payload = {
       ...values,
-      checkIn: values.checkIn.toISOString(),
-      checkOut: values.checkOut.toISOString(),
+      checkIn: format(values.checkIn, "yyyy-MM-dd"),
+      checkOut: format(values.checkOut, "yyyy-MM-dd"),
     };
 
     createBookingMutation.mutate(payload, {
