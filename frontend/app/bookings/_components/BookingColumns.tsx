@@ -92,6 +92,7 @@ export const getBookingColumns = ({
   // unified guest data
   {
     id: "guest",
+    meta: { excludeFromFilterCount: true }, // exclude from filter count
     accessorFn: (row) => row.mainGuest.lastName,
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Ospite Principale" />

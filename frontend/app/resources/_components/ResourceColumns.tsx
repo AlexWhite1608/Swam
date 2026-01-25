@@ -65,6 +65,7 @@ export const getResourceColumns = ({
   // name
   {
     accessorKey: "name",
+    meta: { excludeFromFilterCount: true }, // exclude from filter count
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Nome" />
     ),

@@ -15,6 +15,7 @@ export function BookingTableToolbar<TData>({
     <div className="flex items-center space-x-2">
       {/* search input */}
       <Input
+        clearable
         placeholder="Cerca ospite principale..."
         value={(table.getColumn("guest")?.getFilterValue() as string) ?? ""}
         onChange={(event) =>

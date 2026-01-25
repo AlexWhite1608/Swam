@@ -64,17 +64,22 @@ export function DataTable<TData, TValue>({
   );
 
   // calculate filter counts
-  const calculateFilterCount = (filters: ColumnFiltersState) => {
+  const calculateFilterCount = (
+    filters: ColumnFiltersState,
+    tableInstance: TanStackTable<any>,
+  ) => {
     return filters.reduce((acc, filter) => {
+      const col = tableInstance.getColumn(filter.id as string);
+
+      // skip columns that should be excluded from filter count (excludeFromFilterCount == true)
+      if ((col?.columnDef?.meta as any)?.excludeFromFilterCount) return acc;
+
       if (Array.isArray(filter.value)) {
         return acc + filter.value.length;
       }
       return acc + 1;
     }, 0);
   };
-
-  const activeFilterCount = calculateFilterCount(columnFilters);
-  const draftFilterCount = calculateFilterCount(draftFilters);
 
   // main table
   const table = useReactTable({
@@ -115,6 +120,9 @@ export function DataTable<TData, TValue>({
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
   });
+
+  const activeFilterCount = calculateFilterCount(columnFilters, table);
+  const draftFilterCount = calculateFilterCount(draftFilters, filterTable);
 
   // selection state
   const selectedRows = table.getFilteredSelectedRowModel().rows;
