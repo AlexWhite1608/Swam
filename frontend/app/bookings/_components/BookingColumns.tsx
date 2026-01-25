@@ -142,7 +142,7 @@ export const getBookingColumns = ({
     id: "period",
     accessorFn: (row) => row.checkIn,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Periodo" />
+      <DataTableColumnHeader column={column} title="Soggiorno" />
     ),
     filterFn: dateRangeFilterFn,
     cell: ({ row }) => {
@@ -154,11 +154,11 @@ export const getBookingColumns = ({
         <div className="flex flex-col min-w-0">
           <div className="flex items-center gap-1 text-sm font-medium truncate">
             <span className="truncate">
-              {format(checkIn, "d MMM", { locale: it })}
+              {format(checkIn, "dd/MM/yy", { locale: it })}
             </span>
             <ArrowRight className="h-3 w-3 text-muted-foreground flex-shrink-0" />
             <span className="truncate">
-              {format(checkOut, "d MMM", { locale: it })}
+              {format(checkOut, "dd/MM/yy", { locale: it })}
             </span>
           </div>
           <div className="mt-0.5 flex">

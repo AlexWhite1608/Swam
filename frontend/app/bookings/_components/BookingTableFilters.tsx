@@ -2,7 +2,7 @@ import { Table } from "@tanstack/react-table";
 import * as React from "react";
 import { DateRange } from "react-day-picker";
 
-import { CalendarDateRangePicker } from "@/components/common/CalendarDateRangePicker";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 import {
   DataTableFacetedFilter,
   FilterSection,
@@ -31,7 +31,7 @@ export function BookingTableFilters<TData>({
       {/* Date Range Filter */}
       {periodColumn && (
         <FilterSection label="Periodo Soggiorno">
-          <CalendarDateRangePicker
+          <DateRangePicker
             buttonClassName="w-full justify-between font-normal h-9"
             date={periodColumn.getFilterValue() as DateRange | undefined}
             setDate={(date) => periodColumn.setFilterValue(date)}

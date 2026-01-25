@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form";
 import { useCreateBooking } from "@/hooks/tanstack-query/useBookings";
 import { useResources } from "@/hooks/tanstack-query/useResources";
 
-import { CalendarDateRangePicker } from "@/components/common/CalendarDateRangePicker";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { Button } from "@/components/ui/button";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import {
@@ -126,8 +126,9 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
             render={({ field }) => (
               <FormItem className="flex flex-col">
                 <FormLabel>Periodo Soggiorno</FormLabel>
-                <CalendarDateRangePicker
+                <DateRangePicker
                   buttonClassName=" h-9 border border-input hover:bg-background text-muted-foreground justify-start text-left"
+                  disabled={{ before: new Date() }} // todo: implementa disabilitazione date già prenotate per la risorsa selezionata
                   date={{
                     from: form.watch("checkIn"),
                     to: form.watch("checkOut"),
