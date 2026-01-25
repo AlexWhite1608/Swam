@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Table as TanStackTable } from "@tanstack/react-table";
-import { SlidersHorizontal } from "lucide-react";
+import { RotateCcw, SlidersHorizontal } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { BaseDataDialog } from "@/components/dialog/BaseDataDialog";
@@ -55,18 +55,29 @@ export function DataTableFiltersDialog<TData>({
             {renderFilters(filterTable)}
           </div>
 
-          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-4 border-t">
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-2 pt-4 border-t items-center">
             <Button
-              variant="outline"
+              variant="ghost"
               onClick={() => filterTable.resetColumnFilters()}
-              className="w-full sm:w-auto"
+              className="text-red-600 focus:text-red-600 focus:bg-red-50 hover:bg-red-50"
             >
+              <RotateCcw className="h-4 w-4" />
               Resetta
             </Button>
 
-            <Button onClick={onApplyFilters} className="w-full sm:w-auto">
-              Applica filtri {draftFilterCount > 0 && `(${draftFilterCount})`}
-            </Button>
+            <div className="flex w-full sm:w-auto justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                className="w-full sm:w-auto"
+              >
+                Annulla
+              </Button>
+
+              <Button onClick={onApplyFilters} className="w-full sm:w-auto">
+                Applica filtri {draftFilterCount > 0 && `(${draftFilterCount})`}
+              </Button>
+            </div>
           </div>
         </div>
       </BaseDataDialog>
