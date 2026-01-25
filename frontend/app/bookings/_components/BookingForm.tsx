@@ -44,8 +44,6 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
   const { data: resources, isLoading: isLoadingResources } = useResources();
   const createBookingMutation = useCreateBooking();
 
-  const [phonePrefix, setPhonePrefix] = useState("+39");
-
   const form = useForm<CreateBookingFormValues>({
     resolver: zodResolver(createBookingFormSchema),
     defaultValues: {

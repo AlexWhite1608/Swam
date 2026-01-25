@@ -89,7 +89,7 @@
   --chart-5: oklch(0.62 0.17 25);
 
   /* Sidebar */
-  --sidebar: oklch(0.985 0 0);
+  --sidebar: #ffffff;
   --sidebar-foreground: oklch(0.145 0 0);
 
   --sidebar-primary: oklch(0.4445 0.0443 176.56);
