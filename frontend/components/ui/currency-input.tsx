@@ -43,7 +43,7 @@ export const CurrencyInput = React.forwardRef<
 
   return (
     <div className="relative">
-      <Euro className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <Euro className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 pointer-events-none" />
       <Input
         type="number"
         step="0.01"
@@ -53,6 +53,7 @@ export const CurrencyInput = React.forwardRef<
         onChange={handleChange}
         onBlur={handleBlur}
         onWheel={(e) => e.currentTarget.blur()}
+        clearable={false}
         {...props}
       />
     </div>
