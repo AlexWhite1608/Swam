@@ -202,14 +202,19 @@ public class BookingService {
     @Transactional
     public BookingResponse confirmBooking(String bookingId, boolean hasPaidDeposit) {
         Booking booking = getBookingOrThrow(bookingId);
-        if (booking.getStatus() != BookingStatus.PENDING)
-            throw new IllegalStateException("Solo PENDING può essere confermata");
 
-        // update payment status if deposit has been paid
-        if(hasPaidDeposit) {
+        if (booking.getStatus() != BookingStatus.PENDING)
+            throw new IllegalStateException("Impossibile confermare una prenotazione che non è in attesa.");
+
+        BigDecimal depositAmount = booking.getPriceBreakdown().getDepositAmount();
+        boolean hasDepositToPay = depositAmount != null && depositAmount.compareTo(BigDecimal.ZERO) > 0;
+
+        // set payment status based on deposit payment
+        if (hasPaidDeposit && hasDepositToPay) {
             booking.setPaymentStatus(PaymentStatus.DEPOSIT_PAID);
         }
 
+        // update booking status to CONFIRMED
         booking.setStatus(BookingStatus.CONFIRMED);
         booking.setUpdatedAt(LocalDateTime.now());
         return mapToResponse(bookingRepository.save(booking));
