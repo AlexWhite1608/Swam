@@ -4,6 +4,7 @@ import {
   CreateBookingPayload,
   CheckInPayload,
   CheckOutPayload,
+  ConfirmBookingParams,
 } from "@/services/bookingService";
 import { toast } from "sonner";
 import { bookingKeys } from "@/lib/query-keys";
@@ -51,15 +52,19 @@ export const useConfirmBooking = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: bookingService.confirm,
+    mutationFn: ({ id, hasPaidDeposit }: ConfirmBookingParams) =>
+      bookingService.confirm({ id, hasPaidDeposit }),
+
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: bookingKeys.all });
       queryClient.invalidateQueries({ queryKey: bookingKeys.detail(data.id) });
       toast.success("Prenotazione confermata");
     },
-    onError: (error: unknown) => {
-      toast.error("Errore conferma", {
-        description: getErrorMessage(error),
+    onError: (error: any) => {
+      toast.error("Errore conferma prenotazione", {
+        description:
+          error?.response?.data?.message ||
+          "Impossibile confermare la prenotazione",
       });
     },
   });

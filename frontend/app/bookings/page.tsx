@@ -14,6 +14,7 @@ import { BookingTableToolbar } from "./_components/BookingTableToolbar";
 import { useBookingsPage } from "@/hooks/pages/useBookingPage";
 import { BookingDialog } from "./_components/BookingDialog";
 import { BookingTableFilters } from "./_components/BookingTableFilters";
+import { ConfirmBookingDialog } from "./_components/ConfirmBookingDialog";
 
 export default function BookingsPage() {
   const {
@@ -75,6 +76,13 @@ export default function BookingsPage() {
         open={dialogs.isOpen}
         onOpenChange={actions.setIsOpen}
         mode={dialogs.mode}
+        booking={selections.selectedBooking}
+      />
+
+      {/* Confirm booking dialog */}
+      <ConfirmBookingDialog
+        isOpen={dialogs.isConfirmOpen}
+        onOpenChange={actions.setConfirmOpen}
         booking={selections.selectedBooking}
       />
 

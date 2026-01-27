@@ -3,8 +3,8 @@ import { Booking, PaymentStatus } from "@/schemas/bookingsSchema";
 
 export interface CreateBookingPayload {
   resourceId: string;
-  checkIn: string; // YYYY-MM-DD
-  checkOut: string; // YYYY-MM-DD
+  checkIn: string;
+  checkOut: string;
   guestFirstName: string;
   guestLastName: string;
   guestEmail?: string;
@@ -15,17 +15,22 @@ export interface CreateBookingPayload {
 export interface CheckInPayload {
   phone: string;
   address: string;
-  birthDate: string; // YYYY-MM-DD
-  documentType: string;
-  documentNumber: string;
+  birthDate: string;
+  documentType: string; // FIXME: usa enum specifica
+  documentNumber: string; 
   country?: string;
-  guestType: string;
+  guestType: string; // FIXME: usa enum specifica
   companions?: any[]; //FIXME: definisci meglio
 }
 
 export interface UnavailablePeriod {
-  start: string; // YYYY-MM-DD
-  end: string; // YYYY-MM-DD
+  start: string;
+  end: string;
+}
+
+export interface ConfirmBookingParams {
+  id: string;
+  hasPaidDeposit: boolean;
 }
 
 export interface CheckOutPayload {

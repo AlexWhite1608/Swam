@@ -34,6 +34,7 @@ export const useBookingsPage = () => {
   // dialog states
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
 
   // dialog for managing different modes (CREATE, EDIT, CHECKIN, CHECKOUT)
   const [dialogMode, setDialogMode] = useState<BookingDialogMode>("CREATE");
@@ -70,6 +71,12 @@ export const useBookingsPage = () => {
     setIsDialogOpen(true);
   };
 
+  // opens the confirm booking dialog
+  const openConfirmDialog = (booking: Booking) => {
+    setSelectedBooking(booking);
+    setIsConfirmDialogOpen(true);
+  };
+
   // Delete Single
   const requestDelete = (booking: Booking) => {
     setBookingToDelete(booking);
@@ -97,6 +104,7 @@ export const useBookingsPage = () => {
         onDelete: requestDelete,
         onCheckIn: openCheckInDialog,
         onCheckOut: openCheckOutDialog,
+        onConfirm: openConfirmDialog,
       }),
     [resources],
   );
@@ -115,6 +123,7 @@ export const useBookingsPage = () => {
       isOpen: isDialogOpen,
       mode: dialogMode, // to manage CREATE, EDIT, CHECKIN, CHECKOUT modes
       isDeleteOpen: isDeleteDialogOpen,
+      isConfirmOpen: isConfirmDialogOpen,
     },
 
     // Data State
@@ -130,8 +139,13 @@ export const useBookingsPage = () => {
     actions: {
       setIsOpen: setIsDialogOpen,
       setDeleteOpen: setIsDeleteDialogOpen,
+      setConfirmOpen: setIsConfirmDialogOpen,
 
       openCreateDialog,
+      openEditDialog,
+      openCheckInDialog,
+      openCheckOutDialog,
+      openConfirmDialog,
       confirmDelete,
     },
   };

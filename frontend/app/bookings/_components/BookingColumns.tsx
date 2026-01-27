@@ -5,12 +5,13 @@ import { differenceInCalendarDays, format, parseISO } from "date-fns";
 import { it } from "date-fns/locale";
 import {
   ArrowRight,
+  Check,
   LogIn,
   LogOut,
   MoreHorizontal,
   Pencil,
   Trash,
-  Users,
+  Users
 } from "lucide-react";
 
 import { Resource } from "@/schemas/resourcesSchema";
@@ -42,6 +43,7 @@ interface GetBookingColumnsProps {
   onDelete: (booking: Booking) => void;
   onCheckIn: (booking: Booking) => void;
   onCheckOut: (booking: Booking) => void;
+  onConfirm: (booking: Booking) => void;
 }
 
 export const getBookingColumns = ({
@@ -50,6 +52,7 @@ export const getBookingColumns = ({
   onDelete,
   onCheckIn,
   onCheckOut,
+  onConfirm,
 }: GetBookingColumnsProps): ColumnDef<Booking>[] => [
   // select
   {
@@ -348,6 +351,13 @@ export const getBookingColumns = ({
               <Pencil className="h-4 w-4 hover:text-foreground" />
               Modifica
             </DropdownMenuItem>
+
+            {row.original.status === "PENDING" && (
+              <DropdownMenuItem onClick={() => onConfirm(row.original)}>
+                <Check className="h-4 w-4 hover:text-foreground" />
+                Conferma
+              </DropdownMenuItem>
+            )}
 
             {row.original.status === "CONFIRMED" && (
               <DropdownMenuItem onClick={() => onCheckIn(row.original)}>
