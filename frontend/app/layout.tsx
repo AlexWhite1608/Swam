@@ -35,7 +35,7 @@ export default function RootLayout({
             classNames: {
               toast:
                 "group toast bg-white text-foreground border shadow-lg border-muted/50",
-              description: "group-[.toast]:text-muted-foreground",
+              description: "!text-foreground",
               actionButton:
                 "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
               cancelButton:

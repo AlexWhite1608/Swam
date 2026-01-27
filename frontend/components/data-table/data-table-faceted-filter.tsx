@@ -1,10 +1,9 @@
 "use client";
 
-import * as React from "react";
 import { Column } from "@tanstack/react-table";
-import { Check, Filter, PlusCircle } from "lucide-react";
+import { Check, ChevronDown, Filter } from "lucide-react";
+import * as React from "react";
 
-import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,7 +13,6 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-  CommandSeparator,
 } from "@/components/ui/command";
 import {
   Popover,
@@ -22,9 +20,12 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
 interface DataTableFacetedFilterProps<TData, TValue> {
+  className?: string;
   column?: Column<TData, TValue>;
+  hasIcon?: boolean;
   title?: string;
   options: {
     label: string;
@@ -43,6 +44,7 @@ interface DataTableFacetedFilterProps<TData, TValue> {
  * @param {Column<TData, TValue>} [props.column] - The table column to apply the filter to.
  * @param {string} [props.title] - The title displayed on the filter button.
  * @param {Array} props.options - The list of filter options, each with a label, value, and optional icon.
+ * @param {boolean} [props.hasIcon=false] - Whether to display an icon on the filter button.
  *
  * @example
  * <DataTableFacetedFilter
@@ -55,18 +57,19 @@ interface DataTableFacetedFilterProps<TData, TValue> {
  * />
  */
 export function DataTableFacetedFilter<TData, TValue>({
+  className,
   column,
   title,
   options,
+  hasIcon = false,
 }: DataTableFacetedFilterProps<TData, TValue>) {
-  const facets = column?.getFacetedUniqueValues();
   const selectedValues = new Set(column?.getFilterValue() as string[]);
 
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="sm">
-          <Filter className=" h-4 w-4" />
+        <Button variant="outline" size="sm" className={cn("h-9", className)}>
+          {hasIcon && <Filter className=" h-4 w-4" />}
           {title}
 
           {/* badge selection counter */}
@@ -102,6 +105,10 @@ export function DataTableFacetedFilter<TData, TValue>({
                 )}
               </div>
             </>
+          )}
+
+          {selectedValues?.size === 0 && (
+            <ChevronDown className="ml-auto h-4 w-4 opacity-50 shrink-0" />
           )}
         </Button>
       </PopoverTrigger>
@@ -151,5 +158,26 @@ export function DataTableFacetedFilter<TData, TValue>({
         </Command>
       </PopoverContent>
     </Popover>
+  );
+}
+
+// Helper layout component for filter sections
+export function FilterSection({
+  icon: Icon,
+  label,
+  children,
+}: {
+  icon?: React.ElementType;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+        {Icon && <Icon className="h-4 w-4" />}
+        <span>{label}</span>
+      </div>
+      {children}
+    </div>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { UserAvatar } from "@/components/common/UserAvatar";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -9,11 +10,9 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Separator } from "@/components/ui/separator";
 import { getNavNameByHref } from "@/lib/navigation";
 import { usePathname } from "next/navigation";
 import React from "react";
-import { UserAvatar } from "@/components/common/UserAvatar";
 
 export function AppHeader() {
   const pathname = usePathname();
@@ -22,7 +21,7 @@ export function AppHeader() {
   const paths = pathname === "/" ? [] : pathname.split("/").filter((p) => p);
 
   return (
-    <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6 sticky top-0 z-50 backdrop-blur-sm bg-white/80 shadow-sm">
+    <header className="flex h-14 items-center gap-4 border-b bg-white px-4 lg:h-[60px] lg:px-6 sticky top-0 z-50 backdrop-blur-sm shadow-sm">
       <SidebarTrigger className="-ml-2" />
 
       <div className="w-full flex-1">

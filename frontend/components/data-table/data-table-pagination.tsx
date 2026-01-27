@@ -45,9 +45,7 @@ export function DataTablePagination<TData>({
       <div className="flex-1 text-sm text-muted-foreground">
         {table.getFilteredSelectedRowModel().rows.length} di{" "}
         {table.getFilteredRowModel().rows.length}{" "}
-        {table.getFilteredSelectedRowModel().rows.length === 1
-          ? "elemento selezionato"
-          : "elementi selezionati"}
+        {"elementi selezionati"}
       </div>
 
       {/* right side: pagination controls */}

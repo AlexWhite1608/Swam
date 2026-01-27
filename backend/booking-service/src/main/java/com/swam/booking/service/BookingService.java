@@ -5,6 +5,7 @@ import com.swam.booking.dto.*;
 import com.swam.booking.repository.BookingRepository;
 import com.swam.shared.dto.PriceBreakdown;
 import com.swam.shared.enums.BookingStatus;
+import com.swam.shared.enums.GuestType;
 import com.swam.shared.enums.PaymentStatus;
 import com.swam.shared.exceptions.InvalidBookingDateException;
 import com.swam.shared.exceptions.ResourceNotFoundException;
@@ -36,18 +37,6 @@ public class BookingService {
         // validate input dates
         validateDates(request.getResourceId(), request.getCheckIn(), request.getCheckOut());
 
-        // creates a first partial customer record to be completed at check-in
-        CreateCustomerRequest partialCustomer = CreateCustomerRequest.builder()
-                .firstName(request.getGuestFirstName())
-                .lastName(request.getGuestLastName())
-                .email(request.getGuestEmail())
-                .phone(request.getGuestPhone() != null ? request.getGuestPhone() : "")
-                .address(null)
-                .build();
-
-        CustomerResponse customer = customerService.registerOrUpdateCustomer(partialCustomer);
-        Guest snapshot = customerService.createGuestSnapshot(customer);
-
         // create starting booking record with PENDING status
         Booking booking = Booking.builder()
                 .resourceId(request.getResourceId())
@@ -55,7 +44,13 @@ public class BookingService {
                 .checkOut(request.getCheckOut())
                 .status(BookingStatus.PENDING)
                 .paymentStatus(PaymentStatus.UNPAID)
-                .mainGuest(snapshot)
+                .mainGuest(Guest.builder()
+                        .firstName(request.getGuestFirstName())
+                        .lastName(request.getGuestLastName())
+                        .email(request.getGuestEmail())
+                        .phone(request.getGuestPhone())
+                        .guestType(GuestType.ADULT)
+                        .build())
                 .companions(new ArrayList<>())
                 .extras(new ArrayList<>())
                 .priceBreakdown(PriceBreakdown.builder()
@@ -126,6 +121,8 @@ public class BookingService {
             booking.setCompanions(companions);
         }
 
+        //TODO: GESTIONE ANAGRAFICA COMPANIONS
+
         booking.setStatus(BookingStatus.CHECKED_IN);
         booking.setUpdatedAt(LocalDateTime.now());
 
@@ -162,6 +159,28 @@ public class BookingService {
         booking.setUpdatedAt(LocalDateTime.now());
 
         return mapToResponse(bookingRepository.save(booking));
+    }
+
+    public List<BookingResponse> getAllBookings() {
+        return bookingRepository.findAll().stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    // get unavailable periods for a resource
+    public List<UnavailablePeriodResponse> getUnavailablePeriods(String resourceId) {
+        List<Booking> bookings = bookingRepository.findActiveByResourceId(resourceId);
+
+        LocalDate today = LocalDate.now();
+
+        return bookings.stream()
+                // excludes past bookings where check-out is before today
+                .filter(booking -> booking.getCheckOut().isAfter(today))
+                .map(booking -> UnavailablePeriodResponse.builder()
+                        .start(booking.getCheckIn())
+                        .end(booking.getCheckOut())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     public BookingResponse getBooking(String bookingId) {

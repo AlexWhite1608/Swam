@@ -39,7 +39,6 @@ public class Customer {
     @Email(message = "L'email deve essere valida")
     private String email;
 
-    @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Il numero di telefono non è valido")
     private String phone;
 
     private String address;

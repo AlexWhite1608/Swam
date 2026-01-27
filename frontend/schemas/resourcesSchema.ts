@@ -1,12 +1,9 @@
-import { z } from "zod";
 import {
-  BedDouble,
-  Building,
-  CheckCircle2,
-  Hammer,
   AlertOctagon,
-  Armchair,
+  CheckCircle2,
+  Hammer
 } from "lucide-react";
+import { z } from "zod";
 
 export const ResourceType = {
   DOUBLE_ROOM: "DOUBLE_ROOM",
