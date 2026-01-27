@@ -167,6 +167,22 @@ public class BookingService {
                 .collect(Collectors.toList());
     }
 
+    // get unavailable periods for a resource
+    public List<UnavailablePeriodResponse> getUnavailablePeriods(String resourceId) {
+        List<Booking> bookings = bookingRepository.findActiveByResourceId(resourceId);
+
+        LocalDate today = LocalDate.now();
+
+        return bookings.stream()
+                // excludes past bookings where check-out is before today
+                .filter(booking -> booking.getCheckOut().isAfter(today))
+                .map(booking -> UnavailablePeriodResponse.builder()
+                        .start(booking.getCheckIn())
+                        .end(booking.getCheckOut())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
     public BookingResponse getBooking(String bookingId) {
         return mapToResponse(getBookingOrThrow(bookingId));
     }

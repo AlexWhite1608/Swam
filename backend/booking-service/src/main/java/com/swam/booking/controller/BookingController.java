@@ -63,6 +63,12 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.checkOut(id, request));
     }
 
+    @GetMapping("/unavailable-dates")
+    public ResponseEntity<List<UnavailablePeriodResponse>> getUnavailableDates(
+            @RequestParam String resourceId) {
+        return ResponseEntity.ok(bookingService.getUnavailablePeriods(resourceId));
+    }
+
     // updates the payment status of a booking
     @PatchMapping("/{id}/payment-status")
     public ResponseEntity<BookingResponse> updatePaymentStatus(

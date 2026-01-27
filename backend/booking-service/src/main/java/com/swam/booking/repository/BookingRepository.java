@@ -35,9 +35,6 @@ public interface BookingRepository extends MongoRepository<Booking, String> {
     @Query("{ 'resourceId': ?0, 'status': { $ne: 'CANCELLED' } }")
     List<Booking> findActiveByResourceId(String resourceId);
 
-    // find bookings by status
-    List<Booking> findByStatus(BookingStatus status);
-
     // find bookings by main guest id
     List<Booking> findByMainGuestId(String guestId);
 
