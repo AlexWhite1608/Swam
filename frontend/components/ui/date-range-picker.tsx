@@ -1,8 +1,8 @@
 "use client";
 
-import { format, Locale } from "date-fns";
-import { it } from "date-fns/locale";
-import { DateRange, Matcher } from "react-day-picker";
+import { format, Locale, eachDayOfInterval } from "date-fns";
+import { it, se } from "date-fns/locale";
+import { DateRange, Matcher, isMatch } from "react-day-picker";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+import { RotateCcw } from "lucide-react";
 
 interface CalendarDateRangePickerProps {
   className?: string;
@@ -22,7 +24,8 @@ interface CalendarDateRangePickerProps {
   onUpdate?: (range?: DateRange) => void;
   align?: "start" | "center" | "end";
   locale?: Locale;
-  disabledDates?: Matcher | Matcher[];
+  disabledDates?: Matcher | Matcher[]; // dates that cannot be selected
+  occupiedDates?: Matcher | Matcher[]; // occupied dates to highlight
   disableButton?: boolean;
 }
 
@@ -34,7 +37,8 @@ export function DateRangePicker({
   buttonClassName,
   align = "start",
   locale = it,
-  disabledDates,
+  disabledDates = [],
+  occupiedDates = [],
   disableButton = false,
 }: CalendarDateRangePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -43,7 +47,6 @@ export function DateRangePicker({
   const openedRangeRef = useRef<DateRange | undefined>(date);
 
   useEffect(() => {
-    // keep internal in sync when parent changes selection
     if (!isOpen) {
       setInternalDate(date);
       openedRangeRef.current = date;
@@ -52,6 +55,29 @@ export function DateRangePicker({
 
   const resetValues = () => {
     setInternalDate(openedRangeRef.current);
+  };
+
+  // handle date selection from calendar
+  const handleSelect = (range: DateRange | undefined) => {
+    if (range?.from && range?.to) {
+      const daysInRange = eachDayOfInterval({
+        start: range.from,
+        end: range.to,
+      });
+
+      // check if any day in the selected range matches the disabled dates
+      const isInvalidSelection = daysInRange.some(
+        (day) => isMatch(day, disabledDates), // fixme: deprecated function
+      );
+
+      if (isInvalidSelection) {
+        toast.error("Il periodo selezionato include date non disponibili.");
+        setInternalDate({ from: undefined, to: undefined });
+        return;
+      }
+    }
+
+    setInternalDate(range);
   };
 
   return (
@@ -63,7 +89,6 @@ export function DateRangePicker({
             openedRangeRef.current = date;
             setInternalDate(date);
           } else {
-            // reset to the values that were present when the popover opened
             resetValues();
           }
           setIsOpen(open);
@@ -103,12 +128,19 @@ export function DateRangePicker({
               mode="range"
               defaultMonth={internalDate?.from}
               selected={internalDate}
-              onSelect={(d) => setInternalDate(d)}
+              onSelect={handleSelect}
               numberOfMonths={2}
               locale={locale}
               disabled={disabledDates}
               showOutsideDays={false}
               className="border-b"
+              modifiers={{
+                occupied: occupiedDates,
+              }}
+              modifiersClassNames={{
+                occupied:
+                  "relative after:content-[''] after:absolute after:bottom-[2px] after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:bg-red-500 after:rounded-full",
+              }}
               classNames={{
                 today:
                   "bg-transparent border rounded-md !text-primary border-primary !font-bold !underline hover:bg-primary/10",
@@ -116,27 +148,38 @@ export function DateRangePicker({
             />
           </div>
 
-          <div className="flex justify-end gap-2 py-2 pr-4">
+          <div className="flex justify-between gap-2 py-2 mb-2 pr-4">
             <Button
-              onClick={() => {
-                // cancel -> restore to opened values and close
-                resetValues();
-                setIsOpen(false);
-              }}
               variant="ghost"
+              onClick={() =>
+                setInternalDate({ from: undefined, to: undefined })
+              }
+              className="ml-2 text-red-600 focus:text-red-600 focus:bg-red-50 hover:bg-red-50"
             >
-              Annulla
+              <RotateCcw className="h-4 w-4" />
+              Resetta
             </Button>
-            <Button
-              onClick={() => {
-                // apply -> propagate and close
-                setDate(internalDate);
-                onUpdate?.(internalDate);
-                setIsOpen(false);
-              }}
-            >
-              Applica
-            </Button>
+
+            <div className="flex w-full sm:w-auto justify-end gap-2">
+              <Button
+                onClick={() => {
+                  resetValues();
+                  setIsOpen(false);
+                }}
+                variant="outline"
+              >
+                Annulla
+              </Button>
+              <Button
+                onClick={() => {
+                  setDate(internalDate);
+                  onUpdate?.(internalDate);
+                  setIsOpen(false);
+                }}
+              >
+                Applica
+              </Button>
+            </div>
           </div>
         </PopoverContent>
       </Popover>

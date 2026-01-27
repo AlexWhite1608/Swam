@@ -67,7 +67,8 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
   const selectedResourceId = form.watch("resourceId");
   const { data: unavailablePeriods } = useUnavailableDates(selectedResourceId);
 
-  const disabledDays = useDisabledDays(unavailablePeriods);
+  const { occupiedDatesMatchers, allDisabledDates } =
+    useDisabledDays(unavailablePeriods);
 
   const onSubmit = (values: CreateBookingFormValues) => {
     const payload = {
@@ -129,7 +130,6 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
           />
 
           {/* Date Range Picker */}
-          {/* //fixme: andrebbero disattivate le date non disponibili per la risorsa selezionata (quindi anche quelle precedenti ad oggi)? */}
           <FormField
             control={form.control}
             name="checkIn"
@@ -138,7 +138,8 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
                 <FormLabel>Periodo Soggiorno</FormLabel>
                 <DateRangePicker
                   buttonClassName=" h-9 border border-input hover:bg-background text-muted-foreground justify-start text-left"
-                  disabledDates={disabledDays}
+                  disabledDates={allDisabledDates}
+                  occupiedDates={occupiedDatesMatchers}
                   disableButton={!selectedResourceId}
                   date={{
                     from: form.watch("checkIn"),
