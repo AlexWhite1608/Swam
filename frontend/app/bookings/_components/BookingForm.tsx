@@ -5,7 +5,10 @@ import { Loader2, Plus } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
-import { useCreateBooking } from "@/hooks/tanstack-query/useBookings";
+import {
+  useCreateBooking,
+  useUnavailableDates,
+} from "@/hooks/tanstack-query/useBookings";
 import { useResources } from "@/hooks/tanstack-query/useResources";
 
 import { DateRangePicker } from "@/components/ui/date-range-picker";
@@ -34,7 +37,8 @@ import {
 } from "@/schemas/bookingsSchema";
 import { PhoneInput } from "@/components/ui/phone-input";
 import italialLabels from "react-phone-number-input/locale/it.json";
-import { format } from "date-fns";
+import { format, parseISO, subDays } from "date-fns";
+import { useDisabledDays } from "@/hooks/useDisabledDays";
 
 interface BookingFormProps {
   onSuccess: () => void;
@@ -59,11 +63,17 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
     },
   });
 
+  // get unavailable dates for selected resource
+  const selectedResourceId = form.watch("resourceId");
+  const { data: unavailablePeriods } = useUnavailableDates(selectedResourceId);
+
+  const disabledDays = useDisabledDays(unavailablePeriods);
+
   const onSubmit = (values: CreateBookingFormValues) => {
     const payload = {
       ...values,
-      checkIn: format(values.checkIn, "yyyy-MM-dd"),
-      checkOut: format(values.checkOut, "yyyy-MM-dd"),
+      checkIn: format(values.checkIn!, "yyyy-MM-dd"),
+      checkOut: format(values.checkOut!, "yyyy-MM-dd"),
     };
 
     createBookingMutation.mutate(payload, {
@@ -128,7 +138,8 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
                 <FormLabel>Periodo Soggiorno</FormLabel>
                 <DateRangePicker
                   buttonClassName=" h-9 border border-input hover:bg-background text-muted-foreground justify-start text-left"
-                  disabled={{ before: new Date() }} // todo: implementa disabilitazione date già prenotate per la risorsa selezionata
+                  disabledDates={disabledDays}
+                  disableButton={!selectedResourceId}
                   date={{
                     from: form.watch("checkIn"),
                     to: form.watch("checkOut"),
@@ -146,6 +157,12 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
                     }
                   }}
                 />
+                <FormMessage />
+                {form.formState.errors.checkOut && (
+                  <p className="text-[0.8rem] font-medium text-destructive">
+                    {form.formState.errors.checkOut.message}
+                  </p>
+                )}
               </FormItem>
             )}
           />

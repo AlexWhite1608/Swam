@@ -1,9 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { 
-  bookingService, 
-  CreateBookingPayload, 
-  CheckInPayload, 
-  CheckOutPayload 
+import {
+  bookingService,
+  CreateBookingPayload,
+  CheckInPayload,
+  CheckOutPayload,
 } from "@/services/bookingService";
 import { toast } from "sonner";
 import { bookingKeys } from "@/lib/query-keys";
@@ -32,7 +32,8 @@ export const useCreateBooking = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (payload: CreateBookingPayload) => bookingService.create(payload),
+    mutationFn: (payload: CreateBookingPayload) =>
+      bookingService.create(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: bookingKeys.all });
       toast.success("Prenotazione creata con successo");
@@ -69,7 +70,7 @@ export const useCheckInBooking = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: { id: string; payload: CheckInPayload }) => 
+    mutationFn: (data: { id: string; payload: CheckInPayload }) =>
       bookingService.checkIn(data),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: bookingKeys.all });
@@ -89,7 +90,7 @@ export const useCheckOutBooking = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: { id: string; payload: CheckOutPayload }) => 
+    mutationFn: (data: { id: string; payload: CheckOutPayload }) =>
       bookingService.checkOut(data),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: bookingKeys.all });
@@ -101,6 +102,16 @@ export const useCheckOutBooking = () => {
         description: getErrorMessage(error),
       });
     },
+  });
+};
+
+// Get unavailable dates for a resource
+export const useUnavailableDates = (resourceId: string | undefined) => {
+  return useQuery({
+    queryKey: bookingKeys.unavailable(resourceId),
+    queryFn: () => bookingService.getUnavailablePeriods(resourceId!),
+    enabled: !!resourceId, // enable only if resourceId is provided
+    staleTime: 1000 * 60 * 5,
   });
 };
 

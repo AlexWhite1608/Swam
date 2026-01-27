@@ -23,6 +23,11 @@ export interface CheckInPayload {
   companions?: any[]; //FIXME: definisci meglio
 }
 
+export interface UnavailablePeriod {
+  start: string; // YYYY-MM-DD
+  end: string; // YYYY-MM-DD
+}
+
 export interface CheckOutPayload {
   extras: {
     extraOptionId: string;
@@ -89,6 +94,16 @@ export const bookingService = {
     payload: CheckOutPayload;
   }): Promise<Booking> => {
     const { data } = await api.post(`/api/bookings/${id}/check-out`, payload);
+    return data;
+  },
+
+  // Get unavailable periods for a resource
+  getUnavailablePeriods: async (
+    resourceId: string,
+  ): Promise<UnavailablePeriod[]> => {
+    const { data } = await api.get("/api/bookings/unavailable-dates", {
+      params: { resourceId },
+    });
     return data;
   },
 

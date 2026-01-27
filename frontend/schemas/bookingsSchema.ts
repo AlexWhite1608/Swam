@@ -108,19 +108,32 @@ export const bookingSchema = z.object({
 });
 
 // create booking form schema with essential fields only
-export const createBookingFormSchema = z.object({
-  resourceId: z.string().min(1, "Seleziona una risorsa"),
+export const createBookingFormSchema = z
+  .object({
+    resourceId: z.string().min(1, "Seleziona una risorsa"),
 
-  checkIn: z.date("Data check-in richiesta"),
-  checkOut: z.date("Data check-out richiesta"),
+    checkIn: z.date().optional(),
+    checkOut: z.date().optional(),
 
-  guestFirstName: z.string().min(2, "Nome richiesto"),
-  guestLastName: z.string().min(2, "Cognome richiesto"),
-  guestEmail: z.email("Email non valida").optional().or(z.literal("")),
-  guestPhone: z.string().optional().or(z.literal("")),
+    guestFirstName: z.string().min(2, "Nome richiesto"),
+    guestLastName: z.string().min(2, "Cognome richiesto"),
+    guestEmail: z.email("Email non valida").optional().or(z.literal("")),
+    guestPhone: z.string().optional().or(z.literal("")),
 
-  depositAmount: z.number().min(0).optional(),
-});
+    depositAmount: z.number().min(0).optional(),
+  })
+  .superRefine((data, ctx) => {
+    const missingCheckIn = !data.checkIn;
+    const missingCheckOut = !data.checkOut;
+
+    if (missingCheckIn && missingCheckOut) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Seleziona il periodo",
+        path: ["checkIn"],
+      });
+    }
+  });
 
 export type Booking = z.infer<typeof bookingSchema>;
 export type BookingGuest = z.infer<typeof guestReadSchema>;

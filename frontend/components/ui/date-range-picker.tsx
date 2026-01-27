@@ -22,7 +22,8 @@ interface CalendarDateRangePickerProps {
   onUpdate?: (range?: DateRange) => void;
   align?: "start" | "center" | "end";
   locale?: Locale;
-  disabled?: Matcher | Matcher[];
+  disabledDates?: Matcher | Matcher[];
+  disableButton?: boolean;
 }
 
 export function DateRangePicker({
@@ -33,7 +34,8 @@ export function DateRangePicker({
   buttonClassName,
   align = "start",
   locale = it,
-  disabled,
+  disabledDates,
+  disableButton = false,
 }: CalendarDateRangePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [internalDate, setInternalDate] = useState<DateRange | undefined>(date);
@@ -71,6 +73,7 @@ export function DateRangePicker({
           <Button
             id="date"
             variant={"outline"}
+            disabled={disableButton}
             size="sm"
             className={cn(
               "h-8 justify-start text-left",
@@ -103,7 +106,7 @@ export function DateRangePicker({
               onSelect={(d) => setInternalDate(d)}
               numberOfMonths={2}
               locale={locale}
-              disabled={disabled}
+              disabled={disabledDates}
               showOutsideDays={false}
               className="border-b"
               classNames={{

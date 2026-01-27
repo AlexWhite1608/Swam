@@ -40,7 +40,7 @@ export function BookingDialog({
         return {
           title: "Nuova Prenotazione",
           description:
-            "Inserimento informazioni di base per la nuova prenotazione.",
+            "Seleziona una risorsa per scegliere il periodo del soggiorno.",
           className: "sm:max-w-[600px]",
         };
       case "CHECKIN":
