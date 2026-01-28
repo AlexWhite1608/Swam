@@ -275,11 +275,10 @@ export function BookingForm({
                 <FormControl>
                   <CurrencyInput
                     placeholder="0.00"
-                    {...field}
                     value={field.value ?? ""}
                     onChange={(e) => {
                       const val = e.target.valueAsNumber;
-                      field.onChange(isNaN(val) ? 0.0 : val.toFixed(2));
+                      field.onChange(isNaN(val) ? undefined : val);
                     }}
                   />
                 </FormControl>

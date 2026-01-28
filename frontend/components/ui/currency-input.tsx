@@ -3,37 +3,105 @@ import { Euro } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-interface CurrencyInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface CurrencyInputProps extends Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  "onChange"
+> {
   className?: string;
+  value?: string | number;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export const CurrencyInput = React.forwardRef<
   HTMLInputElement,
   CurrencyInputProps
->(({ className, onChange, onBlur, ...props }, ref) => {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value;
+>(({ className, value, onChange, onBlur, ...props }, ref) => {
+  const [displayValue, setDisplayValue] = React.useState<string>("");
+  const [isFocused, setIsFocused] = React.useState(false);
 
-    if (value.startsWith("0") && value.length > 1 && value[1] !== ".") {
-      value = value.replace(/^0+/, "");
-      e.target.value = value;
+  // Update display value when external value changes
+  React.useEffect(() => {
+    if (value !== undefined && value !== null && !isFocused) {
+      const numValue = typeof value === "string" ? parseFloat(value) : value;
+      if (!isNaN(numValue)) {
+        setDisplayValue(numValue.toFixed(2));
+      } else {
+        setDisplayValue("");
+      }
+    }
+  }, [value, isFocused]);
+
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    setIsFocused(true);
+    // Select all text on focus
+    e.target.select();
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let inputValue = e.target.value;
+
+    // Allow empty string
+    if (inputValue === "") {
+      setDisplayValue("");
+      if (onChange) {
+        const syntheticEvent = {
+          ...e,
+          target: {
+            ...e.target,
+            value: "",
+            valueAsNumber: 0,
+          },
+        } as React.ChangeEvent<HTMLInputElement>;
+        onChange(syntheticEvent);
+      }
+      return;
     }
 
+    // Remove leading zeros except for decimal cases like "0.5"
+    if (
+      inputValue.startsWith("0") &&
+      inputValue.length > 1 &&
+      inputValue[1] !== "."
+    ) {
+      inputValue = inputValue.replace(/^0+/, "");
+    }
+
+    setDisplayValue(inputValue);
+
     if (onChange) {
-      onChange(e);
+      const numValue = parseFloat(inputValue);
+      const syntheticEvent = {
+        ...e,
+        target: {
+          ...e.target,
+          value: inputValue,
+          valueAsNumber: isNaN(numValue) ? 0 : numValue,
+        },
+      } as React.ChangeEvent<HTMLInputElement>;
+      onChange(syntheticEvent);
     }
   };
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    let value = e.target.value;
+    setIsFocused(false);
+    let inputValue = e.target.value;
 
-    if (value === "") {
-      value = "0";
+    // If empty, set to empty string
+    if (inputValue === "") {
+      setDisplayValue("");
+      if (onBlur) {
+        onBlur(e);
+      }
+      return;
     }
 
-    const numericValue = parseFloat(value);
+    const numericValue = parseFloat(inputValue);
     if (!isNaN(numericValue)) {
-      e.target.value = numericValue.toFixed(2);
+      const formatted = numericValue.toFixed(2);
+      setDisplayValue(formatted);
+
+      // Update the actual input value
+      e.target.value = formatted;
     }
 
     if (onBlur) {
@@ -50,7 +118,9 @@ export const CurrencyInput = React.forwardRef<
         min="0"
         className={cn("bg-background pl-8", className)}
         ref={ref}
+        value={displayValue}
         onChange={handleChange}
+        onFocus={handleFocus}
         onBlur={handleBlur}
         onWheel={(e) => e.currentTarget.blur()}
         clearable={false}
