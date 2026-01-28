@@ -89,6 +89,27 @@ export const useCancelBooking = () => {
   });
 };
 
+// Update booking (simple edit for pending/confirmed)
+export const useUpdateBooking = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (
+      data: { id: string; payload: any }, //FIXME: payload typing può essere raffinato
+    ) => bookingService.update(data),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: bookingKeys.all });
+      queryClient.invalidateQueries({ queryKey: bookingKeys.detail(data.id) });
+      toast.success("Prenotazione aggiornata");
+    },
+    onError: (error: any) => {
+      toast.error("Errore aggiornamento", {
+        description: error?.response?.data?.message || "Impossibile aggiornare",
+      });
+    },
+  });
+};
+
 // Check-in booking
 export const useCheckInBooking = () => {
   const queryClient = useQueryClient();
@@ -130,11 +151,10 @@ export const useCheckOutBooking = () => {
 };
 
 // Get unavailable dates for a resource
-export const useUnavailableDates = (resourceId: string | undefined) => {
+export const useUnavailableDates = (resourceId: string | undefined, excludeBookingId?: string) => {
   return useQuery({
-    queryKey: bookingKeys.unavailable(resourceId),
-    queryFn: () => bookingService.getUnavailablePeriods(resourceId!),
-    enabled: !!resourceId, // enable only if resourceId is provided
+    queryKey: [...bookingKeys.unavailable(resourceId), excludeBookingId], 
+    queryFn: () => bookingService.getUnavailablePeriods(resourceId!, excludeBookingId),
     staleTime: 1000 * 60 * 5,
   });
 };
@@ -165,7 +185,9 @@ export const useBulkDeleteBookings = () => {
     mutationFn: (ids: string[]) => bookingService.bulkDelete(ids),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: bookingKeys.all });
-      toast.success("Prenotazioni selezionate rimosse dal sistema con successo");
+      toast.success(
+        "Prenotazioni selezionate rimosse dal sistema con successo",
+      );
     },
     onError: (error: unknown) => {
       toast.error("Impossibile eliminare le prenotazioni selezionate", {

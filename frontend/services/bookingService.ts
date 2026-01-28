@@ -1,5 +1,9 @@
 import { api } from "@/lib/api";
-import { Booking, PaymentStatus } from "@/schemas/bookingsSchema";
+import {
+  Booking,
+  CreateBookingFormValues,
+  PaymentStatus,
+} from "@/schemas/bookingsSchema";
 
 export interface CreateBookingPayload {
   resourceId: string;
@@ -64,6 +68,18 @@ export const bookingService = {
     return data;
   },
 
+  // Update booking (simple edit for pending/confirmed)
+  update: async ({
+    id,
+    payload,
+  }: {
+    id: string;
+    payload: CreateBookingFormValues;
+  }): Promise<Booking> => {
+    const { data } = await api.put(`/api/bookings/${id}`, payload);
+    return data;
+  },
+
   // Confirm Booking (Switch from PENDING to CONFIRMED)
   confirm: async ({
     id,
@@ -111,9 +127,13 @@ export const bookingService = {
   // Get unavailable periods for a resource
   getUnavailablePeriods: async (
     resourceId: string,
+    excludeBookingId?: string,
   ): Promise<UnavailablePeriod[]> => {
     const { data } = await api.get("/api/bookings/unavailable-dates", {
-      params: { resourceId },
+      params: {
+        resourceId,
+        excludeBookingId,
+      },
     });
     return data;
   },

@@ -215,7 +215,7 @@ export const getBookingColumns = ({
                     <ul className="list-disc list-inside pl-2">
                       {adults.map((guest, idx) => (
                         <li key={idx}>
-                          {guest.firstName} {guest.lastName}
+                          {guest.lastName} {guest.firstName}
                         </li>
                       ))}
                     </ul>
@@ -230,7 +230,7 @@ export const getBookingColumns = ({
                     <ul className="list-disc list-inside pl-2">
                       {children.map((guest, idx) => (
                         <li key={idx}>
-                          {guest.firstName} {guest.lastName}
+                          {guest.lastName} {guest.firstName}
                         </li>
                       ))}
                     </ul>
@@ -245,7 +245,7 @@ export const getBookingColumns = ({
                     <ul className="list-disc list-inside pl-2">
                       {infants.map((guest, idx) => (
                         <li key={idx}>
-                          {guest.firstName} {guest.lastName}
+                          {guest.lastName} {guest.firstName}
                         </li>
                       ))}
                     </ul>
