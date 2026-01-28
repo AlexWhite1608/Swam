@@ -137,14 +137,14 @@ public class BookingService {
             throw new InvalidBookingDateException("Il Check-out richiede stato CHECKED_IN.");
         }
 
-        // add extras
+        // add extras - snapshot
         List<BookingExtra> finalExtras = processExtras(request.getExtras());
         booking.setExtras(finalExtras);
 
-        // Mappiamo gli extra del booking nel formato che il Pricing si aspetta per il calcolo
+        // map extras for pricing request
         List<PriceCalculationRequest.BillableExtraItem> billableExtras = finalExtras.stream()
                 .map(extra -> new PriceCalculationRequest.BillableExtraItem(
-                        extra.getPriceSnapshot(), // Usiamo il prezzo congelato nello snapshot
+                        extra.getPriceSnapshot(),
                         extra.getQuantity()
                 ))
                 .collect(Collectors.toList());
@@ -172,7 +172,7 @@ public class BookingService {
                 .build();
 
 
-        // Il Pricing Service ci restituisce un oggetto completo: Base + Tasse + Extra - Acconto
+        // pricing service gives us an object  Base + Tasse + Extra - Acconto
         PriceBreakdown finalPriceBreakdown = pricingClient.calculateQuote(pricingRequest);
 
         booking.setPriceBreakdown(finalPriceBreakdown);
