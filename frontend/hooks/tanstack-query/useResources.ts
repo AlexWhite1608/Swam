@@ -101,10 +101,10 @@ export const useDeleteResource = () => {
     mutationFn: resourceService.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: resourceKeys.all });
-      toast.success("Risorsa eliminata con successo");
+      toast.success("Risorsa rimossa con successo");
     },
     onError: (error: any) => {
-      toast.error("Impossibile eliminare la risorsa", {
+      toast.error("Impossibile rimuovere la risorsa", {
         description: getErrorMessage(error),
       });
     },
