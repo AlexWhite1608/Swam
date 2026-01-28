@@ -69,6 +69,35 @@ public class BookingService {
         return mapToResponse(bookingRepository.save(booking));
     }
 
+    // cancels an existing booking by setting its status to CANCELLED
+    @Transactional
+    public BookingResponse cancelBooking(String bookingId) {
+        Booking booking = getBookingOrThrow(bookingId);
+
+        if (booking.getStatus() == BookingStatus.CANCELLED) {
+            throw new IllegalStateException("La prenotazione è già stata cancellata.");
+        }
+
+        // cannot cancel a booking that has already been checked out or checked in
+        if (booking.getStatus() == BookingStatus.CHECKED_OUT || booking.getStatus() == BookingStatus.CHECKED_IN) {
+            throw new IllegalStateException("Non puoi annullare una prenotazione già conclusa.");
+        }
+
+        booking.setStatus(BookingStatus.CANCELLED);
+        booking.setUpdatedAt(LocalDateTime.now());
+
+        return mapToResponse(bookingRepository.save(booking));
+    }
+
+    // soft delete of the selected booking
+    @Transactional
+    public void deleteBooking(String bookingId) {
+        if (!bookingRepository.existsById(bookingId)) {
+            throw new ResourceNotFoundException("Risorsa non trovata: " + bookingId);
+        }
+        bookingRepository.deleteById(bookingId);
+    }
+
     @Transactional
     public BookingResponse checkIn(String bookingId, CheckInRequest request) {
         Booking booking = getBookingOrThrow(bookingId);

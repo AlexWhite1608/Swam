@@ -27,6 +27,12 @@ public class BookingController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteBooking(@PathVariable String id) {
+        bookingService.deleteBooking(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<BookingResponse> getBookingById(@PathVariable String id) {
         return ResponseEntity.ok(bookingService.getBooking(id));
@@ -47,6 +53,12 @@ public class BookingController {
             @PathVariable String id,
             @RequestParam(defaultValue = "false") boolean hasPaidDeposit) {
         return ResponseEntity.ok(bookingService.confirmBooking(id, hasPaidDeposit));
+    }
+
+    // cancels an existing booking by setting its status to CANCELLED
+    @PatchMapping("/{id}/cancel")
+    public ResponseEntity<BookingResponse> cancelBooking(@PathVariable String id) {
+        return ResponseEntity.ok(bookingService.cancelBooking(id));
     }
 
     @PostMapping("/{id}/check-in")
