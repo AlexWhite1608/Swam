@@ -70,6 +70,25 @@ export const useConfirmBooking = () => {
   });
 };
 
+// Cancel booking (set status to CANCELED)
+export const useCancelBooking = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => bookingService.cancel(id),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: bookingKeys.all });
+      queryClient.invalidateQueries({ queryKey: bookingKeys.detail(data.id) });
+      toast.success("Prenotazione cancellata");
+    },
+    onError: (error: unknown) => {
+      toast.error("Errore cancellazione prenotazione", {
+        description: getErrorMessage(error),
+      });
+    },
+  });
+};
+
 // Check-in booking
 export const useCheckInBooking = () => {
   const queryClient = useQueryClient();
@@ -128,10 +147,10 @@ export const useDeleteBooking = () => {
     mutationFn: bookingService.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: bookingKeys.all });
-      toast.success("Prenotazione cancellata");
+      toast.success("Prenotazione rimossa dal sistema");
     },
     onError: (error: unknown) => {
-      toast.error("Errore cancellazione", {
+      toast.error("Errore rimozione della prenotazione", {
         description: getErrorMessage(error),
       });
     },

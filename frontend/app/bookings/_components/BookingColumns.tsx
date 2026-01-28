@@ -6,12 +6,13 @@ import { it } from "date-fns/locale";
 import {
   ArrowRight,
   Check,
+  CircleX,
   LogIn,
   LogOut,
   MoreHorizontal,
   Pencil,
   Trash,
-  Users
+  Users,
 } from "lucide-react";
 
 import { Resource } from "@/schemas/resourcesSchema";
@@ -44,6 +45,7 @@ interface GetBookingColumnsProps {
   onCheckIn: (booking: Booking) => void;
   onCheckOut: (booking: Booking) => void;
   onConfirm: (booking: Booking) => void;
+  onCancel: (booking: Booking) => void;
 }
 
 export const getBookingColumns = ({
@@ -53,6 +55,7 @@ export const getBookingColumns = ({
   onCheckIn,
   onCheckOut,
   onConfirm,
+  onCancel,
 }: GetBookingColumnsProps): ColumnDef<Booking>[] => [
   // select
   {
@@ -341,7 +344,7 @@ export const getBookingColumns = ({
       <div onClick={(e) => e.stopPropagation()}>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
+            <Button variant="outline" className="h-8 w-8 p-0">
               <span className="sr-only">Apri menu</span>
               <MoreHorizontal className="h-4 w-4" />
             </Button>
@@ -373,13 +376,21 @@ export const getBookingColumns = ({
               </DropdownMenuItem>
             )}
 
+            {(row.original.status === "PENDING" ||
+              row.original.status === "CONFIRMED") && (
+              <DropdownMenuItem onClick={() => onCancel(row.original)}>
+                <CircleX className="h-4 w-4 hover:text-foreground" />
+                Cancella Prenotazione
+              </DropdownMenuItem>
+            )}
+
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => onDelete(row.original)}
               className="text-red-600 focus:text-red-600 focus:bg-red-50"
             >
               <Trash className="h-4 w-4 text-red-600/70" />
-              Cancella
+              Rimuovi
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

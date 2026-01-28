@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { useResources } from "@/hooks/tanstack-query/useResources";
 import { getBookingColumns } from "@/app/bookings/_components/BookingColumns";
 import { Booking } from "@/schemas/bookingsSchema";
-import { useBookings, useDeleteBooking } from "../tanstack-query/useBookings";
+import { useBookings, useCancelBooking, useDeleteBooking } from "../tanstack-query/useBookings";
 
 // booking dialog mode types
 export type BookingDialogMode = "CREATE" | "EDIT" | "CHECKIN" | "CHECKOUT";
@@ -30,11 +30,13 @@ export const useBookingsPage = () => {
   const isError = isBookingsError || isResourceError;
 
   const deleteBookingMutation = useDeleteBooking();
+  const cancelBookingMutation = useCancelBooking();
 
   // dialog states
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
 
   // dialog for managing different modes (CREATE, EDIT, CHECKIN, CHECKOUT)
   const [dialogMode, setDialogMode] = useState<BookingDialogMode>("CREATE");
@@ -42,6 +44,7 @@ export const useBookingsPage = () => {
   // selection states
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [bookingToDelete, setBookingToDelete] = useState<Booking | null>(null);
+  const [bookingToCancel, setBookingToCancel] = useState<Booking | null>(null);
 
   // opens the dialog in CREATE booking mode
   const openCreateDialog = () => {
@@ -93,6 +96,22 @@ export const useBookingsPage = () => {
     });
   };
 
+  // cancel booking (set status to CANCELED)
+  const openCancelDialog = (booking: Booking) => {
+    setBookingToCancel(booking);
+    setIsCancelDialogOpen(true);
+  };
+
+  const confirmCancel = () => {
+    if (!bookingToCancel) return;
+    cancelBookingMutation.mutate(bookingToCancel.id, {
+        onSuccess: () => {
+            setBookingToCancel(null);
+            setIsCancelDialogOpen(false);
+        }
+    });
+  };
+
   //TODO: Bulk Delete
 
   // columns
@@ -105,6 +124,7 @@ export const useBookingsPage = () => {
         onCheckIn: openCheckInDialog,
         onCheckOut: openCheckOutDialog,
         onConfirm: openConfirmDialog,
+        onCancel: openCancelDialog,
       }),
     [resources],
   );
@@ -124,22 +144,26 @@ export const useBookingsPage = () => {
       mode: dialogMode, // to manage CREATE, EDIT, CHECKIN, CHECKOUT modes
       isDeleteOpen: isDeleteDialogOpen,
       isConfirmOpen: isConfirmDialogOpen,
+      isCancelOpen: isCancelDialogOpen,
     },
 
     // Data State
     selections: {
       selectedBooking,
       bookingToDelete,
+      bookingToCancel,
     },
 
     // Mutation State
     isDeleting: deleteBookingMutation.isPending,
+    isCanceling: cancelBookingMutation.isPending,
 
     // Actions
     actions: {
       setIsOpen: setIsDialogOpen,
       setDeleteOpen: setIsDeleteDialogOpen,
       setConfirmOpen: setIsConfirmDialogOpen,
+      setCancelOpen: setIsCancelDialogOpen,
 
       openCreateDialog,
       openEditDialog,
@@ -147,6 +171,7 @@ export const useBookingsPage = () => {
       openCheckOutDialog,
       openConfirmDialog,
       confirmDelete,
+      confirmCancel,
     },
   };
 };

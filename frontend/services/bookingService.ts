@@ -17,7 +17,7 @@ export interface CheckInPayload {
   address: string;
   birthDate: string;
   documentType: string; // FIXME: usa enum specifica
-  documentNumber: string; 
+  documentNumber: string;
   country?: string;
   guestType: string; // FIXME: usa enum specifica
   companions?: any[]; //FIXME: definisci meglio
@@ -78,6 +78,12 @@ export const bookingService = {
     return data;
   },
 
+  // cancel booking (set status to CANCELED)
+  cancel: async (id: string): Promise<Booking> => {
+    const { data } = await api.patch(`/api/bookings/${id}/cancel`);
+    return data;
+  },
+
   // Check-in
   checkIn: async ({
     id,
@@ -130,7 +136,7 @@ export const bookingService = {
     return data;
   },
 
-  //TODO: Delete Booking anche nel controller
+  // soft delete booking
   delete: async (id: string): Promise<void> => {
     await api.delete(`/api/bookings/${id}`);
   },
