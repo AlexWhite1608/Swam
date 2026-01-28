@@ -41,7 +41,7 @@ export function BookingTableFilters<TData>({
 
       {/* Resource Filter */}
       {resourceColumn && resources && (
-        <FilterSection label="Risorsa / Camera">
+        <FilterSection label="Risorsa">
           <DataTableFacetedFilter
             column={resourceColumn}
             title="Tutte le risorse"

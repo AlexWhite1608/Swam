@@ -39,6 +39,7 @@ import {
 import { format } from "date-fns";
 import italialLabels from "react-phone-number-input/locale/it.json";
 import { ResourceStatusBadge } from "@/components/common/badges/ResourceStatusBadge";
+import { ResourceSelect } from "@/components/ui/resource-select";
 
 interface BookingFormProps {
   onSuccess: () => void;
@@ -101,43 +102,14 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Risorsa</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="w-full overflow-x-hidden">
-                        <SelectValue
-                          placeholder={
-                            isLoadingResources
-                              ? "Caricamento..."
-                              : "Seleziona risorsa"
-                          }
-                          className="truncate"
-                        />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {resources?.map((resource) => (
-                        <SelectItem key={resource.id} value={resource.id}>
-                          <div className="flex items-center justify-between w-full gap-2 max-w-[20rem]">
-                            <span
-                              className="truncate flex-1"
-                              title={resource.name}
-                            >
-                              {resource.name}
-                            </span>
-                            {resource.status !== "AVAILABLE" && (
-                              <ResourceStatusBadge
-                                status={resource.status}
-                                showIcon={false}
-                              />
-                            )}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <ResourceSelect
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      resources={resources}
+                      isLoading={isLoadingResources}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
