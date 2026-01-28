@@ -1,8 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Plus } from "lucide-react";
-import { useState } from "react";
+import { AlertTriangle, Loader2, Plus } from "lucide-react";
 import { useForm } from "react-hook-form";
 
 import {
@@ -11,9 +10,9 @@ import {
 } from "@/hooks/tanstack-query/useBookings";
 import { useResources } from "@/hooks/tanstack-query/useResources";
 
-import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { Button } from "@/components/ui/button";
 import { CurrencyInput } from "@/components/ui/currency-input";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 import {
   Form,
   FormControl,
@@ -23,6 +22,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import {
   Select,
   SelectContent,
@@ -31,14 +31,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { useDisabledDays } from "@/hooks/useDisabledDays";
 import {
   createBookingFormSchema,
   CreateBookingFormValues,
 } from "@/schemas/bookingsSchema";
-import { PhoneInput } from "@/components/ui/phone-input";
+import { format } from "date-fns";
 import italialLabels from "react-phone-number-input/locale/it.json";
-import { format, parseISO, subDays } from "date-fns";
-import { useDisabledDays } from "@/hooks/useDisabledDays";
+import { ResourceStatusBadge } from "@/components/common/badges/ResourceStatusBadge";
 
 interface BookingFormProps {
   onSuccess: () => void;
@@ -67,6 +67,8 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
   const selectedResourceId = form.watch("resourceId");
   const { data: unavailablePeriods } = useUnavailableDates(selectedResourceId);
 
+  const selectedResource = resources?.find((r) => r.id === selectedResourceId);
+
   const { occupiedDatesMatchers, allDisabledDates } =
     useDisabledDays(unavailablePeriods);
 
@@ -92,42 +94,55 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pt-2">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* resource */}
-          <FormField
-            control={form.control}
-            name="resourceId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Risorsa</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue
-                        placeholder={
-                          isLoadingResources
-                            ? "Caricamento..."
-                            : "Seleziona risorsa"
-                        }
-                        className="truncate"
-                      />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {resources?.map((resource) => (
-                      <SelectItem key={resource.id} value={resource.id}>
-                        <span className="truncate block max-w-[200px] md:max-w-[300px]">
-                          {resource.name}
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="space-y-3">
+            <FormField
+              control={form.control}
+              name="resourceId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Risorsa</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full overflow-x-hidden">
+                        <SelectValue
+                          placeholder={
+                            isLoadingResources
+                              ? "Caricamento..."
+                              : "Seleziona risorsa"
+                          }
+                          className="truncate"
+                        />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {resources?.map((resource) => (
+                        <SelectItem key={resource.id} value={resource.id}>
+                          <div className="flex items-center justify-between w-full gap-2 max-w-[20rem]">
+                            <span
+                              className="truncate flex-1"
+                              title={resource.name}
+                            >
+                              {resource.name}
+                            </span>
+                            {resource.status !== "AVAILABLE" && (
+                              <ResourceStatusBadge
+                                status={resource.status}
+                                showIcon={false}
+                              />
+                            )}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
           {/* Date Range Picker */}
           <FormField

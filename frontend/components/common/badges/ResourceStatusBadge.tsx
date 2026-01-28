@@ -3,9 +3,13 @@ import { ResourceStatus, statusOptions } from "@/schemas/resourcesSchema";
 
 interface ResourceStatusBadgeProps {
   status: ResourceStatus | string;
+  showIcon?: boolean;
 }
 
-export function ResourceStatusBadge({ status }: ResourceStatusBadgeProps) {
+export function ResourceStatusBadge({
+  status,
+  showIcon = true,
+}: ResourceStatusBadgeProps) {
   const statusObj = statusOptions.find((s) => s.value === status);
   if (!statusObj) return null;
 
@@ -24,8 +28,11 @@ export function ResourceStatusBadge({ status }: ResourceStatusBadgeProps) {
   const Icon = statusObj.icon;
 
   return (
-    <Badge variant="outline" className={badgeClass + " flex items-center gap-1"}>
-      <Icon className="h-4 w-4 mr-1" />
+    <Badge
+      variant="outline"
+      className={badgeClass + " flex items-center gap-1"}
+    >
+      {showIcon && Icon && <Icon className="h-4 w-4" />}
       {statusObj.label}
     </Badge>
   );
