@@ -28,7 +28,9 @@ export default function BookingsPage() {
     selections,
     isDeleting,
     isCanceling,
+    isBulkDeleting,
     actions,
+    resetSelectionTrigger,
   } = useBookingsPage();
 
   if (isError) return <Error onRetry={() => refetch()} />;
@@ -52,12 +54,14 @@ export default function BookingsPage() {
       ) : bookings && bookings.length > 0 ? (
         <div className="flex-1 overflow-hidden">
           <DataTable
+            key={resetSelectionTrigger}
             data={bookings}
             columns={columns}
             renderToolbar={(table) => <BookingTableToolbar table={table} />} // search bar
             renderFilters={(table) => (
               <BookingTableFilters table={table} resources={resources} />
             )}
+            onBulkDelete={actions.requestBulkDelete}
             // onRowClick={(row) => actions.openEditDialog(row)}
           />
         </div>
@@ -122,6 +126,27 @@ export default function BookingsPage() {
         }
         confirmText="Conferma"
         isLoading={isCanceling}
+      />
+
+      {/* bulk delete */}
+      <ConfirmDialog
+        key="bulk-delete"
+        isOpen={dialogs.isBulkDeleteOpen}
+        onClose={() => actions.setBulkDeleteOpen(false)}
+        onConfirm={actions.confirmBulkDelete}
+        title="Rimuovi prenotazioni selezionate"
+        description={
+          <>
+            Stai per rimuovere dal sistema{" "}
+            <strong>{selections.bookingsToBulkDelete.length}</strong>{" "}
+            prenotazion
+            {selections.bookingsToBulkDelete.length > 1 ? "i" : "e"}. Questa
+            azione è irreversibile.
+          </>
+        }
+        variant="destructive"
+        confirmText="Rimuovi"
+        isLoading={isBulkDeleting}
       />
     </div>
   );

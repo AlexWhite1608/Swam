@@ -156,3 +156,21 @@ export const useDeleteBooking = () => {
     },
   });
 };
+
+// Bulk delete bookings
+export const useBulkDeleteBookings = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (ids: string[]) => bookingService.bulkDelete(ids),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: bookingKeys.all });
+      toast.success("Prenotazioni selezionate rimosse dal sistema con successo");
+    },
+    onError: (error: unknown) => {
+      toast.error("Impossibile eliminare le prenotazioni selezionate", {
+        description: getErrorMessage(error),
+      });
+    },
+  });
+};

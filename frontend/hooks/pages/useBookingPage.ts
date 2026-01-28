@@ -5,7 +5,12 @@ import { useMemo, useState } from "react";
 import { useResources } from "@/hooks/tanstack-query/useResources";
 import { getBookingColumns } from "@/app/bookings/_components/BookingColumns";
 import { Booking } from "@/schemas/bookingsSchema";
-import { useBookings, useCancelBooking, useDeleteBooking } from "../tanstack-query/useBookings";
+import {
+  useBookings,
+  useBulkDeleteBookings,
+  useCancelBooking,
+  useDeleteBooking,
+} from "../tanstack-query/useBookings";
 
 // booking dialog mode types
 export type BookingDialogMode = "CREATE" | "EDIT" | "CHECKIN" | "CHECKOUT";
@@ -31,12 +36,14 @@ export const useBookingsPage = () => {
 
   const deleteBookingMutation = useDeleteBooking();
   const cancelBookingMutation = useCancelBooking();
+  const useBulkDeleteMutation = useBulkDeleteBookings();
 
   // dialog states
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+  const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
 
   // dialog for managing different modes (CREATE, EDIT, CHECKIN, CHECKOUT)
   const [dialogMode, setDialogMode] = useState<BookingDialogMode>("CREATE");
@@ -45,6 +52,12 @@ export const useBookingsPage = () => {
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [bookingToDelete, setBookingToDelete] = useState<Booking | null>(null);
   const [bookingToCancel, setBookingToCancel] = useState<Booking | null>(null);
+  const [bookingsToBulkDelete, setBookingsToBulkDelete] = useState<Booking[]>(
+    [],
+  );
+
+  // table reset callback
+  const [resetSelectionTrigger, setResetSelectionTrigger] = useState(0);
 
   // opens the dialog in CREATE booking mode
   const openCreateDialog = () => {
@@ -105,14 +118,30 @@ export const useBookingsPage = () => {
   const confirmCancel = () => {
     if (!bookingToCancel) return;
     cancelBookingMutation.mutate(bookingToCancel.id, {
-        onSuccess: () => {
-            setBookingToCancel(null);
-            setIsCancelDialogOpen(false);
-        }
+      onSuccess: () => {
+        setBookingToCancel(null);
+        setIsCancelDialogOpen(false);
+      },
     });
   };
 
-  //TODO: Bulk Delete
+  // Delete Bulk
+  const requestBulkDelete = (bookings: Booking[]) => {
+    setBookingsToBulkDelete(bookings);
+    setIsBulkDeleteDialogOpen(true);
+  };
+
+  const confirmBulkDelete = () => {
+    if (bookingsToBulkDelete.length === 0) return;
+    const ids = bookingsToBulkDelete.map((b) => b.id);
+    useBulkDeleteMutation.mutate(ids, {
+      onSuccess: () => {
+        setBookingsToBulkDelete([]);
+        setIsBulkDeleteDialogOpen(false);
+        setResetSelectionTrigger((prev) => prev + 1);
+      },
+    });
+  };
 
   // columns
   const columns = useMemo(
@@ -145,6 +174,7 @@ export const useBookingsPage = () => {
       isDeleteOpen: isDeleteDialogOpen,
       isConfirmOpen: isConfirmDialogOpen,
       isCancelOpen: isCancelDialogOpen,
+      isBulkDeleteOpen: isBulkDeleteDialogOpen,
     },
 
     // Data State
@@ -152,11 +182,16 @@ export const useBookingsPage = () => {
       selectedBooking,
       bookingToDelete,
       bookingToCancel,
+      bookingsToBulkDelete,
     },
 
     // Mutation State
     isDeleting: deleteBookingMutation.isPending,
     isCanceling: cancelBookingMutation.isPending,
+    isBulkDeleting: useBulkDeleteMutation.isPending,
+
+    // Reset Trigger
+    resetSelectionTrigger,
 
     // Actions
     actions: {
@@ -164,6 +199,7 @@ export const useBookingsPage = () => {
       setDeleteOpen: setIsDeleteDialogOpen,
       setConfirmOpen: setIsConfirmDialogOpen,
       setCancelOpen: setIsCancelDialogOpen,
+      setBulkDeleteOpen: setIsBulkDeleteDialogOpen,
 
       openCreateDialog,
       openEditDialog,
@@ -172,6 +208,8 @@ export const useBookingsPage = () => {
       openConfirmDialog,
       confirmDelete,
       confirmCancel,
+      requestBulkDelete,
+      confirmBulkDelete,
     },
   };
 };

@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import {
   useCreateResource,
   useUpdateResource,
@@ -178,8 +179,10 @@ export function ResourceForm({
           />
         </div>
 
+        <Separator />
+
         {/* action buttons */}
-        <div className="flex justify-end pt-4 gap-2">
+        <div className="flex justify-end gap-2">
           <Button
             type="button"
             variant="outline"

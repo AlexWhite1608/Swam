@@ -174,7 +174,7 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
         {/* main guest info */}
         <div>
           <h4 className="text-sm font-medium text-muted-foreground mb-3">
-            Dati Prenotante
+            Dati Ospite Principale
           </h4>
           <div className="grid grid-cols-2 gap-4">
             <FormField
@@ -278,8 +278,10 @@ export function BookingForm({ onSuccess, onCancel }: BookingFormProps) {
           />
         </div>
 
+        <Separator />
+
         {/* actions */}
-        <div className="flex justify-end pt-2 gap-2">
+        <div className="flex justify-end gap-2">
           <Button
             type="button"
             variant="outline"

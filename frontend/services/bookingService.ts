@@ -140,4 +140,9 @@ export const bookingService = {
   delete: async (id: string): Promise<void> => {
     await api.delete(`/api/bookings/${id}`);
   },
+
+  // bulk delete bookings
+  bulkDelete: async (ids: string[]): Promise<void> => {
+    await api.post("/api/bookings/bulk-delete", { ids });
+  },
 };

@@ -105,17 +105,17 @@ export default function ResourcesPage() {
         isOpen={dialogs.isBulkDeleteOpen}
         onClose={() => actions.setBulkDeleteOpen(false)}
         onConfirm={actions.confirmBulkDelete}
-        title="Elimina risorse selezionate"
+        title="Rimuovi risorse selezionate"
         description={
           <>
-            Stai per eliminare{" "}
+            Stai per rimuovere dal sistema{" "}
             <strong>{selections.resourcesToBulkDelete.length}</strong> risors
             {selections.resourcesToBulkDelete.length > 1 ? "e" : "a"}. Questa
             azione è irreversibile.
           </>
         }
         variant="destructive"
-        confirmText="Elimina"
+        confirmText="Rimuovi"
         isLoading={isBulkDeleting}
       />
     </div>
