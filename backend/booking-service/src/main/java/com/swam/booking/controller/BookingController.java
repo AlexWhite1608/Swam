@@ -56,6 +56,18 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.confirmBooking(id, hasPaidDeposit));
     }
 
+    // updates an existing base booking (with status PENDING or CONFIRMED)
+    @PutMapping("/{id}")
+    public ResponseEntity<BookingResponse> updateBooking(
+            @PathVariable String id,
+            @Valid @RequestBody CreateBookingRequest request) {
+        return ResponseEntity.ok(bookingService.updateBooking(id, request));
+    }
+
+    //TODO: endpoint PUT /api/bookings/{id}/guests per modifica dati del check-in guest
+
+    //TODO: endpoint PUT /api/bookings/{id}/extras per modifica extra del booking
+
     // cancels an existing booking by setting its status to CANCELLED
     @PatchMapping("/{id}/cancel")
     public ResponseEntity<BookingResponse> cancelBooking(@PathVariable String id) {
@@ -76,10 +88,12 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.checkOut(id, request));
     }
 
+    // returns unavailable dates for a specific resource, optionally excluding a booking
     @GetMapping("/unavailable-dates")
     public ResponseEntity<List<UnavailablePeriodResponse>> getUnavailableDates(
-            @RequestParam String resourceId) {
-        return ResponseEntity.ok(bookingService.getUnavailablePeriods(resourceId));
+            @RequestParam String resourceId,
+            @RequestParam(required = false) String excludeBookingId) {
+        return ResponseEntity.ok(bookingService.getUnavailablePeriods(resourceId, excludeBookingId));
     }
 
     // updates the payment status of a booking

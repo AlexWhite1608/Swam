@@ -45,15 +45,4 @@ public class Guest {
     GuestType guestType;
 
     String notes;
-
-    public String getFullName() {
-        return firstName + " " + lastName;
-    }
-
-    public Integer getAge() {
-        if (birthDate == null) {
-            return null;
-        }
-        return Period.between(birthDate, LocalDate.now()).getYears();
-    }
 }
