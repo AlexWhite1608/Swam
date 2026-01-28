@@ -98,6 +98,17 @@ public class BookingService {
         bookingRepository.deleteById(bookingId);
     }
 
+    // bulk delete bookings
+    @Transactional
+    public void deleteBookings(List<String> ids) {
+        // if the list is null or empty, do nothing
+        if (ids == null || ids.isEmpty()) {
+            return;
+        }
+
+        bookingRepository.deleteAllById(ids);
+    }
+
     @Transactional
     public BookingResponse checkIn(String bookingId, CheckInRequest request) {
         Booking booking = getBookingOrThrow(bookingId);

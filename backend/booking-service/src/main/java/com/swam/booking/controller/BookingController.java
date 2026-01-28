@@ -2,6 +2,7 @@ package com.swam.booking.controller;
 
 import com.swam.booking.dto.*;
 import com.swam.booking.service.BookingService;
+import com.swam.resource.dto.BulkDeleteRequest;
 import com.swam.shared.enums.PaymentStatus;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -87,5 +88,12 @@ public class BookingController {
             @PathVariable String id,
             @RequestParam PaymentStatus status) {
         return ResponseEntity.ok(bookingService.updatePaymentStatus(id, status));
+    }
+
+    // bulk Delete bookings
+    @PostMapping("/bulk-delete")
+    public ResponseEntity<Void> bulkDelete(@RequestBody BulkDeleteRequest request) {
+        bookingService.deleteBookings(request.getIds());
+        return ResponseEntity.noContent().build();
     }
 }
