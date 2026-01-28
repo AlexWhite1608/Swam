@@ -172,7 +172,7 @@ public class BookingService {
                 .build();
 
 
-        // pricing service gives us an object  Base + Tasse + Extra - Acconto
+        // pricing service gives us an object Tot = Base + Tax + Extras - Deposit - Discount
         PriceBreakdown finalPriceBreakdown = pricingClient.calculateQuote(pricingRequest);
 
         booking.setPriceBreakdown(finalPriceBreakdown);

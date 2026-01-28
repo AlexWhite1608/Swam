@@ -22,7 +22,6 @@ public class PriceCalculationRequest {
     private int numInfants;
     private boolean taxExempt;
     private BigDecimal manualDiscount;
-    private Integer manualNightsCap;
     private BigDecimal depositAmount;
     private List<BillableExtraItem> extras;
 

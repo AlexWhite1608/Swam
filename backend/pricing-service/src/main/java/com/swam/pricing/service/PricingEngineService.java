@@ -6,6 +6,7 @@ import com.swam.pricing.dto.PriceCalculationRequest;
 import com.swam.shared.dto.PriceBreakdown;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import com.swam.shared.exceptions.CityTaxRequiredException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -108,16 +109,10 @@ public class PricingEngineService {
         CityTaxRule rule = taxRepository.findAll().stream().findFirst().orElse(null);
 
         if (rule == null || !rule.isEnabled()) {
-            return BigDecimal.ZERO;
+            throw new CityTaxRequiredException();
         }
 
-        long effectiveCap;
-
-        if (req.getManualNightsCap() != null) {
-            effectiveCap = req.getManualNightsCap();
-        } else {
-            effectiveCap = rule.getMaxNightsCap() > 0 ? rule.getMaxNightsCap() : totalNights;
-        }
+        int effectiveCap = rule.getMaxNightsCap();
 
         long chargeableNights = Math.min(totalNights, effectiveCap);
 
