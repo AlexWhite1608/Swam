@@ -29,7 +29,25 @@ export default function RootLayout({
             <MainLayout>{children}</MainLayout>
           </ErrorBoundary>
         </QueryProvider>
-        <Toaster />
+        <Toaster
+          position="top-center"
+          toastOptions={{
+            classNames: {
+              toast:
+                "group toast bg-white text-foreground border shadow-lg border-muted/50",
+              description: "!text-foreground",
+              actionButton:
+                "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
+              cancelButton:
+                "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
+              error: "!bg-white !text-red-600",
+              success: "!bg-white !text-green-600",
+              warning: "!bg-white !text-yellow-600",
+              info: "!bg-white !text-blue-600",
+            },
+          }}
+          duration={3000}
+        />
       </body>
     </html>
   );

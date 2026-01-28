@@ -30,13 +30,10 @@ public class Guest {
     @Email(message = "L'email non è valida")
     String email;
 
-    @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Il numero di telefono non è valido")
     String phone;
 
-    @NotBlank(message = "L'indirizzo è obbligatorio")
     String address;
 
-    @NotNull(message = "La data di nascita è obbligatoria")
     @Past(message = "La data di nascita deve essere valida")
     LocalDate birthDate;
 

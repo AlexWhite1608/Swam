@@ -1,5 +1,6 @@
 package com.swam.resource.dto;
 
+import com.swam.shared.enums.ResourceStatus;
 import com.swam.shared.enums.ResourceType;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -17,4 +18,7 @@ public class CreateResourceRequest {
     @NotNull
     @Min(value = 1)
     private Integer capacity;
+
+    @NotNull
+    private ResourceStatus status;
 }

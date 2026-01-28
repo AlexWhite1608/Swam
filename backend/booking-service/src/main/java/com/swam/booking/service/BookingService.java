@@ -16,10 +16,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -36,46 +36,34 @@ public class BookingService {
     @Transactional
     public BookingResponse createBooking(CreateBookingRequest request) {
 
-        // Validazione date
+        // validate input dates
         validateDates(request.getResourceId(), request.getCheckIn(), request.getCheckOut());
 
-        // Creazione Customer
-        CreateCustomerRequest partialCustomer = CreateCustomerRequest.builder()
-                .firstName(request.getGuestFirstName())
-                .lastName(request.getGuestLastName())
-                .email(request.getGuestEmail())
-                .phone(request.getGuestPhone() != null ? request.getGuestPhone() : "")
-                .address(null)
-                .build();
-
-        CustomerResponse customer = customerService.registerOrUpdateCustomer(partialCustomer);
-        Guest snapshot = customerService.createGuestSnapshot(customer);
-
-        // CHIAMATA AL PRICING SERVICE
-        PriceCalculationRequest pricingRequest = PriceCalculationRequest.builder()
-                .resourceId(request.getResourceId())
-                .checkIn(request.getCheckIn())
-                .checkOut(request.getCheckOut())
-                .numAdults(1) // Default 1 adulto
-                .numChildren(0)
-                .numInfants(0)
-                .depositAmount(request.getDepositAmount()) // Passiamo l'acconto
-                .extras(Collections.emptyList()) // Nessun extra alla creazione
-                .build();
-
-        PriceBreakdown initialPrice = pricingClient.calculateQuote(pricingRequest);
-
-        // Salvataggio Booking
+        // create starting booking record with PENDING status
         Booking booking = Booking.builder()
                 .resourceId(request.getResourceId())
                 .checkIn(request.getCheckIn())
                 .checkOut(request.getCheckOut())
                 .status(BookingStatus.PENDING)
                 .paymentStatus(PaymentStatus.UNPAID)
-                .mainGuest(snapshot)
+                .mainGuest(Guest.builder()
+                        .firstName(request.getGuestFirstName())
+                        .lastName(request.getGuestLastName())
+                        .email(request.getGuestEmail())
+                        .phone(request.getGuestPhone())
+                        .guestType(GuestType.ADULT)
+                        .build())
                 .companions(new ArrayList<>())
                 .extras(new ArrayList<>())
-                .priceBreakdown(initialPrice)
+                .priceBreakdown(PriceBreakdown.builder()
+                        .baseAmount(BigDecimal.ZERO)
+                        .depositAmount(request.getDepositAmount())
+                        .taxAmount(BigDecimal.ZERO)
+                        .discountAmount(BigDecimal.ZERO)
+                        .extrasAmount(BigDecimal.ZERO)
+                        .finalTotal(BigDecimal.ZERO)
+                        .taxDescription(null)
+                        .build())
                 .createdAt(LocalDateTime.now())
                 .updatedAt(null)
                 .build();
@@ -88,13 +76,18 @@ public class BookingService {
         Booking booking = getBookingOrThrow(bookingId);
 
         LocalDate today = LocalDate.now();
+        if (booking.getCheckIn().isAfter(today)) {
+            throw new InvalidBookingDateException("Check-in non ancora disponibile");
+        }
 
         if (booking.getStatus() != BookingStatus.CONFIRMED && booking.getStatus() != BookingStatus.PENDING) {
             throw new InvalidBookingDateException("Check-in non valido per lo stato attuale.");
         }
 
-        // Aggiornamento Customer
+        // fills the customer record with complete data
         Customer customerEntity = customerService.getCustomerEntityOrThrow(booking.getMainGuest().getCustomerId());
+
+        // creates a full customer record merging existing and new data
         CreateCustomerRequest fullData = CreateCustomerRequest.builder()
                 .firstName(customerEntity.getFirstName())
                 .lastName(customerEntity.getLastName())
@@ -109,9 +102,11 @@ public class BookingService {
                 .build();
 
         CustomerResponse updatedCustomer = customerService.registerOrUpdateCustomer(fullData);
+
+        // updates guest snapshot
         booking.setMainGuest(customerService.createGuestSnapshot(updatedCustomer));
 
-        // Aggiunta Compagni
+        // adds companions if any
         if (request.getCompanions() != null) {
             List<Guest> companions = request.getCompanions().stream()
                     .map(c -> Guest.builder()
@@ -142,7 +137,7 @@ public class BookingService {
             throw new InvalidBookingDateException("Il Check-out richiede stato CHECKED_IN.");
         }
 
-        // Gestione Extra: Salvataggio locale (Snapshot)
+        // add extras
         List<BookingExtra> finalExtras = processExtras(request.getExtras());
         booking.setExtras(finalExtras);
 
@@ -188,6 +183,28 @@ public class BookingService {
         return mapToResponse(bookingRepository.save(booking));
     }
 
+    public List<BookingResponse> getAllBookings() {
+        return bookingRepository.findAll().stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    // get unavailable periods for a resource
+    public List<UnavailablePeriodResponse> getUnavailablePeriods(String resourceId) {
+        List<Booking> bookings = bookingRepository.findActiveByResourceId(resourceId);
+
+        LocalDate today = LocalDate.now();
+
+        return bookings.stream()
+                // excludes past bookings where check-out is before today
+                .filter(booking -> booking.getCheckOut().isAfter(today))
+                .map(booking -> UnavailablePeriodResponse.builder()
+                        .start(booking.getCheckIn())
+                        .end(booking.getCheckOut())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
     public BookingResponse getBooking(String bookingId) {
         return mapToResponse(getBookingOrThrow(bookingId));
     }
@@ -210,6 +227,7 @@ public class BookingService {
         if (booking.getStatus() != BookingStatus.PENDING)
             throw new IllegalStateException("Solo PENDING può essere confermata");
 
+        // update payment status if deposit has been paid
         if(hasPaidDeposit) {
             booking.setPaymentStatus(PaymentStatus.DEPOSIT_PAID);
         }
@@ -219,6 +237,7 @@ public class BookingService {
         return mapToResponse(bookingRepository.save(booking));
     }
 
+    // check date validity and availability
     private void validateDates(String resourceId, LocalDate in, LocalDate out) {
         if (!out.isAfter(in))
             throw new InvalidBookingDateException("La data di check-out deve essere successiva alla data di check-in.");

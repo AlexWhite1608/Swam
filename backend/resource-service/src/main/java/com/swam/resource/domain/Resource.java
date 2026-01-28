@@ -25,6 +25,7 @@ public class Resource {
     @Setter
     private int capacity;
 
+    @Setter
     private ResourceStatus status;
 
     public boolean isAvailable() {
