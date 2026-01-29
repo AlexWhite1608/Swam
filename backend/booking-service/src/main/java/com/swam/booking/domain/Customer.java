@@ -29,22 +29,23 @@ public class Customer {
     @Id
     private String id;
 
-    @NotBlank()
+    @NotBlank
     private String firstName;
 
-    @NotBlank()
+    @NotBlank
     private String lastName;
 
-    @NotNull()
+    @NotNull
     private Sex sex;
 
-    @Past(message = "La data di nascita deve essere valida")
+    @NotNull
+    @Past
     private LocalDate birthDate;
 
     private String placeOfBirth;
     private String citizenship;
 
-    @Email()
+    @Email
     private String email;
 
     private String phone;

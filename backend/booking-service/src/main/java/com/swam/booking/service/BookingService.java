@@ -166,56 +166,54 @@ public class BookingService {
     public BookingResponse checkIn(String bookingId, CheckInRequest request) {
         Booking booking = getBookingOrThrow(bookingId);
 
-        LocalDate today = LocalDate.now();
-        if (booking.getCheckIn().isAfter(today)) {
-            throw new InvalidBookingDateException("Check-in non ancora disponibile");
+        if (booking.getStatus() == BookingStatus.CHECKED_IN) {
+            throw new IllegalStateException("La prenotazione ha già effettuato il check-in.");
         }
-
         if (booking.getStatus() != BookingStatus.CONFIRMED && booking.getStatus() != BookingStatus.PENDING) {
             throw new InvalidBookingDateException("Check-in non valido per lo stato attuale.");
         }
 
-        // fills the customer record with complete data
-        Customer customerEntity = customerService.getCustomerEntityOrThrow(booking.getMainGuest().getCustomerId());
-
-        // creates a full customer record merging existing and new data
-        CreateCustomerRequest fullData = CreateCustomerRequest.builder()
-                .firstName(customerEntity.getFirstName())
-                .lastName(customerEntity.getLastName())
-                .email(customerEntity.getEmail())
-                .phone(request.getPhone())
-                .address(request.getAddress())
+        // main guest
+        CreateCustomerRequest mainGuestData = CreateCustomerRequest.builder()
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .sex(request.getSex())
                 .birthDate(request.getBirthDate())
+                .email(request.getEmail())
+                .phone(request.getPhone())
+                .placeOfBirth(request.getPlaceOfBirth())
+                .citizenship(request.getCitizenship())
                 .documentType(request.getDocumentType())
                 .documentNumber(request.getDocumentNumber())
-                .country(request.getCountry())
+                .documentPlaceOfIssue(request.getDocumentPlaceOfIssue())
                 .guestType(request.getGuestType())
+                .notes(request.getNotes())
                 .build();
 
-        CustomerResponse updatedCustomer = customerService.registerOrUpdateCustomer(fullData);
+        CustomerResponse mainCustomer = customerService.registerOrUpdateCustomer(mainGuestData);
 
-        // updates guest snapshot
-        booking.setMainGuest(customerService.createGuestSnapshot(updatedCustomer));
+        // main guest snapshot for booking, adds guestRole
+        Guest mainGuestSnapshot = customerService.createGuestSnapshot(mainCustomer, request.getGuestRole());
+        booking.setMainGuest(mainGuestSnapshot);
 
-        // adds companions if any
+        // companions data
+        List<Guest> companionSnapshots = new ArrayList<>();
+
         if (request.getCompanions() != null) {
-            List<Guest> companions = request.getCompanions().stream()
-                    .map(c -> Guest.builder()
-                            .firstName(c.getFirstName())
-                            .lastName(c.getLastName())
-                            .birthDate(c.getBirthDate())
-                            .guestType(c.getGuestType())
-                            .address(booking.getMainGuest().getAddress())
-                            .email("") // FIXME: da richiedere?
-                            .phone("") // FIXME: da richiedere?
-                            .documentNumber("") // FIXME: da richiedere?
-                            .build())
-                    .collect(Collectors.toList());
-            booking.setCompanions(companions);
+            for (CheckInRequest.CompanionData compData : request.getCompanions()) {
+
+                // register companion data
+                CustomerResponse compCustomer = customerService.registerOrUpdateCompanion(compData);
+
+                // companion snapshot
+                Guest companionSnapshot = customerService.createGuestSnapshot(compCustomer, compData.getGuestRole());
+
+                companionSnapshots.add(companionSnapshot);
+            }
         }
+        booking.setCompanions(companionSnapshots);
 
-        //TODO: GESTIONE ANAGRAFICA COMPANIONS
-
+        // status update
         booking.setStatus(BookingStatus.CHECKED_IN);
         booking.setUpdatedAt(LocalDateTime.now());
 

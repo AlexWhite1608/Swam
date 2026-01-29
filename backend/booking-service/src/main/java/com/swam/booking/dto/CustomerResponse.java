@@ -2,6 +2,7 @@ package com.swam.booking.dto;
 
 import com.swam.shared.enums.DocumentType;
 import com.swam.shared.enums.GuestType;
+import com.swam.shared.enums.Sex;
 import lombok.Builder;
 import lombok.Data;
 
@@ -11,15 +12,22 @@ import java.time.LocalDate;
 @Builder
 public class CustomerResponse {
     private String id;
+
     private String firstName;
     private String lastName;
+    private Sex sex;
+
     private String email;
     private String phone;
-    private String address;
+
     private LocalDate birthDate;
-    private String country;
+    private String placeOfBirth;
+    private String citizenship;
+
     private String documentNumber;
     private DocumentType documentType;
+    private String documentPlaceOfIssue;
+
     private GuestType guestType;
     private String notes;
 }
