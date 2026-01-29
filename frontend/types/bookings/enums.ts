@@ -16,7 +16,7 @@ export const PaymentStatus = {
 export const DocumentType = {
   ID_CARD: "ID_CARD",
   PASSPORT: "PASSPORT",
-  DRIVING_LICENSE: "DRIVING_LICENSE",
+  DRIVER_LICENSE: "DRIVER_LICENSE",
   OTHER: "OTHER",
 } as const;
 
