@@ -13,7 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { useConfirmBooking } from "@/hooks/tanstack-query/useBookings";
 import { useResource } from "@/hooks/tanstack-query/useResources";
 import { NAV_ITEMS } from "@/lib/navigation";
-import { Booking } from "@/schemas/bookingsSchema";
+import { Booking } from "@/schemas/createBookingSchema";
 
 interface ConfirmBookingDialogProps {
   isOpen: boolean;

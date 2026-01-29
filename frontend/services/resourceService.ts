@@ -1,5 +1,5 @@
 import { api } from "@/lib/api";
-import { Resource, ResourceStatus, ResourceType } from "@/schemas/resourcesSchema";
+import { Resource, ResourceStatus, ResourceType } from "@/schemas/createResourceSchema";
 
 interface SearchResourcesParams {
   type?: ResourceType;

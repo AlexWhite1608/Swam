@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 // create booking form schema with essential fields only
-export const createBookingFormSchema = z
+export const createBookingSchema = z
   .object({
     resourceId: z.string().min(1, "Seleziona una risorsa"),
 

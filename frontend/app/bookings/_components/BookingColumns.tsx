@@ -15,7 +15,7 @@ import {
   Users,
 } from "lucide-react";
 
-import { Resource } from "@/schemas/resourcesSchema";
+import { Resource } from "@/schemas/createResourceSchema";
 
 import { BookingStatusBadge } from "@/components/common/badges/BookingStatusBadge";
 import { PaymentStatusBadge } from "@/components/common/badges/PaymentStatusBadge";
@@ -36,7 +36,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { dateRangeFilterFn, formatCurrency } from "@/lib/utils";
-import { Booking } from "@/schemas/bookingsSchema";
+import { Booking } from "@/schemas/createBookingSchema";
 
 interface GetBookingColumnsProps {
   resources: Resource[];

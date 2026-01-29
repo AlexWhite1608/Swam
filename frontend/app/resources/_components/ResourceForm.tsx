@@ -22,7 +22,7 @@ import {
   useCreateResource,
   useUpdateResource,
 } from "@/hooks/tanstack-query/useResources";
-import { resourceSchema } from "@/schemas/resourcesSchema";
+import { createResourceSchema } from "@/schemas/createResourceSchema";
 import { ResourceStatus } from "@/types/resources/enums";
 import { resourceStatusOptions, resourceTypeOptions } from "@/types/resources/options";
 import { Resource } from "@/types/resources/types";
@@ -51,7 +51,7 @@ export function ResourceForm({
 
   // form setup
   const form = useForm<Resource>({
-    resolver: zodResolver(resourceSchema),
+    resolver: zodResolver(createResourceSchema),
     defaultValues: initialData || {
       id: "",
       name: "",

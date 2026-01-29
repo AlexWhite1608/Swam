@@ -1,7 +1,7 @@
 "use client";
 
 import { BaseDataDialog } from "@/components/dialog/BaseDataDialog";
-import { Resource } from "@/schemas/resourcesSchema";
+import { Resource } from "@/schemas/createResourceSchema";
 import { ResourceForm } from "./ResourceForm";
 
 interface ResourceDialogProps {
