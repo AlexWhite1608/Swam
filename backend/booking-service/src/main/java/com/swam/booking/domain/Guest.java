@@ -10,51 +10,53 @@ import org.springframework.data.annotation.Id;
 
 import java.time.LocalDate;
 
+@Data
 @Builder(toBuilder = true)
-@Value
+@NoArgsConstructor
+@AllArgsConstructor
 public class Guest {
 
     @Id
-    String id;
-    String customerId;
+    private String id;
+
+    private String customerId;
 
     @NotBlank
-    String firstName;
+    private String firstName;
+
     @NotBlank
-    String lastName;
+    private String lastName;
 
-    @NotNull
-    Sex sex;
+    private Sex sex;
 
-    @NotNull
-    @Past
-    LocalDate birthDate;
+    private LocalDate birthDate;
 
-    String placeOfBirth;
-    String citizenship; // iso code
+    private String placeOfBirth;
+
+    private String citizenship; // iso code
 
     @Email
-    String email;
+    private String email;
 
-    String phone;
+    private String phone;
 
-    DocumentType documentType;
-    String documentNumber;
-    String documentPlaceOfIssue;
+    private DocumentType documentType;
 
-    @NotNull
-    GuestType guestType; // ADULT, CHILD, INFANT
+    private String documentNumber;
 
-    @NotNull
-    GuestRole guestRole; // HEAD_OF_FAMILY, MEMBER, HEAD_OF_GROUP
+    private String documentPlaceOfIssue;
+
+    private GuestType guestType; // ADULT, CHILD, INFANT
+
+    private GuestRole guestRole; // HEAD_OF_FAMILY, MEMBER, HEAD_OF_GROUP
 
     @Min(1)
-    Integer daysOfStay; // effective days of stay, used for city tax calculation
+    private Integer daysOfStay; // effective days of stay, used for city tax calculation
 
     @Builder.Default
-    boolean taxExempt = false;
+    private boolean taxExempt = false;
 
-    String taxExemptReason;
+    private String taxExemptReason;
 
-    String notes;
+    private String notes;
 }
