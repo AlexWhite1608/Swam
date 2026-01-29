@@ -62,7 +62,7 @@ export default function BookingsPage() {
               <BookingTableFilters table={table} resources={resources} />
             )}
             onBulkDelete={actions.requestBulkDelete}
-            // onRowClick={(row) => actions.openEditDialog(row)}
+            onRowClick={(row) => actions.openEditDialog(row)}
           />
         </div>
       ) : (
