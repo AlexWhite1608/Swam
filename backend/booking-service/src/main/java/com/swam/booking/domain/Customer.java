@@ -55,7 +55,6 @@ public class Customer {
     private String documentPlaceOfIssue;
 
     private GuestType guestType;
-    private String notes;
 
     @CreatedDate
     private LocalDateTime createdAt;

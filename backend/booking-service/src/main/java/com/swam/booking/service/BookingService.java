@@ -187,7 +187,6 @@ public class BookingService {
                 .documentNumber(request.getDocumentNumber())
                 .documentPlaceOfIssue(request.getDocumentPlaceOfIssue())
                 .guestType(request.getGuestType())
-                .notes(request.getNotes())
                 .build();
 
         CustomerResponse mainCustomer = customerService.registerOrUpdateCustomer(mainGuestData);
@@ -195,6 +194,11 @@ public class BookingService {
         // main guest snapshot for booking, adds guestRole
         Guest mainGuestSnapshot = customerService.createGuestSnapshot(mainCustomer, request.getGuestRole());
         booking.setMainGuest(mainGuestSnapshot);
+
+        // set eventual notes
+        if (request.getNotes() != null && !request.getNotes().isBlank()) {
+            booking.setNotes(request.getNotes());
+        }
 
         // companions data
         List<Guest> companionSnapshots = new ArrayList<>();

@@ -1,9 +1,6 @@
 import { api } from "@/lib/api";
-import {
-  Booking,
-  CreateBookingFormValues,
-  PaymentStatus,
-} from "@/schemas/bookingsSchema";
+import { Booking, CreateBookingFormValues } from "@/types/bookings/types";
+import type { PaymentStatusType, SexType, DocumentTypeType, GuestTypeType, GuestRoleType } from "@/types/bookings/types";
 
 export interface CreateBookingPayload {
   resourceId: string;
@@ -16,15 +13,39 @@ export interface CreateBookingPayload {
   depositAmount?: number;
 }
 
-export interface CheckInPayload {
-  phone: string;
-  address: string;
+export interface CheckInCompanion {
+  firstName: string;
+  lastName: string;
+  sex: SexType;
   birthDate: string;
-  documentType: string; // FIXME: usa enum specifica
+  email?: string;
+  phone?: string;
+  placeOfBirth?: string;
+  citizenship?: string;
+  documentType: DocumentTypeType;
   documentNumber: string;
-  country?: string;
-  guestType: string; // FIXME: usa enum specifica
-  companions?: any[]; //FIXME: definisci meglio
+  documentPlaceOfIssue?: string;
+  guestType: GuestTypeType;
+  guestRole: GuestRoleType;
+  notes?: string;
+}
+
+export interface CheckInPayload {
+  firstName: string;
+  lastName: string;
+  sex: SexType;
+  birthDate: string;
+  email?: string;
+  phone: string;
+  placeOfBirth?: string;
+  citizenship?: string;
+  documentType: DocumentTypeType;
+  documentNumber: string;
+  documentPlaceOfIssue?: string;
+  guestType: GuestTypeType;
+  guestRole: GuestRoleType;
+  notes?: string; // refers to the booking
+  companions?: CheckInCompanion[];
 }
 
 export interface UnavailablePeriod {
@@ -144,7 +165,7 @@ export const bookingService = {
     status,
   }: {
     id: string;
-    status: PaymentStatus;
+    status: PaymentStatusType;
   }): Promise<Booking> => {
     const { data } = await api.patch(
       `/api/bookings/${id}/payment-status`,

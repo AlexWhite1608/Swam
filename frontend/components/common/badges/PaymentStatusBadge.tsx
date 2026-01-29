@@ -1,9 +1,15 @@
 import { Badge } from "@/components/ui/badge";
-import { PaymentStatus } from "@/schemas/bookingsSchema";
-import { CheckCircle2, CircleDollarSign, XCircle, RefreshCw } from "lucide-react";
+import { PaymentStatus } from "@/types/bookings/enums";
+import { PaymentStatusType } from "@/types/bookings/types";
+import {
+  CheckCircle2,
+  CircleDollarSign,
+  XCircle,
+  RefreshCw,
+} from "lucide-react";
 
 interface PaymentStatusBadgeProps {
-  status: PaymentStatus | string;
+  status: PaymentStatusType | string;
 }
 
 export function PaymentStatusBadge({ status }: PaymentStatusBadgeProps) {
@@ -38,7 +44,10 @@ export function PaymentStatusBadge({ status }: PaymentStatusBadgeProps) {
   }
 
   return (
-    <Badge variant="outline" className={`${badgeClass} flex items-center gap-1 w-fit`}>
+    <Badge
+      variant="outline"
+      className={`${badgeClass} flex items-center gap-1 w-fit`}
+    >
       <Icon className="h-3 w-3" />
       {label}
     </Badge>

@@ -7,7 +7,7 @@ import {
   useUpdateResourceStatus,
   useBulkDeleteResources,
 } from "@/hooks/tanstack-query/useResources";
-import { Resource, ResourceStatus } from "@/schemas/resourcesSchema";
+import { Resource, ResourceStatus } from "@/schemas/createResourceSchema";
 import { getResourceColumns } from "@/app/resources/_components/ResourceColumns";
 
 export const useResourcesPage = () => {

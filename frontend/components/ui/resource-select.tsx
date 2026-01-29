@@ -8,7 +8,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ResourceStatusBadge } from "@/components/common/badges/ResourceStatusBadge";
-import { Resource } from "@/schemas/resourcesSchema";
+import { Resource } from "@/schemas/createResourceSchema";
 
 interface ResourceSelectProps {
   value?: string;

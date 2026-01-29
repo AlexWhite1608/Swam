@@ -22,13 +22,10 @@ import {
   useCreateResource,
   useUpdateResource,
 } from "@/hooks/tanstack-query/useResources";
-import {
-  Resource,
-  resourceSchema,
-  ResourceStatus,
-  statusOptions,
-  typeOptions,
-} from "@/schemas/resourcesSchema";
+import { createResourceSchema } from "@/schemas/createResourceSchema";
+import { ResourceStatus } from "@/types/resources/enums";
+import { resourceStatusOptions, resourceTypeOptions } from "@/types/resources/options";
+import { Resource } from "@/types/resources/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, PlusCircle, Save } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -54,7 +51,7 @@ export function ResourceForm({
 
   // form setup
   const form = useForm<Resource>({
-    resolver: zodResolver(resourceSchema),
+    resolver: zodResolver(createResourceSchema),
     defaultValues: initialData || {
       id: "",
       name: "",
@@ -114,7 +111,7 @@ export function ResourceForm({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {typeOptions.map((option) => (
+                    {resourceTypeOptions.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
                       </SelectItem>
@@ -163,7 +160,7 @@ export function ResourceForm({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {statusOptions.map((option) => (
+                    {resourceStatusOptions.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         <div className="flex items-center gap-2">
                           {option.icon && <option.icon className="h-4 w-4 hover:text-foreground" />}

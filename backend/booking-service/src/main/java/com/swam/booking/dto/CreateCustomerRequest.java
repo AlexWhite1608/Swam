@@ -38,10 +38,7 @@ public class CreateCustomerRequest {
 
     private String placeOfBirth;
 
-    private String provinceOfBirth;
-
     private String citizenship;
-
 
     private String documentNumber;
     private DocumentType documentType;
@@ -52,6 +49,4 @@ public class CreateCustomerRequest {
 
     @NotNull
     private GuestRole guestRole;
-
-    private String notes;
 }

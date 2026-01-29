@@ -30,9 +30,9 @@ import { Separator } from "@/components/ui/separator";
 import { useDisabledDays } from "@/hooks/useDisabledDays";
 import {
   Booking,
-  createBookingFormSchema,
+  createBookingSchema,
   CreateBookingFormValues,
-} from "@/schemas/bookingsSchema";
+} from "@/schemas/createBookingSchema";
 import italialLabels from "react-phone-number-input/locale/it.json";
 
 interface BookingFormProps {
@@ -53,7 +53,7 @@ export function BookingForm({
   const isEditMode = !!booking;
 
   const form = useForm<CreateBookingFormValues>({
-    resolver: zodResolver(createBookingFormSchema),
+    resolver: zodResolver(createBookingSchema),
 
     // check if edit mode to set and populate default values
     defaultValues: isEditMode

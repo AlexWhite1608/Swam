@@ -1,6 +1,6 @@
 import { getErrorMessage } from "@/lib/api";
 import { resourceKeys } from "@/lib/query-keys";
-import { ResourceStatus } from "@/schemas/resourcesSchema";
+import { ResourceStatus } from "@/schemas/createResourceSchema";
 import { resourceService } from "@/services/resourceService";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";

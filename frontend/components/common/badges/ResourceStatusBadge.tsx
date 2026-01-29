@@ -1,8 +1,10 @@
 import { Badge } from "@/components/ui/badge";
-import { ResourceStatus, statusOptions } from "@/schemas/resourcesSchema";
+import { ResourceStatus } from "@/types/resources/enums";
+import { resourceStatusOptions } from "@/types/resources/options";
+import { ResourceStatusType } from "@/types/resources/types";
 
 interface ResourceStatusBadgeProps {
-  status: ResourceStatus | string;
+  status: ResourceStatusType | string;
   showIcon?: boolean;
 }
 
@@ -10,7 +12,7 @@ export function ResourceStatusBadge({
   status,
   showIcon = true,
 }: ResourceStatusBadgeProps) {
-  const statusObj = statusOptions.find((s) => s.value === status);
+  const statusObj = resourceStatusOptions.find((s) => s.value === status);
   if (!statusObj) return null;
 
   let badgeClass = "";

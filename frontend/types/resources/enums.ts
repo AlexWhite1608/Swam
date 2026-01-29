@@ -1,0 +1,13 @@
+export const ResourceType = {
+  DOUBLE_ROOM: "DOUBLE_ROOM",
+  SINGLE_ROOM: "SINGLE_ROOM",
+  SUITE: "SUITE",
+  CAMPSITE_PITCH: "CAMPSITE_PITCH",
+  APARTMENT: "APARTMENT",
+} as const;
+
+export const ResourceStatus = {
+  AVAILABLE: "AVAILABLE",
+  MAINTENANCE: "MAINTENANCE",
+  OUT_OF_ORDER: "OUT_OF_ORDER",
+} as const;

@@ -4,13 +4,13 @@ import { useMemo, useState } from "react";
 
 import { useResources } from "@/hooks/tanstack-query/useResources";
 import { getBookingColumns } from "@/app/bookings/_components/BookingColumns";
-import { Booking } from "@/schemas/bookingsSchema";
 import {
   useBookings,
   useBulkDeleteBookings,
   useCancelBooking,
   useDeleteBooking,
 } from "../tanstack-query/useBookings";
+import { Booking } from "@/types/bookings/types";
 
 // booking dialog mode types
 export type BookingDialogMode = "CREATE" | "EDIT" | "CHECKIN" | "CHECKOUT";
