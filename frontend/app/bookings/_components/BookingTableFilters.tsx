@@ -1,16 +1,15 @@
 import { Table } from "@tanstack/react-table";
-import * as React from "react";
 import { DateRange } from "react-day-picker";
 
-import { DateRangePicker } from "@/components/ui/date-range-picker";
 import {
   DataTableFacetedFilter,
   FilterSection,
 } from "@/components/data-table/data-table-faceted-filter";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 import {
   bookingStatusOptions,
   paymentStatusOptions,
-} from "@/schemas/bookingsSchema";
+} from "@/types/bookings/options";
 
 export interface BookingTableFiltersProps<TData> {
   table: Table<TData>;

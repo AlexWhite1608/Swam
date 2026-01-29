@@ -1,9 +1,10 @@
 "use client";
 
 import { BookingDialogMode } from "@/hooks/pages/useBookingPage";
-import { Booking, BookingStatus } from "@/schemas/bookingsSchema";
 import { BaseDataDialog } from "@/components/dialog/BaseDataDialog";
 import { BookingForm } from "./BookingForm";
+import { BookingStatus } from "@/types/bookings/enums";
+import { Booking } from "@/types/bookings/types";
 
 //FIXME: Placeholder per i form futuri
 const FullEditForm = ({ booking }: { booking: Booking }) => (

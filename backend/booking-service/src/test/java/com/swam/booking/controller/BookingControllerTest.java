@@ -124,7 +124,6 @@ class BookingControllerTest {
                 .documentNumber("AB12345")
                 .guestType(GuestType.ADULT)
                 .guestRole(GuestRole.HEAD_OF_FAMILY)
-                .notes("Check-in test")
                 .build();
 
         BookingResponse response = BookingResponse.builder()

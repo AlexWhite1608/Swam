@@ -1,9 +1,10 @@
 import { Badge } from "@/components/ui/badge";
-import { BookingStatus } from "@/schemas/bookingsSchema";
+import { BookingStatus } from "@/types/bookings/enums";
+import { BookingStatusType } from "@/types/bookings/types";
 import { Clock, CheckCircle2, LogIn, LogOut, XCircle } from "lucide-react";
 
 interface BookingStatusBadgeProps {
-  status: BookingStatus | string;
+  status: BookingStatusType | string;
 }
 
 export function BookingStatusBadge({ status }: BookingStatusBadgeProps) {
@@ -43,7 +44,10 @@ export function BookingStatusBadge({ status }: BookingStatusBadgeProps) {
   }
 
   return (
-    <Badge variant="outline" className={`${badgeClass} flex items-center gap-1 w-fit`}>
+    <Badge
+      variant="outline"
+      className={`${badgeClass} flex items-center gap-1 w-fit`}
+    >
       <Icon className="h-3 w-3" />
       {label}
     </Badge>
