@@ -1,13 +1,14 @@
 package com.swam.booking.domain;
 
 import com.swam.shared.enums.DocumentType;
+import com.swam.shared.enums.GuestRole;
 import com.swam.shared.enums.GuestType;
+import com.swam.shared.enums.Sex;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 
 import java.time.LocalDate;
-import java.time.Period;
 
 @Builder(toBuilder = true)
 @Value
@@ -15,34 +16,45 @@ public class Guest {
 
     @Id
     String id;
-
-    // reference to customer id in customers collection
     String customerId;
 
-    @NotBlank(message = "Il nome è obbligatorio")
-    @Size(min = 2, max = 50, message = "Il nome deve essere tra 2 e 50 caratteri")
+    @NotBlank
     String firstName;
-
-    @NotBlank(message = "Il cognome è obbligatorio")
-    @Size(min = 2, max = 50, message = "Il cognome deve essere tra 2 e 50 caratteri")
+    @NotBlank
     String lastName;
 
-    @Email(message = "L'email non è valida")
+    @NotNull
+    Sex sex;
+
+    @NotNull
+    @Past
+    LocalDate birthDate;
+
+    String placeOfBirth;
+    String citizenship; // iso code
+
+    @Email
     String email;
 
     String phone;
 
-    String address;
-
-    @Past(message = "La data di nascita deve essere valida")
-    LocalDate birthDate;
-
     DocumentType documentType;
-
     String documentNumber;
+    String documentPlaceOfIssue;
 
-    @NotNull(message = "Il tipo di ospite è obbligatorio")
-    GuestType guestType;
+    @NotNull
+    GuestType guestType; // ADULT, CHILD, INFANT
+
+    @NotNull
+    GuestRole guestRole; // HEAD_OF_FAMILY, MEMBER, HEAD_OF_GROUP
+
+    @Min(1)
+    Integer daysOfStay; // effective days of stay, used for city tax calculation
+
+    @Builder.Default
+    boolean taxExempt = false;
+
+    String taxExemptReason;
 
     String notes;
 }
