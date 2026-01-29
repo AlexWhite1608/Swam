@@ -52,6 +52,4 @@ public class CreateCustomerRequest {
 
     @NotNull
     private GuestRole guestRole;
-
-    private String notes;
 }

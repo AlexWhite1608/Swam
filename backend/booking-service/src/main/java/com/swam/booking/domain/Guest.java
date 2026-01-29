@@ -57,6 +57,4 @@ public class Guest {
     private boolean taxExempt = false;
 
     private String taxExemptReason;
-
-    private String notes;
 }

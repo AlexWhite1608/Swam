@@ -29,5 +29,4 @@ public class CustomerResponse {
     private String documentPlaceOfIssue;
 
     private GuestType guestType;
-    private String notes;
 }

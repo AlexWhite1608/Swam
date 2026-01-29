@@ -61,7 +61,7 @@ public class CheckInRequest {
     @NotNull
     GuestRole guestRole;
 
-    private String notes;
+    private String notes; // refers to booking notes
 
     // reduced fields for companions
     @Data

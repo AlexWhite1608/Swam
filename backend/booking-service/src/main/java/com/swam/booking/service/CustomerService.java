@@ -137,8 +137,6 @@ public class CustomerService {
 
                 .guestType(customer.getGuestType())
                 .guestRole(role) // guestRole injection for booking infos
-
-                .notes(customer.getNotes())
                 .build();
     }
 
@@ -162,7 +160,6 @@ public class CustomerService {
                 .documentType(c.getDocumentType())
                 .documentPlaceOfIssue(c.getDocumentPlaceOfIssue())
                 .guestType(c.getGuestType())
-                .notes(c.getNotes())
                 .build();
     }
 
@@ -180,7 +177,6 @@ public class CustomerService {
                 .documentType(r.getDocumentType())
                 .documentPlaceOfIssue(r.getDocumentPlaceOfIssue())
                 .guestType(r.getGuestType())
-                .notes(r.getNotes())
                 .build();
     }
 
@@ -198,6 +194,5 @@ public class CustomerService {
         t.setDocumentType(s.getDocumentType());
         t.setDocumentPlaceOfIssue(s.getDocumentPlaceOfIssue());
         t.setGuestType(s.getGuestType());
-        t.setNotes(s.getNotes());
     }
 }
