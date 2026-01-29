@@ -35,7 +35,7 @@ public class BookingService {
     public BookingResponse createBooking(CreateBookingRequest request) {
 
         // validate input dates
-        validateDates(request.getResourceId(), request.getCheckIn(), request.getCheckOut());
+        validateDates(request.getResourceId(), request.getCheckIn(), request.getCheckOut(), null);
 
         // create starting booking record with PENDING status
         Booking booking = Booking.builder()
@@ -67,6 +67,99 @@ public class BookingService {
                 .build();
 
         return mapToResponse(bookingRepository.save(booking));
+    }
+
+    @Transactional
+    public BookingResponse updateBooking(String bookingId, CreateBookingRequest request) {
+        Booking booking = getBookingOrThrow(bookingId);
+
+        if (booking.getStatus() == BookingStatus.CANCELLED || booking.getStatus() == BookingStatus.CHECKED_OUT) {
+            throw new IllegalStateException("Non può essere modificata una prenotazione conclusa o cancellata.");
+        }
+
+        // check if dates or resource have changed
+        boolean datesChanged = !booking.getCheckIn().equals(request.getCheckIn()) ||
+                !booking.getCheckOut().equals(request.getCheckOut());
+        boolean resourceChanged = !booking.getResourceId().equals(request.getResourceId());
+
+        if (datesChanged || resourceChanged) {
+            // cannot move check-in date to future if already checked-in
+            if (booking.getStatus() == BookingStatus.CHECKED_IN && request.getCheckIn().isAfter(LocalDate.now())) {
+                throw new InvalidBookingDateException("Non puoi spostare il check-in nel futuro se l'ospite è già in struttura.");
+            }
+
+            // check availability for new dates/resource (excluding current booking)
+            validateDates(request.getResourceId(), request.getCheckIn(), request.getCheckOut(), bookingId);
+        }
+
+        // update resource and dates
+        booking.setResourceId(request.getResourceId());
+        booking.setCheckIn(request.getCheckIn());
+        booking.setCheckOut(request.getCheckOut());
+
+        // get current guest snapshot with validation
+        Guest currentGuest = getGuest(request, booking);
+
+        // update new guest snapshot
+        Guest updatedGuest = currentGuest.toBuilder()
+                .firstName(request.getGuestFirstName())
+                .lastName(request.getGuestLastName())
+                .email(request.getGuestEmail())
+                .phone(request.getGuestPhone())
+                .build();
+
+        booking.setMainGuest(updatedGuest);
+
+        // customer sync (if linked)
+        if (updatedGuest.getCustomerId() != null) {
+            // TODO: Implementare aggiornamento anagrafica cliente nella tabella Customer?
+        }
+
+        // update deposit amount
+        booking.getPriceBreakdown().setDepositAmount(request.getDepositAmount());
+
+        booking.setUpdatedAt(LocalDateTime.now());
+        return mapToResponse(bookingRepository.save(booking));
+    }
+
+    // cancels an existing booking by setting its status to CANCELLED
+    @Transactional
+    public BookingResponse cancelBooking(String bookingId) {
+        Booking booking = getBookingOrThrow(bookingId);
+
+        if (booking.getStatus() == BookingStatus.CANCELLED) {
+            throw new IllegalStateException("La prenotazione è già stata cancellata.");
+        }
+
+        // cannot cancel a booking that has already been checked out or checked in
+        if (booking.getStatus() == BookingStatus.CHECKED_OUT || booking.getStatus() == BookingStatus.CHECKED_IN) {
+            throw new IllegalStateException("Non puoi annullare una prenotazione già conclusa.");
+        }
+
+        booking.setStatus(BookingStatus.CANCELLED);
+        booking.setUpdatedAt(LocalDateTime.now());
+
+        return mapToResponse(bookingRepository.save(booking));
+    }
+
+    // soft delete of the selected booking
+    @Transactional
+    public void deleteBooking(String bookingId) {
+        if (!bookingRepository.existsById(bookingId)) {
+            throw new ResourceNotFoundException("Risorsa non trovata: " + bookingId);
+        }
+        bookingRepository.deleteById(bookingId);
+    }
+
+    // bulk delete bookings
+    @Transactional
+    public void deleteBookings(List<String> ids) {
+        // if the list is null or empty, do nothing
+        if (ids == null || ids.isEmpty()) {
+            return;
+        }
+
+        bookingRepository.deleteAllById(ids);
     }
 
     @Transactional
@@ -167,15 +260,17 @@ public class BookingService {
                 .collect(Collectors.toList());
     }
 
-    // get unavailable periods for a resource
-    public List<UnavailablePeriodResponse> getUnavailablePeriods(String resourceId) {
+    // get unavailable periods for a resource (excluding optional booking)
+    public List<UnavailablePeriodResponse> getUnavailablePeriods(String resourceId, String excludeBookingId) {
         List<Booking> bookings = bookingRepository.findActiveByResourceId(resourceId);
 
         LocalDate today = LocalDate.now();
 
         return bookings.stream()
-                // excludes past bookings where check-out is before today
+                // exclude past bookings
                 .filter(booking -> booking.getCheckOut().isAfter(today))
+                // exclude the specified booking if provided (in case of editing)
+                .filter(booking -> !booking.getId().equals(excludeBookingId))
                 .map(booking -> UnavailablePeriodResponse.builder()
                         .start(booking.getCheckIn())
                         .end(booking.getCheckOut())
@@ -202,26 +297,58 @@ public class BookingService {
     @Transactional
     public BookingResponse confirmBooking(String bookingId, boolean hasPaidDeposit) {
         Booking booking = getBookingOrThrow(bookingId);
-        if (booking.getStatus() != BookingStatus.PENDING)
-            throw new IllegalStateException("Solo PENDING può essere confermata");
 
-        // update payment status if deposit has been paid
-        if(hasPaidDeposit) {
+        if (booking.getStatus() != BookingStatus.PENDING)
+            throw new IllegalStateException("Impossibile confermare una prenotazione che non è in attesa.");
+
+        BigDecimal depositAmount = booking.getPriceBreakdown().getDepositAmount();
+        boolean hasDepositToPay = depositAmount != null && depositAmount.compareTo(BigDecimal.ZERO) > 0;
+
+        // set payment status based on deposit payment
+        if (hasPaidDeposit && hasDepositToPay) {
             booking.setPaymentStatus(PaymentStatus.DEPOSIT_PAID);
         }
 
+        // update booking status to CONFIRMED
         booking.setStatus(BookingStatus.CONFIRMED);
         booking.setUpdatedAt(LocalDateTime.now());
         return mapToResponse(bookingRepository.save(booking));
     }
 
-    // check date validity and availability
-    private void validateDates(String resourceId, LocalDate in, LocalDate out) {
-        if (!out.isAfter(in))
+    // checks date validity and availability
+    private void validateDates(String resourceId, LocalDate in, LocalDate out, String excludeBookingId) {
+        if (!out.isAfter(in)) {
             throw new InvalidBookingDateException("La data di check-out deve essere successiva alla data di check-in.");
-        if (!bookingRepository.findOverlaps(resourceId, in, out).isEmpty()) {
+        }
+
+        List<Booking> overlaps;
+
+        if (excludeBookingId == null) {
+            // case of creation: no booking to exclude
+            overlaps = bookingRepository.findOverlaps(resourceId, in, out);
+        } else {
+            // case of update: exclude the current booking from overlap check
+            overlaps = bookingRepository.findOverlapsExcluding(resourceId, in, out, excludeBookingId);
+        }
+
+        // if there are overlapping bookings, throw exception
+        if (!overlaps.isEmpty()) {
             throw new SlotNotAvailableException(resourceId);
         }
+    }
+
+    // retrieves the current guest and performs validation for check-in status
+    private static Guest getGuest(CreateBookingRequest request, Booking booking) {
+        Guest currentGuest = booking.getMainGuest();
+
+        // Validazione specifica per Check-in
+        if (booking.getStatus() == BookingStatus.CHECKED_IN) {
+            if (!currentGuest.getFirstName().equals(request.getGuestFirstName()) ||
+                    !currentGuest.getLastName().equals(request.getGuestLastName())) {
+                throw new IllegalStateException("Non può essere cambiato il titolare della prenotazione dopo il check-in. ");
+            }
+        }
+        return currentGuest;
     }
 
     private List<BookingExtra> processExtras(List<CheckOutRequest.ConsumedExtra> requestExtras) {

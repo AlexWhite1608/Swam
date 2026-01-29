@@ -86,16 +86,16 @@ export default function ResourcesPage() {
         isOpen={dialogs.isDeleteOpen}
         onClose={() => actions.setDeleteOpen(false)}
         onConfirm={actions.confirmDelete}
-        title="Elimina Risorsa"
+        title="Rimuovi Risorsa"
         description={
           <>
-            Sei sicuro di voler eliminare{" "}
-            <strong>{selections.resourceToDelete?.name}</strong>? Questa azione
+            Sei sicuro di voler rimuovere{" "}
+            <strong>{selections.resourceToDelete?.name}</strong> dal sistema? Questa azione
             è irreversibile.
           </>
         }
         variant="destructive"
-        confirmText="Elimina"
+        confirmText="Rimuovi"
         isLoading={isDeleting}
       />
 
@@ -105,17 +105,17 @@ export default function ResourcesPage() {
         isOpen={dialogs.isBulkDeleteOpen}
         onClose={() => actions.setBulkDeleteOpen(false)}
         onConfirm={actions.confirmBulkDelete}
-        title="Elimina risorse selezionate"
+        title="Rimuovi risorse selezionate"
         description={
           <>
-            Stai per eliminare{" "}
+            Stai per rimuovere dal sistema{" "}
             <strong>{selections.resourcesToBulkDelete.length}</strong> risors
             {selections.resourcesToBulkDelete.length > 1 ? "e" : "a"}. Questa
             azione è irreversibile.
           </>
         }
         variant="destructive"
-        confirmText="Elimina"
+        confirmText="Rimuovi"
         isLoading={isBulkDeleting}
       />
     </div>

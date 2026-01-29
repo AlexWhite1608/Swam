@@ -179,7 +179,7 @@ export const getResourceColumns = ({
               className="text-red-600 focus:text-red-600 focus:bg-red-50"
             >
               <Trash className="h-4 w-4 text-red-600/70" />
-              Cancella
+              Rimuovi
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

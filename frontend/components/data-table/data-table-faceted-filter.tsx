@@ -68,7 +68,7 @@ export function DataTableFacetedFilter<TData, TValue>({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className={cn("h-9", className)}>
+        <Button variant="outline" size="sm" className={cn("h-8", className)}>
           {hasIcon && <Filter className=" h-4 w-4" />}
           {title}
 
@@ -82,7 +82,7 @@ export function DataTableFacetedFilter<TData, TValue>({
               >
                 {selectedValues.size}
               </Badge>
-              <div className="hidden space-x-1 lg:flex">
+              <div className="hidden space-x-1 lg:flex min-w-0 flex-1">
                 {selectedValues.size > 2 ? (
                   <Badge
                     variant="outline"
@@ -97,9 +97,10 @@ export function DataTableFacetedFilter<TData, TValue>({
                       <Badge
                         variant="outline"
                         key={option.value}
-                        className="rounded-sm px-1 font-normal"
+                        className="rounded-sm px-1 font-normal max-w-[120px]"
+                        title={option.label}
                       >
-                        {option.label}
+                        <span className="truncate block">{option.label}</span>
                       </Badge>
                     ))
                 )}
@@ -112,10 +113,13 @@ export function DataTableFacetedFilter<TData, TValue>({
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0" align="start">
+      <PopoverContent
+        className="w-[250px] p-0 max-h-[400px] overflow-hidden"
+        align="start"
+      >
         <Command>
           <CommandInput placeholder={title} />
-          <CommandList>
+          <CommandList className="max-h-[350px] overflow-y-auto">
             <CommandEmpty>Nessun risultato</CommandEmpty>
             <CommandGroup>
               {options.map((option) => {
@@ -138,15 +142,17 @@ export function DataTableFacetedFilter<TData, TValue>({
                       "flex justify-between items-center group [&:hover_.check-icon]:text-primary-foreground",
                     )}
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
                       {option.icon && (
-                        <option.icon className="h-4 w-4 hover:text-foreground" />
+                        <option.icon className="h-4 w-4 hover:text-foreground flex-shrink-0" />
                       )}
-                      <span>{option.label}</span>
+                      <span className="truncate" title={option.label}>
+                        {option.label}
+                      </span>
                     </div>
                     <Check
                       className={cn(
-                        "h-4 w-4",
+                        "h-4 w-4 flex-shrink-0 ml-2",
                         isSelected ? "opacity-100" : "opacity-0",
                       )}
                     />

@@ -5,6 +5,8 @@ import { differenceInCalendarDays, format, parseISO } from "date-fns";
 import { it } from "date-fns/locale";
 import {
   ArrowRight,
+  Check,
+  CircleX,
   LogIn,
   LogOut,
   MoreHorizontal,
@@ -42,6 +44,8 @@ interface GetBookingColumnsProps {
   onDelete: (booking: Booking) => void;
   onCheckIn: (booking: Booking) => void;
   onCheckOut: (booking: Booking) => void;
+  onConfirm: (booking: Booking) => void;
+  onCancel: (booking: Booking) => void;
 }
 
 export const getBookingColumns = ({
@@ -50,6 +54,8 @@ export const getBookingColumns = ({
   onDelete,
   onCheckIn,
   onCheckOut,
+  onConfirm,
+  onCancel,
 }: GetBookingColumnsProps): ColumnDef<Booking>[] => [
   // select
   {
@@ -209,7 +215,7 @@ export const getBookingColumns = ({
                     <ul className="list-disc list-inside pl-2">
                       {adults.map((guest, idx) => (
                         <li key={idx}>
-                          {guest.firstName} {guest.lastName}
+                          {guest.lastName} {guest.firstName}
                         </li>
                       ))}
                     </ul>
@@ -224,7 +230,7 @@ export const getBookingColumns = ({
                     <ul className="list-disc list-inside pl-2">
                       {children.map((guest, idx) => (
                         <li key={idx}>
-                          {guest.firstName} {guest.lastName}
+                          {guest.lastName} {guest.firstName}
                         </li>
                       ))}
                     </ul>
@@ -239,7 +245,7 @@ export const getBookingColumns = ({
                     <ul className="list-disc list-inside pl-2">
                       {infants.map((guest, idx) => (
                         <li key={idx}>
-                          {guest.firstName} {guest.lastName}
+                          {guest.lastName} {guest.firstName}
                         </li>
                       ))}
                     </ul>
@@ -338,7 +344,7 @@ export const getBookingColumns = ({
       <div onClick={(e) => e.stopPropagation()}>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
+            <Button variant="outline" className="h-8 w-8 p-0">
               <span className="sr-only">Apri menu</span>
               <MoreHorizontal className="h-4 w-4" />
             </Button>
@@ -348,6 +354,13 @@ export const getBookingColumns = ({
               <Pencil className="h-4 w-4 hover:text-foreground" />
               Modifica
             </DropdownMenuItem>
+
+            {row.original.status === "PENDING" && (
+              <DropdownMenuItem onClick={() => onConfirm(row.original)}>
+                <Check className="h-4 w-4 hover:text-foreground" />
+                Conferma
+              </DropdownMenuItem>
+            )}
 
             {row.original.status === "CONFIRMED" && (
               <DropdownMenuItem onClick={() => onCheckIn(row.original)}>
@@ -363,13 +376,21 @@ export const getBookingColumns = ({
               </DropdownMenuItem>
             )}
 
+            {(row.original.status === "PENDING" ||
+              row.original.status === "CONFIRMED") && (
+              <DropdownMenuItem onClick={() => onCancel(row.original)}>
+                <CircleX className="h-4 w-4 hover:text-foreground" />
+                Cancella Prenotazione
+              </DropdownMenuItem>
+            )}
+
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => onDelete(row.original)}
               className="text-red-600 focus:text-red-600 focus:bg-red-50"
             >
               <Trash className="h-4 w-4 text-red-600/70" />
-              Cancella
+              Rimuovi
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

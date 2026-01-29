@@ -1,23 +1,23 @@
 "use client";
 
-import { BaseDataDialog } from "@/components/dialog/BaseDataDialog";
 import { BookingDialogMode } from "@/hooks/pages/useBookingPage";
-import { Booking } from "@/schemas/bookingsSchema";
+import { Booking, BookingStatus } from "@/schemas/bookingsSchema";
+import { BaseDataDialog } from "@/components/dialog/BaseDataDialog";
 import { BookingForm } from "./BookingForm";
 
-const CheckInForm = () => (
-  <div className="p-4 text-sm text-muted-foreground">
-    Form Check-in (In arrivo...)
+//FIXME: Placeholder per i form futuri
+const FullEditForm = ({ booking }: { booking: Booking }) => (
+  <div className="p-4 bg-purple-50 text-purple-800 rounded">
+    Form di modifica "Full" per {booking.mainGuest.lastName} (Stato:{" "}
+    {booking.status})
+    <br />
+    Tabs: Anagrafica Completa, Documenti, Extra, Estensione Soggiorno.
   </div>
 );
-const CheckOutForm = () => (
-  <div className="p-4 text-sm text-muted-foreground">
-    Form Check-out (In arrivo...)
-  </div>
-);
-const EditBookingForm = () => (
-  <div className="p-4 text-sm text-muted-foreground">
-    Form Edit Completo (In arrivo...)
+
+const ReadOnlyView = ({ booking }: { booking: Booking }) => (
+  <div className="p-4 bg-gray-100 text-gray-800 rounded">
+    Vista dettagli (Sola lettura o correzioni amministrative).
   </div>
 );
 
@@ -58,8 +58,14 @@ export function BookingDialog({
       case "EDIT":
         return {
           title: `Modifica Prenotazione`,
-          description: "Aggiorna i dettagli della prenotazione esistente.",
-          className: "sm:max-w-[600px]",
+          description: booking
+            ? `Gestione prenotazione per ${booking.mainGuest.lastName} ${booking.mainGuest.firstName} `
+            : "Modifica dati",
+          // if checked-in, larger dialog for more complex edit form
+          className:
+            booking?.status === BookingStatus.CHECKED_IN
+              ? "sm:max-w-[800px]"
+              : "sm:max-w-[600px]",
         };
       default:
         return { title: "", description: "", className: "" };
@@ -68,6 +74,7 @@ export function BookingDialog({
 
   const config = getConfig();
 
+  // content renderer
   const renderContent = () => {
     switch (mode) {
       case "CREATE":
@@ -77,15 +84,38 @@ export function BookingDialog({
             onCancel={() => onOpenChange(false)}
           />
         );
-      case "CHECKIN":
-        // return <CheckInForm booking={booking} onSuccess={...} />;
-        return <CheckInForm />;
-      case "CHECKOUT":
-        // return <CheckOutForm booking={booking} onSuccess={...} />;
-        return <CheckOutForm />;
+
       case "EDIT":
-        // return <EditBookingForm booking={booking} onSuccess={...} />;
-        return <EditBookingForm />;
+        if (!booking) return null;
+
+        if (
+          booking.status === BookingStatus.PENDING ||
+          booking.status === BookingStatus.CONFIRMED
+        ) {
+          // simple edit form for pending/confirmed bookings
+          return (
+            <BookingForm
+              booking={booking}
+              onSuccess={() => onOpenChange(false)}
+              onCancel={() => onOpenChange(false)}
+            />
+          );
+        }
+
+        if (booking.status === BookingStatus.CHECKED_IN) {
+          // full edit form for checked-in bookings
+          return <FullEditForm booking={booking} />;
+        }
+
+        // checkout or other statuses - read-only view and small admin corrections
+        return <ReadOnlyView booking={booking} />;
+
+      case "CHECKIN":
+        return <div className="p-4">Wizard Check-in (Da implementare)</div>;
+
+      case "CHECKOUT":
+        return <div className="p-4">Wizard Check-out (Da implementare)</div>;
+
       default:
         return null;
     }

@@ -14,6 +14,7 @@ import { BookingTableToolbar } from "./_components/BookingTableToolbar";
 import { useBookingsPage } from "@/hooks/pages/useBookingPage";
 import { BookingDialog } from "./_components/BookingDialog";
 import { BookingTableFilters } from "./_components/BookingTableFilters";
+import { ConfirmBookingDialog } from "./_components/ConfirmBookingDialog";
 
 export default function BookingsPage() {
   const {
@@ -26,7 +27,10 @@ export default function BookingsPage() {
     dialogs,
     selections,
     isDeleting,
+    isCanceling,
+    isBulkDeleting,
     actions,
+    resetSelectionTrigger,
   } = useBookingsPage();
 
   if (isError) return <Error onRetry={() => refetch()} />;
@@ -50,12 +54,14 @@ export default function BookingsPage() {
       ) : bookings && bookings.length > 0 ? (
         <div className="flex-1 overflow-hidden">
           <DataTable
+            key={resetSelectionTrigger}
             data={bookings}
             columns={columns}
             renderToolbar={(table) => <BookingTableToolbar table={table} />} // search bar
             renderFilters={(table) => (
               <BookingTableFilters table={table} resources={resources} />
             )}
+            onBulkDelete={actions.requestBulkDelete}
             // onRowClick={(row) => actions.openEditDialog(row)}
           />
         </div>
@@ -78,22 +84,69 @@ export default function BookingsPage() {
         booking={selections.selectedBooking}
       />
 
-      {/* Single Delete Confirmation */}
+      {/* Confirm booking dialog */}
+      <ConfirmBookingDialog
+        isOpen={dialogs.isConfirmOpen}
+        onOpenChange={actions.setConfirmOpen}
+        booking={selections.selectedBooking}
+      />
+
+      {/* Single system Delete Confirmation */}
       <ConfirmDialog
         isOpen={dialogs.isDeleteOpen}
         onClose={() => actions.setDeleteOpen(false)}
         onConfirm={actions.confirmDelete}
-        title="Cancella Prenotazione"
+        title="Rimuovi Prenotazione"
         description={
           <>
-            Sei sicuro di voler cancellare la prenotazione a nome di{" "}
+            Sei sicuro di voler rimuovere dal sistema la prenotazione a nome di{" "}
             <strong>{selections.bookingToDelete?.mainGuest.lastName}</strong>?
             Questa azione è irreversibile.
           </>
         }
         variant="destructive"
-        confirmText="Cancella"
+        confirmText="Rimuovi"
         isLoading={isDeleting}
+      />
+
+      {/* cancel booking confirmation */}
+      <ConfirmDialog
+        isOpen={dialogs.isCancelOpen}
+        onClose={() => actions.setCancelOpen(false)}
+        onConfirm={actions.confirmCancel}
+        title="Cancella Prenotazione"
+        description={
+          <>
+            Stai per cancellare la prenotazione di{" "}
+            <strong>{selections.bookingToCancel?.mainGuest.lastName}</strong>.
+            <br className="mb-2" />
+            La prenotazione rimarrà nel sistema con stato{" "}
+            <strong>"CANCELLATA"</strong> ma non sarà più attiva.
+          </>
+        }
+        confirmText="Conferma"
+        isLoading={isCanceling}
+      />
+
+      {/* bulk delete */}
+      <ConfirmDialog
+        key="bulk-delete"
+        isOpen={dialogs.isBulkDeleteOpen}
+        onClose={() => actions.setBulkDeleteOpen(false)}
+        onConfirm={actions.confirmBulkDelete}
+        title="Rimuovi prenotazioni selezionate"
+        description={
+          <>
+            Stai per rimuovere dal sistema{" "}
+            <strong>{selections.bookingsToBulkDelete.length}</strong>{" "}
+            prenotazion
+            {selections.bookingsToBulkDelete.length > 1 ? "i" : "e"}. Questa
+            azione è irreversibile.
+          </>
+        }
+        variant="destructive"
+        confirmText="Rimuovi"
+        isLoading={isBulkDeleting}
       />
     </div>
   );

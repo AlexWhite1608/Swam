@@ -189,7 +189,7 @@ export function DataTable<TData, TValue>({
             onClick={handleBulkDelete}
           >
             <Trash2 className="h-4 w-4" />
-            Cancella ({selectedRows.length})
+            Rimuovi ({selectedRows.length})
           </Button>
         )}
       </div>
