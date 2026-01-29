@@ -97,7 +97,6 @@ public class CustomerService {
             customer.setPlaceOfBirth(data.getPlaceOfBirth());
             customer.setCitizenship(data.getCitizenship());
             customer.setGuestType(data.getGuestType());
-            customer.setNotes(data.getNotes());
             customer.setUpdatedAt(LocalDateTime.now());
             return mapToResponse(customerRepository.save(customer));
         }
@@ -111,7 +110,6 @@ public class CustomerService {
                 .placeOfBirth(data.getPlaceOfBirth())
                 .citizenship(data.getCitizenship())
                 .guestType(data.getGuestType())
-                .notes(data.getNotes())
                 .createdAt(LocalDateTime.now())
                 .build();
 

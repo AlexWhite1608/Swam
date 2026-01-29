@@ -90,7 +90,5 @@ public class CheckInRequest {
 
         @NotNull
         private GuestRole guestRole; // only used for check in data
-
-        private String notes;
     }
 }
