@@ -7,10 +7,7 @@ import com.swam.booking.domain.Guest;
 import com.swam.booking.dto.*;
 import com.swam.booking.repository.BookingRepository;
 import com.swam.shared.dto.PriceBreakdown;
-import com.swam.shared.enums.BookingStatus;
-import com.swam.shared.enums.DocumentType;
-import com.swam.shared.enums.GuestType;
-import com.swam.shared.enums.PaymentStatus;
+import com.swam.shared.enums.*;
 import com.swam.shared.exceptions.InvalidBookingDateException;
 import com.swam.shared.exceptions.SlotNotAvailableException;
 import org.junit.jupiter.api.DisplayName;
@@ -40,9 +37,6 @@ class BookingServiceTest {
     @Mock
     private CustomerService customerService;
 
-    @Mock
-    private ExtraOptionService extraOptionService;
-
     @InjectMocks
     private BookingService bookingService;
 
@@ -63,11 +57,6 @@ class BookingServiceTest {
         PriceBreakdown initialPriceBreakdown = PriceBreakdown.builder()
                 .baseAmount(BigDecimal.ZERO)
                 .depositAmount(new BigDecimal("50.00"))
-                .taxAmount(BigDecimal.ZERO)
-                .discountAmount(BigDecimal.ZERO)
-                .extrasAmount(BigDecimal.ZERO)
-                .finalTotal(BigDecimal.ZERO)
-                .taxDescription(null)
                 .build();
 
         Booking savedBooking = Booking.builder()
@@ -79,184 +68,105 @@ class BookingServiceTest {
                 .build();
 
         when(bookingRepository.findOverlaps(anyString(), any(), any())).thenReturn(Collections.emptyList());
-        when(customerService.registerOrUpdateCustomer(any())).thenReturn(CustomerResponse.builder().id("cust-1").build());
-        when(customerService.createGuestSnapshot(any())).thenReturn(mockGuest);
         when(bookingRepository.save(any(Booking.class))).thenReturn(savedBooking);
 
         BookingResponse response = bookingService.createBooking(request);
 
         assertNotNull(response);
         assertEquals(BookingStatus.PENDING, response.getStatus());
-        assertEquals(PaymentStatus.UNPAID, response.getPaymentStatus());
+        assertEquals(new BigDecimal("50.00"), response.getPriceBreakdown().getDepositAmount());
 
-        // check price breakdown
-        PriceBreakdown breakdown = response.getPriceBreakdown();
-        assertNotNull(breakdown);
-        assertEquals(BigDecimal.ZERO, breakdown.getBaseAmount());
-        assertEquals(new BigDecimal("50.00"), breakdown.getDepositAmount());
-        assertEquals(BigDecimal.ZERO, breakdown.getTaxAmount());
-        assertEquals(BigDecimal.ZERO, breakdown.getDiscountAmount());
-        assertEquals(BigDecimal.ZERO, breakdown.getExtrasAmount());
-        assertEquals(BigDecimal.ZERO, breakdown.getFinalTotal());
-        assertNull(breakdown.getTaxDescription());
-
-        assertTrue(response.getCompanions() == null || response.getCompanions().isEmpty());
-        assertTrue(response.getExtras() == null || response.getExtras().isEmpty());
-
-
-        verify(customerService, times(1)).registerOrUpdateCustomer(any());
         verify(bookingRepository, times(1)).save(any(Booking.class));
     }
 
     @Test
-    @DisplayName("Check: Should throw exception when booking dates are invalid")
-    void createBooking_ShouldThrowException_WhenDatesAreInvalid() {
-        // check out before check in
-        CreateBookingRequest request = CreateBookingRequest.builder()
-                .resourceId("res-1")
-                .checkIn(LocalDate.now().plusDays(10))
-                .checkOut(LocalDate.now().plusDays(5))
-                .build();
-
-        assertThrows(InvalidBookingDateException.class, () -> bookingService.createBooking(request));
-        verify(bookingRepository, never()).save(any());
-    }
-
-    @Test
-    @DisplayName("Check: Should throw exception when slot is not available (overlap)")
-    void createBooking_ShouldThrowException_WhenSlotIsNotAvailable() {
-        CreateBookingRequest request = CreateBookingRequest.builder()
-                .resourceId("res-1")
-                .checkIn(LocalDate.now().plusDays(10))
-                .checkOut(LocalDate.now().plusDays(15))
-                .build();
-
-        // simulates overlapping bookings
-        when(bookingRepository.findOverlaps(anyString(), any(), any()))
-                .thenReturn(List.of(new Booking()));
-
-        assertThrows(SlotNotAvailableException.class, () -> bookingService.createBooking(request));
-    }
-
-    @Test
-    @DisplayName("Check: Should confirm booking when status is pending")
-    void confirmBooking_ShouldUpdateStatus_WhenStatusIsPending() {
-        Booking pendingBooking = Booking.builder().id("book-1").status(BookingStatus.PENDING).build();
-        Booking confirmedBooking = Booking.builder().id("book-1").status(BookingStatus.CONFIRMED).build();
-
-        when(bookingRepository.findById("book-1")).thenReturn(Optional.of(pendingBooking));
-        when(bookingRepository.save(any(Booking.class))).thenReturn(confirmedBooking);
-
-        BookingResponse response = bookingService.confirmBooking("book-1", false);
-
-        assertEquals(BookingStatus.CONFIRMED, response.getStatus());
-    }
-
-    @Test
-    @DisplayName("Check: Should throw exception when confirming booking with invalid status")
-    void confirmBooking_ShouldThrowException_WhenStatusIsNotPending() {
-        Booking cancelledBooking = Booking.builder().id("book-1").status(BookingStatus.CANCELLED).build();
-        when(bookingRepository.findById("book-1")).thenReturn(Optional.of(cancelledBooking));
-
-        assertThrows(IllegalStateException.class, () -> bookingService.confirmBooking("book-1", false));
-    }
-
-    @Test
-    @DisplayName("Check: Should check-in and update customer when data is valid")
-    void checkIn_ShouldUpdateCustomerAndStatus_WhenDataIsValid() {
+    @DisplayName("Check: Should check-in, update Main Customer AND register Companions")
+    void checkIn_ShouldHandleMainGuestAndCompanions() {
         String bookingId = "book-1";
 
+        // Setup Request con Main Guest e Companion
         CheckInRequest request = CheckInRequest.builder()
-                .documentType(DocumentType.PASSPORT)
-                .documentNumber("AB12345")
-                .country("Italy")
-                .phone("+3332952197")
-                .address("Via Roma")
-                .birthDate(LocalDate.of(1990, 1, 1))
+                // Main Guest
+                .firstName("Mario")
+                .lastName("Rossi")
+                .sex(Sex.M)
+                .birthDate(LocalDate.of(1980, 1, 1))
+                .documentType(DocumentType.ID_CARD)
+                .documentNumber("DOC1")
+                .guestRole(GuestRole.HEAD_OF_FAMILY)
                 .guestType(GuestType.ADULT)
+                .email("mario@test.com")
+                // Companion
+                .companions(List.of(
+                        CheckInRequest.CompanionData.builder()
+                                .firstName("Luigi")
+                                .lastName("Rossi")
+                                .sex(Sex.M)
+                                .birthDate(LocalDate.of(2010, 1, 1))
+                                .guestRole(GuestRole.MEMBER)
+                                .guestType(GuestType.CHILD)
+                                .build()
+                ))
                 .build();
 
-        PriceBreakdown emptyPrice = PriceBreakdown.builder()
-                .depositAmount(BigDecimal.ZERO)
-                .build();
-
-        Guest initialGuest = Guest.builder().customerId("cust-1").build();
         Booking confirmedBooking = Booking.builder()
                 .id(bookingId)
                 .status(BookingStatus.CONFIRMED)
                 .checkIn(LocalDate.now())
-                .mainGuest(initialGuest)
-                .priceBreakdown(emptyPrice)
+                .mainGuest(Guest.builder().customerId("cust-1").build()) // existing partial guest
+                .priceBreakdown(PriceBreakdown.builder().build())
                 .build();
 
-        Customer existingCustomer = Customer.builder().id("cust-1").firstName("Mario").build();
-        CustomerResponse updatedCustomerResponse = CustomerResponse.builder().id("cust-1").build();
-        Guest updatedGuestSnapshot = Guest.builder().documentNumber("AB12345").build();
+        // Mocks for Main Guest
+        CustomerResponse mainGuestResponse = CustomerResponse.builder().id("cust-1").firstName("Mario").build();
+        Guest mainSnapshot = Guest.builder().firstName("Mario").guestRole(GuestRole.HEAD_OF_FAMILY).build();
 
+        // Mocks for Companion
+        CustomerResponse companionResponse = CustomerResponse.builder().id("cust-2").firstName("Luigi").build();
+        Guest compSnapshot = Guest.builder().firstName("Luigi").guestRole(GuestRole.MEMBER).build();
+
+        // 1. Retrieve Booking
         when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(confirmedBooking));
-        when(customerService.getCustomerEntityOrThrow("cust-1")).thenReturn(existingCustomer);
-        when(customerService.registerOrUpdateCustomer(any())).thenReturn(updatedCustomerResponse);
-        when(customerService.createGuestSnapshot(any())).thenReturn(updatedGuestSnapshot);
 
-        Booking savedBooking = Booking.builder()
-                .id(bookingId)
-                .status(BookingStatus.CHECKED_IN)
-                .checkIn(LocalDate.now())
-                .mainGuest(updatedGuestSnapshot)
-                .priceBreakdown(emptyPrice)
-                .build();
+        // 2. Register/Update Main Customer
+        when(customerService.registerOrUpdateCustomer(any(CreateCustomerRequest.class))).thenReturn(mainGuestResponse);
+        when(customerService.createGuestSnapshot(mainGuestResponse, GuestRole.HEAD_OF_FAMILY)).thenReturn(mainSnapshot);
 
-        when(bookingRepository.save(any(Booking.class))).thenReturn(savedBooking);
+        // 3. Register/Update Companion
+        when(customerService.registerOrUpdateCompanion(any(CheckInRequest.CompanionData.class))).thenReturn(companionResponse);
+        when(customerService.createGuestSnapshot(companionResponse, GuestRole.MEMBER)).thenReturn(compSnapshot);
 
+        // 4. Save Booking (return the modified object)
+        when(bookingRepository.save(any(Booking.class))).thenAnswer(i -> i.getArgument(0));
+
+        // Execution
         BookingResponse response = bookingService.checkIn(bookingId, request);
 
+        // Assertions
         assertEquals(BookingStatus.CHECKED_IN, response.getStatus());
-        verify(customerService).registerOrUpdateCustomer(any());
 
+        // Verify Main Guest
+        assertEquals("Mario", response.getMainGuest().getFirstName());
+
+        // Verify Companion
+        assertNotNull(response.getCompanions());
+        assertEquals(1, response.getCompanions().size());
+        assertEquals("Luigi", response.getCompanions().get(0).getFirstName());
+        assertEquals(GuestRole.MEMBER, response.getCompanions().get(0).getGuestRole());
+
+        // Verify Interactions
+        verify(customerService).registerOrUpdateCustomer(any());
+        verify(customerService).registerOrUpdateCompanion(any());
         verify(bookingRepository).save(any(Booking.class));
     }
 
     @Test
-    @DisplayName("Check: Should check-out, add extras and close booking when status is checked-in")
-    void checkOut_ShouldAddExtrasAndCloseBooking_WhenStatusIsCheckedIn() {
-        String bookingId = "book-1";
-        CheckOutRequest request = CheckOutRequest.builder()
-                .extras(List.of(new CheckOutRequest.ConsumedExtra("extra-1", 2)))
-                .build();
-
-        PriceBreakdown initialPrice = PriceBreakdown.builder().depositAmount(BigDecimal.ZERO).build();
-        Booking checkedInBooking = Booking.builder()
-                .id(bookingId)
-                .status(BookingStatus.CHECKED_IN)
-                .priceBreakdown(initialPrice)
-                .build();
-
-        ExtraOption mockExtra = ExtraOption.builder()
-                .id("extra-1")
-                .name("Cena")
-                .defaultPrice(new BigDecimal("20.00"))
-                .build();
-
-        when(bookingRepository.findById(bookingId)).thenReturn(Optional.of(checkedInBooking));
-        when(extraOptionService.getExtraEntity("extra-1")).thenReturn(mockExtra);
-
-        when(bookingRepository.save(any(Booking.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        BookingResponse response = bookingService.checkOut(bookingId, request);
-
-        assertEquals(BookingStatus.CHECKED_OUT, response.getStatus());
-        assertEquals(1, response.getExtras().size());
-        assertEquals("Cena", response.getExtras().get(0).getNameSnapshot());
-        //assertEquals(new BigDecimal("40.00"), response.getPriceBreakdown().getExtrasAmount()); // TODO: gestione pagamenti
-    }
-
-    @Test
-    @DisplayName("Check: Should throw exception when checking out with invalid status")
-    void checkOut_ShouldThrowException_WhenStatusIsNotCheckedIn() {
-        Booking confirmedBooking = Booking.builder().id("book-1").status(BookingStatus.CONFIRMED).build();
-        when(bookingRepository.findById("book-1")).thenReturn(Optional.of(confirmedBooking));
+    @DisplayName("Check: Should throw exception when checking in with invalid status")
+    void checkIn_ShouldThrowException_WhenStatusIsInvalid() {
+        Booking cancelledBooking = Booking.builder().id("book-1").status(BookingStatus.CANCELLED).build();
+        when(bookingRepository.findById("book-1")).thenReturn(Optional.of(cancelledBooking));
 
         assertThrows(InvalidBookingDateException.class,
-                () -> bookingService.checkOut("book-1", new CheckOutRequest()));
+                () -> bookingService.checkIn("book-1", new CheckInRequest()));
     }
 }

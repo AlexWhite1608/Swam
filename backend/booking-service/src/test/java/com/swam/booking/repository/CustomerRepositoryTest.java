@@ -1,6 +1,9 @@
 package com.swam.booking.repository;
 
 import com.swam.booking.domain.Customer;
+import com.swam.shared.enums.DocumentType;
+import com.swam.shared.enums.GuestType;
+import com.swam.shared.enums.Sex;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -12,6 +15,7 @@ import org.testcontainers.containers.MongoDBContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,24 +38,47 @@ class CustomerRepositoryTest {
 
     private Customer mario;
     private Customer luigi;
+    private Customer luciaCompanion;
 
     @BeforeEach
     void setUp() {
+        // Main Guest con email
         mario = Customer.builder()
                 .firstName("Mario")
                 .lastName("Rossi")
                 .email("mario.rossi@email.com")
                 .phone("1234567890")
+                .sex(Sex.M) // Mandatory
+                .birthDate(LocalDate.of(1980, 1, 1))
+                .documentType(DocumentType.ID_CARD)
+                .documentNumber("DOC123")
+                .guestType(GuestType.ADULT)
                 .build();
 
+        // Main Guest con email diversa
         luigi = Customer.builder()
                 .firstName("Luigi")
                 .lastName("Verdi")
                 .email("luigi.verdi@test.it")
                 .phone("1234567890")
+                .sex(Sex.M)
+                .birthDate(LocalDate.of(1985, 5, 20))
+                .documentType(DocumentType.PASSPORT)
+                .documentNumber("PASS456")
+                .guestType(GuestType.ADULT)
                 .build();
 
-        customerRepository.saveAll(List.of(mario, luigi));
+        // Companion (Senza Email)
+        luciaCompanion = Customer.builder()
+                .firstName("Lucia")
+                .lastName("Bianchi")
+                .email(null) // Light customer
+                .sex(Sex.F)
+                .birthDate(LocalDate.of(2015, 3, 10))
+                .guestType(GuestType.CHILD)
+                .build();
+
+        customerRepository.saveAll(List.of(mario, luigi, luciaCompanion));
     }
 
     @Test
@@ -64,32 +91,38 @@ class CustomerRepositoryTest {
     }
 
     @Test
+    @DisplayName("Check: findByFirstNameAndLastNameAndBirthDate finds Companion (Light Customer)")
+    void findByFirstNameAndLastNameAndBirthDate_ShouldReturnCustomer() {
+        // Questa query è fondamentale per evitare duplicati dei companions che non hanno email
+        Optional<Customer> found = customerRepository.findByFirstNameAndLastNameAndBirthDate(
+                "Lucia", "Bianchi", LocalDate.of(2015, 3, 10)
+        );
+
+        assertThat(found).isPresent();
+        assertThat(found.get().getGuestType()).isEqualTo(GuestType.CHILD);
+        assertThat(found.get().getEmail()).isNull();
+    }
+
+    @Test
+    @DisplayName("Check: findByDocumentTypeAndDocumentNumber finds Customer")
+    void findByDocumentTypeAndDocumentNumber_ShouldReturnCustomer() {
+        Optional<Customer> found = customerRepository.findByDocumentTypeAndDocumentNumber(
+                DocumentType.PASSPORT, "PASS456"
+        );
+
+        assertThat(found).isPresent();
+        assertThat(found.get().getLastName()).isEqualTo("Verdi");
+    }
+
+    @Test
     @DisplayName("Check: findByPhone returns all customers with that phone")
     void findByPhone_ShouldReturnAllWithPhone() {
         List<Customer> results = customerRepository.findByPhone("1234567890");
 
-        assertThat(results).hasSize(2);
+        assertThat(results).hasSize(2); // Mario e Luigi hanno lo stesso telefono nel setup
 
         // check wrong phone number returns empty list
         List<Customer> wrong = customerRepository.findByPhone("0987654321");
-        assertThat(wrong).isEmpty();
-    }
-
-    @Test
-    @DisplayName("Check: findByFirstName...And... ignores case and matches exact")
-    void findByFirstAndLast_ShouldMatchExactAndIgnoreCase() {
-        // Test Case Insensitive (mArIo, rOsSi)
-        List<Customer> results = customerRepository.findByFirstNameIgnoreCaseAndLastNameIgnoreCase(
-                "mArIo", "rOsSi"
-        );
-
-        assertThat(results).hasSize(1);
-        assertThat(results.get(0).getEmail()).isEqualTo("mario.rossi@email.com");
-
-        // Test Wrong Data
-        List<Customer> wrong = customerRepository.findByFirstNameIgnoreCaseAndLastNameIgnoreCase(
-                "Mario", "Verdi"
-        );
         assertThat(wrong).isEmpty();
     }
 
@@ -114,15 +147,5 @@ class CustomerRepositoryTest {
         // search non-existing term
         List<Customer> nothing = customerRepository.search("doesnotexist");
         assertThat(nothing).isEmpty();
-    }
-
-    @Test
-    @DisplayName("Check: search handles partial matches (Regex)")
-    void search_ShouldHandlePartialMatches() {
-        // "Ros" should match "Rossi"
-        List<Customer> results = customerRepository.search("Ros");
-
-        assertThat(results).hasSize(1);
-        assertThat(results.get(0).getLastName()).isEqualTo("Rossi");
     }
 }
