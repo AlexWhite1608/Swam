@@ -35,7 +35,6 @@ public class CreateBookingRequest {
 
     private BigDecimal depositAmount;
 
-    @NotBlank(message = "Email obbligatoria")
     @Email
     private String guestEmail;
 
