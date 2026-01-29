@@ -38,10 +38,7 @@ public class CreateCustomerRequest {
 
     private String placeOfBirth;
 
-    private String provinceOfBirth;
-
     private String citizenship;
-
 
     private String documentNumber;
     private DocumentType documentType;
