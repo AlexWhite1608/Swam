@@ -27,7 +27,9 @@ import {
   sexOptions,
 } from "@/types/bookings/options";
 import { User } from "lucide-react";
-import { Control } from "react-hook-form";
+import { useEffect } from "react";
+import { Control, useWatch } from "react-hook-form";
+import { Country } from "react-phone-number-input";
 
 interface MainGuestSectionProps {
   control: Control<CheckInFormValues>;
@@ -41,6 +43,12 @@ export function MainGuestSection({ control }: MainGuestSectionProps) {
     const dateVal = e.target.value ? new Date(e.target.value) : undefined;
     onChange(dateVal);
   };
+
+  // watch citizenship
+  const citizenship = useWatch({
+    control,
+    name: "citizenship",
+  });
 
   return (
     <div className="space-y-5">
@@ -208,11 +216,13 @@ export function MainGuestSection({ control }: MainGuestSectionProps) {
                 <FormItem>
                   <FormLabel>Telefono</FormLabel>
                   <FormControl>
+                    {/* 3. Passa citizenship come defaultCountry */}
                     <PhoneInput
                       className="w-full"
                       placeholder="Inserisci telefono"
                       value={field.value}
                       onChange={field.onChange}
+                      defaultCountry={citizenship as Country}
                     />
                   </FormControl>
                   <FormMessage />
@@ -222,7 +232,7 @@ export function MainGuestSection({ control }: MainGuestSectionProps) {
           </div>
         </div>
 
-        {/* Colonna Destra: Ruolo e Classificazione */}
+        {/* guest type and guest role */}
         <div className="space-y-3 col-span-4">
           <div className="flex items-center gap-2 text-primary pb-1 border-b border-dashed">
             <h4 className="text-sm font-semibold">Classificazione</h4>
