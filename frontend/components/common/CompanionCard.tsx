@@ -27,15 +27,7 @@ import {
   guestTypeOptions,
   sexOptions,
 } from "@/types/bookings/options";
-
-const COUNTRIES = [
-  { code: "IT", name: "Italia" },
-  { code: "DE", name: "Germania" },
-  { code: "FR", name: "Francia" },
-  { code: "US", name: "Stati Uniti" },
-  { code: "GB", name: "Regno Unito" },
-  { code: "ES", name: "Spagna" },
-];
+import { CountrySelect } from "../ui/country-select";
 
 interface CompanionCardProps {
   index: number;
@@ -69,10 +61,10 @@ export function CompanionCard({
             name={`companions.${index}.firstName`}
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs">Nome</FormLabel>
+                <FormLabel className="">Nome</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="Es. Mario"
+                    placeholder="Inserisci nome"
                     className="h-9 text-sm"
                     {...field}
                   />
@@ -89,10 +81,10 @@ export function CompanionCard({
             name={`companions.${index}.lastName`}
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs">Cognome</FormLabel>
+                <FormLabel className="">Cognome</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="Es. Rossi"
+                    placeholder="Inserisci cognome"
                     className="h-9 text-sm"
                     {...field}
                   />
@@ -109,7 +101,7 @@ export function CompanionCard({
             name={`companions.${index}.sex`}
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs">Sesso</FormLabel>
+                <FormLabel className="">Sesso</FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
@@ -139,7 +131,7 @@ export function CompanionCard({
             name={`companions.${index}.birthDate`}
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs">Data Nascita</FormLabel>
+                <FormLabel className="">Data Nascita</FormLabel>
                 <FormControl>
                   <BirthDateInput
                     value={field.value}
@@ -161,24 +153,12 @@ export function CompanionCard({
             name={`companions.${index}.citizenship`}
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs">Cittadinanza</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger className="w-full h-8 text-sm">
-                      <SelectValue placeholder="Seleziona..." />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {COUNTRIES.map((c) => (
-                      <SelectItem key={c.code} value={c.code}>
-                        {c.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <FormLabel className="">Cittadinanza</FormLabel>
+                <CountrySelect
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Cittadinanza"
+                />
                 <FormMessage />
               </FormItem>
             )}
@@ -190,9 +170,9 @@ export function CompanionCard({
             control={control}
             nationalityField={`companions.${index}.citizenship`}
             placeField={`companions.${index}.placeOfBirth`}
-            label="Luogo Nascita"
-            className="text-xs"
-            labelClassName="text-xs"
+            label="Luogo di Nascita"
+            className=""
+            labelClassName=""
           />
         </div>
 
@@ -202,7 +182,7 @@ export function CompanionCard({
             name={`companions.${index}.guestType`}
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs">Fascia Età</FormLabel>
+                <FormLabel className="">Fascia Età</FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
@@ -232,7 +212,7 @@ export function CompanionCard({
             name={`companions.${index}.guestRole`}
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-xs">Ruolo</FormLabel>
+                <FormLabel className="">Ruolo</FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}

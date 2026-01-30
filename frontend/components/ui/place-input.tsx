@@ -58,7 +58,7 @@ export function PlaceInput({
             {isItaly ? (
               <Select onValueChange={field.onChange} value={field.value}>
                 <SelectTrigger className={cn("w-full", className)}>
-                  <SelectValue placeholder="Seleziona comune" />
+                  <SelectValue placeholder="Comune" />
                 </SelectTrigger>
                 <SelectContent>
                   {ITALIAN_CITIES.map((c) => (
@@ -71,7 +71,7 @@ export function PlaceInput({
             ) : (
               // nation select input
               <Input
-                placeholder="Inserisci nazione"
+                placeholder="Nazione"
                 className={cn("w-full", className)}
                 {...field}
               />

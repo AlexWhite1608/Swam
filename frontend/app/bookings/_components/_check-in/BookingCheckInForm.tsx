@@ -39,7 +39,7 @@ export function BookingCheckInForm({
       citizenship: booking.mainGuest.citizenship || "IT",
       placeOfBirth: booking.mainGuest.placeOfBirth || "",
       guestType: booking.mainGuest.guestType || "ADULT",
-      guestRole: booking.mainGuest.guestRole || "HEAD_OF_FAMILY",
+      guestRole: booking.mainGuest.guestRole || "HEAD_OF_GROUP",
       documentType: booking.mainGuest.documentType || "ID_CARD",
       documentNumber: booking.mainGuest.documentNumber || "",
       birthDate: booking.mainGuest.birthDate

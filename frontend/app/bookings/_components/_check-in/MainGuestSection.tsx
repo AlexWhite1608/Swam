@@ -2,6 +2,7 @@
 
 import { DocumentFields } from "@/components/common/DocumentFields";
 import { BirthDateInput } from "@/components/ui/birth-date-input";
+import { CountrySelect } from "@/components/ui/country-select";
 import {
   FormControl,
   FormField,
@@ -20,25 +21,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CheckInFormValues } from "@/schemas/mainGuestCheckInSchema";
-import { GuestRole, GuestType } from "@/types/bookings/enums";
 import {
   guestRoleOptions,
   guestTypeOptions,
   sexOptions,
 } from "@/types/bookings/options";
-import { format } from "date-fns";
-import { Contact, Fingerprint, User, Users } from "lucide-react";
+import { User } from "lucide-react";
 import { Control } from "react-hook-form";
-
-//FIXME: Mock data - In futuro sposta in un hook o constants
-const COUNTRIES = [
-  { code: "IT", name: "Italia" },
-  { code: "DE", name: "Germania" },
-  { code: "FR", name: "Francia" },
-  { code: "US", name: "Stati Uniti" },
-  { code: "GB", name: "Regno Unito" },
-  { code: "ES", name: "Spagna" },
-];
 
 interface MainGuestSectionProps {
   control: Control<CheckInFormValues>;
@@ -72,7 +61,7 @@ export function MainGuestSection({ control }: MainGuestSectionProps) {
                 <FormItem>
                   <FormLabel>Nome</FormLabel>
                   <FormControl>
-                    <Input placeholder="Es. Mario" {...field} />
+                    <Input placeholder="Inserisci nome" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -89,7 +78,7 @@ export function MainGuestSection({ control }: MainGuestSectionProps) {
                 <FormItem>
                   <FormLabel>Cognome</FormLabel>
                   <FormControl>
-                    <Input placeholder="Es. Rossi" {...field} />
+                    <Input placeholder="Inserisci cognome" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -152,17 +141,6 @@ export function MainGuestSection({ control }: MainGuestSectionProps) {
             />
           </div>
 
-          {/* place of birth */}
-          <div className="col-span-12 md:col-span-4">
-            <PlaceInput
-              control={control}
-              className="w-full"
-              nationalityField="citizenship"
-              placeField="placeOfBirth"
-              label="Luogo di Nascita"
-            />
-          </div>
-
           {/* citizenship */}
           <div className="col-span-12 md:col-span-4">
             <FormField
@@ -171,26 +149,25 @@ export function MainGuestSection({ control }: MainGuestSectionProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Cittadinanza</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Seleziona..." />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {COUNTRIES.map((c) => (
-                        <SelectItem key={c.code} value={c.code}>
-                          {c.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <CountrySelect
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder="Seleziona cittadinanza"
+                  />
                   <FormMessage />
                 </FormItem>
               )}
+            />
+          </div>
+
+          {/* place of birth */}
+          <div className="col-span-12 md:col-span-4">
+            <PlaceInput
+              control={control}
+              className="w-full"
+              nationalityField="citizenship"
+              placeField="placeOfBirth"
+              label="Luogo di Nascita"
             />
           </div>
         </div>
@@ -296,11 +273,13 @@ export function MainGuestSection({ control }: MainGuestSectionProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {guestRoleOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
+                        {guestRoleOptions
+                          .filter((option) => option.value !== "MEMBER")
+                          .map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
                   </FormItem>
