@@ -2,9 +2,11 @@ package com.swam.booking.service;
 
 import com.swam.booking.domain.Customer;
 import com.swam.booking.domain.Guest;
+import com.swam.booking.dto.CheckInRequest;
 import com.swam.booking.dto.CreateCustomerRequest;
 import com.swam.booking.dto.CustomerResponse;
 import com.swam.booking.repository.CustomerRepository;
+import com.swam.shared.enums.GuestRole;
 import com.swam.shared.exceptions.CustomerNotFoundException;
 import com.swam.shared.exceptions.DuplicateCustomerException;
 import lombok.RequiredArgsConstructor;
@@ -41,68 +43,100 @@ public class CustomerService {
         return mapToResponse(customer);
     }
 
+    // create new customer
     //FIXME: gestione cliente duplicato
-    @Transactional
     public CustomerResponse createCustomer(CreateCustomerRequest request) {
-        if (customerRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new DuplicateCustomerException(request.getEmail());
-        }
-
         Customer customer = mapToEntity(request);
         customer.setCreatedAt(LocalDateTime.now());
-
-        Customer saved = customerRepository.save(customer);
-        return mapToResponse(saved);
+        return mapToResponse(customerRepository.save(customer));
     }
 
-    @Transactional
-    public CustomerResponse updateCustomer(String id, CreateCustomerRequest request) {
-        Customer existing = getCustomerEntityOrThrow(id);
-
+    // update customer data
+    private CustomerResponse updateCustomerEntity(Customer existing, CreateCustomerRequest request) {
         updateEntityFromRequest(existing, request);
         existing.setUpdatedAt(LocalDateTime.now());
-
-        Customer saved = customerRepository.save(existing);
-        return mapToResponse(saved);
+        return mapToResponse(customerRepository.save(existing));
     }
 
-    // upsert method used during booking process when a customer may already exist
+    // upsert for customer data
     @Transactional
     public CustomerResponse registerOrUpdateCustomer(CreateCustomerRequest request) {
-        // find by email first
-        Optional<Customer> existingByEmail = customerRepository.findByEmail(request.getEmail());
-        if (existingByEmail.isPresent()) {
-            return updateCustomer(existingByEmail.get().getId(), request);
-        }
-
-        // find by document if provided
-        if (request.getDocumentNumber() != null && request.getDocumentType() != null) {
-            Optional<Customer> existingByDoc = customerRepository.findByDocumentTypeAndDocumentNumber(
-                    request.getDocumentType(), request.getDocumentNumber());
-
-            if (existingByDoc.isPresent()) {
-                return updateCustomer(existingByDoc.get().getEmail(), request);
+        // find by email
+        if (request.getEmail() != null && !request.getEmail().isBlank()) {
+            Optional<Customer> existingByEmail = customerRepository.findByEmail(request.getEmail());
+            if (existingByEmail.isPresent()) {
+                return updateCustomerEntity(existingByEmail.get(), request);
             }
         }
 
-        // no existing customer found, create new one
+        // find by document
+        if (request.getDocumentNumber() != null && request.getDocumentType() != null) {
+            Optional<Customer> existingByDoc = customerRepository.findByDocumentTypeAndDocumentNumber(
+                    request.getDocumentType(), request.getDocumentNumber());
+            if (existingByDoc.isPresent()) {
+                return updateCustomerEntity(existingByDoc.get(), request);
+            }
+        }
+
+        // else create new customer
         return createCustomer(request);
     }
 
+    @Transactional
+    public CustomerResponse registerOrUpdateCompanion(CheckInRequest.CompanionData data) {
+        // check if a Customer with the same firstName, lastName, and birthDate exists
+        Optional<Customer> existing = customerRepository.findByFirstNameAndLastNameAndBirthDate(
+                data.getFirstName(), data.getLastName(), data.getBirthDate()
+        );
+
+        // if already exists, update only the fields provided in the "light" check-in companion data
+        // FIXME: valutare se aggiornare anche firstName, lastName, birthDate
+        if (existing.isPresent()) {
+            Customer customer = existing.get();
+            customer.setSex(data.getSex());
+            customer.setPlaceOfBirth(data.getPlaceOfBirth());
+            customer.setCitizenship(data.getCitizenship());
+            customer.setGuestType(data.getGuestType());
+            customer.setUpdatedAt(LocalDateTime.now());
+            return mapToResponse(customerRepository.save(customer));
+        }
+
+        // if not exists, create a new light Customer with the provided data
+        Customer newCustomer = Customer.builder()
+                .firstName(data.getFirstName())
+                .lastName(data.getLastName())
+                .sex(data.getSex())
+                .birthDate(data.getBirthDate())
+                .placeOfBirth(data.getPlaceOfBirth())
+                .citizenship(data.getCitizenship())
+                .guestType(data.getGuestType())
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        return mapToResponse(customerRepository.save(newCustomer));
+    }
+
     // used to create a snapshot of the customer at the time of booking (Guest)
-    public Guest createGuestSnapshot(CustomerResponse customer) {
+    public Guest createGuestSnapshot(CustomerResponse customer, GuestRole role) {
         return Guest.builder()
-                .customerId(customer.getId()) // Link fondamentale al CRM
+                .customerId(customer.getId())
+
                 .firstName(customer.getFirstName())
                 .lastName(customer.getLastName())
+                .sex(customer.getSex())
+                .birthDate(customer.getBirthDate())
+                .placeOfBirth(customer.getPlaceOfBirth())
+                .citizenship(customer.getCitizenship()) // ISO Code
+
                 .email(customer.getEmail())
                 .phone(customer.getPhone())
-                .address(customer.getAddress())
-                .birthDate(customer.getBirthDate())
+
                 .documentType(customer.getDocumentType())
                 .documentNumber(customer.getDocumentNumber())
+                .documentPlaceOfIssue(customer.getDocumentPlaceOfIssue())
+
                 .guestType(customer.getGuestType())
-                .notes(customer.getNotes())
+                .guestRole(role) // guestRole injection for booking infos
                 .build();
     }
 
@@ -111,49 +145,54 @@ public class CustomerService {
                 .orElseThrow(() -> new CustomerNotFoundException(id));
     }
 
-    private CustomerResponse mapToResponse(Customer customer) {
+    private CustomerResponse mapToResponse(Customer c) {
         return CustomerResponse.builder()
-                .id(customer.getId())
-                .firstName(customer.getFirstName())
-                .lastName(customer.getLastName())
-                .email(customer.getEmail())
-                .phone(customer.getPhone())
-                .address(customer.getAddress())
-                .birthDate(customer.getBirthDate())
-                .documentNumber(customer.getDocumentNumber())
-                .documentType(customer.getDocumentType())
-                .guestType(customer.getGuestType())
-                .notes(customer.getNotes())
+                .id(c.getId())
+                .firstName(c.getFirstName())
+                .lastName(c.getLastName())
+                .sex(c.getSex())
+                .email(c.getEmail())
+                .phone(c.getPhone())
+                .birthDate(c.getBirthDate())
+                .placeOfBirth(c.getPlaceOfBirth())
+                .citizenship(c.getCitizenship())
+                .documentNumber(c.getDocumentNumber())
+                .documentType(c.getDocumentType())
+                .documentPlaceOfIssue(c.getDocumentPlaceOfIssue())
+                .guestType(c.getGuestType())
                 .build();
     }
 
-    private Customer mapToEntity(CreateCustomerRequest request) {
+    private Customer mapToEntity(CreateCustomerRequest r) {
         return Customer.builder()
-                .firstName(request.getFirstName())
-                .lastName(request.getLastName())
-                .email(request.getEmail())
-                .phone(request.getPhone())
-                .address(request.getAddress())
-                .birthDate(request.getBirthDate())
-                .documentNumber(request.getDocumentNumber())
-                .documentType(request.getDocumentType())
-                .guestType(request.getGuestType())
-                .notes(request.getNotes())
+                .firstName(r.getFirstName())
+                .lastName(r.getLastName())
+                .sex(r.getSex())
+                .email(r.getEmail())
+                .phone(r.getPhone())
+                .birthDate(r.getBirthDate())
+                .placeOfBirth(r.getPlaceOfBirth())
+                .citizenship(r.getCitizenship())
+                .documentNumber(r.getDocumentNumber())
+                .documentType(r.getDocumentType())
+                .documentPlaceOfIssue(r.getDocumentPlaceOfIssue())
+                .guestType(r.getGuestType())
                 .build();
     }
 
     // updates entity fields from request fields
-    private void updateEntityFromRequest(Customer target, CreateCustomerRequest source) {
-        target.setFirstName(source.getFirstName());
-        target.setLastName(source.getLastName());
-        target.setPhone(source.getPhone());
-        target.setEmail(source.getEmail());
-        target.setAddress(source.getAddress());
-        target.setBirthDate(source.getBirthDate());
-        target.setDocumentNumber(source.getDocumentNumber());
-        target.setDocumentType(source.getDocumentType());
-        target.setGuestType(source.getGuestType());
-        target.setCountry(source.getCountry());
-        target.setNotes(source.getNotes());
+    private void updateEntityFromRequest(Customer t, CreateCustomerRequest s) {
+        t.setFirstName(s.getFirstName());
+        t.setLastName(s.getLastName());
+        t.setSex(s.getSex());
+        t.setEmail(s.getEmail());
+        t.setPhone(s.getPhone());
+        t.setBirthDate(s.getBirthDate());
+        t.setPlaceOfBirth(s.getPlaceOfBirth());
+        t.setCitizenship(s.getCitizenship());
+        t.setDocumentNumber(s.getDocumentNumber());
+        t.setDocumentType(s.getDocumentType());
+        t.setDocumentPlaceOfIssue(s.getDocumentPlaceOfIssue());
+        t.setGuestType(s.getGuestType());
     }
 }

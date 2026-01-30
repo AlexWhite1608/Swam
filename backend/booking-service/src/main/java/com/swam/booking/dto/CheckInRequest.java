@@ -1,12 +1,14 @@
 package com.swam.booking.dto;
 
 import com.swam.shared.enums.DocumentType;
+import com.swam.shared.enums.GuestRole;
 import com.swam.shared.enums.GuestType;
+import com.swam.shared.enums.Sex;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
-import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,29 +23,47 @@ import java.util.List;
 @AllArgsConstructor
 public class CheckInRequest {
 
-    private String phone;
+    @NotBlank
+    private String firstName;
 
-    @NotBlank(message = "Indirizzo obbligatorio")
-    private String address;
+    @NotBlank
+    private String lastName;
 
-    @NotNull(message = "Data di nascita obbligatoria")
+    @NotNull
+    private Sex sex;
+
+    @NotNull
     @Past
     private LocalDate birthDate;
 
-    @NotNull(message = "Tipo documento obbligatorio")
-    private DocumentType documentType;
+    private String placeOfBirth;
+    private String citizenship; // ISO Code
 
-    @NotBlank(message = "Numero documento obbligatorio")
-    private String documentNumber;
+    @Email
+    private String email;
+
+    private String phone;
 
     @NotNull
-    private GuestType guestType;
+    private DocumentType documentType;
 
-    private String country;
+    @NotBlank
+    private String documentNumber;
+
+    private String documentPlaceOfIssue;
 
     @Valid
     private List<CompanionData> companions;
 
+    @NotNull
+    GuestType guestType;
+
+    @NotNull
+    GuestRole guestRole;
+
+    private String notes; // refers to booking notes
+
+    // reduced fields for companions
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -51,13 +71,24 @@ public class CheckInRequest {
     public static class CompanionData {
         @NotBlank
         private String firstName;
+
         @NotBlank
         private String lastName;
+
         @NotNull
+        private Sex sex;
+
+        @NotNull
+        @Past
         private LocalDate birthDate;
+
+        private String placeOfBirth;
+        private String citizenship;
+
         @NotNull
         private GuestType guestType;
 
-        //TODO: servono informazioni sui documenti dei companions?
+        @NotNull
+        private GuestRole guestRole; // only used for check in data
     }
 }

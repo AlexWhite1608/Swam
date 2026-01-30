@@ -1,11 +1,11 @@
 "use client";
 
 import { Table } from "@tanstack/react-table";
-
 import { Input } from "@/components/ui/input";
 
 interface BookingTableToolbarProps<TData> {
   table: Table<TData>;
+  onDeleteSelected?: (rows: TData[]) => void;
 }
 
 export function BookingTableToolbar<TData>({

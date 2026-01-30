@@ -2,6 +2,7 @@ package com.swam.booking.controller;
 
 import com.swam.booking.dto.*;
 import com.swam.booking.service.BookingService;
+import com.swam.resource.dto.BulkDeleteRequest;
 import com.swam.shared.enums.PaymentStatus;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,12 @@ public class BookingController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteBooking(@PathVariable String id) {
+        bookingService.deleteBooking(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<BookingResponse> getBookingById(@PathVariable String id) {
         return ResponseEntity.ok(bookingService.getBooking(id));
@@ -49,6 +56,24 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.confirmBooking(id, hasPaidDeposit));
     }
 
+    // updates an existing base booking (with status PENDING or CONFIRMED)
+    @PutMapping("/{id}")
+    public ResponseEntity<BookingResponse> updateBooking(
+            @PathVariable String id,
+            @Valid @RequestBody CreateBookingRequest request) {
+        return ResponseEntity.ok(bookingService.updateBooking(id, request));
+    }
+
+    //TODO: endpoint PUT /api/bookings/{id}/guests per modifica dati del check-in guest
+
+    //TODO: endpoint PUT /api/bookings/{id}/extras per modifica extra del booking
+
+    // cancels an existing booking by setting its status to CANCELLED
+    @PatchMapping("/{id}/cancel")
+    public ResponseEntity<BookingResponse> cancelBooking(@PathVariable String id) {
+        return ResponseEntity.ok(bookingService.cancelBooking(id));
+    }
+
     @PostMapping("/{id}/check-in")
     public ResponseEntity<BookingResponse> checkIn(
             @PathVariable String id,
@@ -63,10 +88,12 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.checkOut(id, request));
     }
 
+    // returns unavailable dates for a specific resource, optionally excluding a booking
     @GetMapping("/unavailable-dates")
     public ResponseEntity<List<UnavailablePeriodResponse>> getUnavailableDates(
-            @RequestParam String resourceId) {
-        return ResponseEntity.ok(bookingService.getUnavailablePeriods(resourceId));
+            @RequestParam String resourceId,
+            @RequestParam(required = false) String excludeBookingId) {
+        return ResponseEntity.ok(bookingService.getUnavailablePeriods(resourceId, excludeBookingId));
     }
 
     // updates the payment status of a booking
@@ -75,5 +102,12 @@ public class BookingController {
             @PathVariable String id,
             @RequestParam PaymentStatus status) {
         return ResponseEntity.ok(bookingService.updatePaymentStatus(id, status));
+    }
+
+    // bulk Delete bookings
+    @PostMapping("/bulk-delete")
+    public ResponseEntity<Void> bulkDelete(@RequestBody BulkDeleteRequest request) {
+        bookingService.deleteBookings(request.getIds());
+        return ResponseEntity.noContent().build();
     }
 }

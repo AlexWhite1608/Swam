@@ -2,10 +2,14 @@ package com.swam.booking.repository;
 
 import com.swam.booking.domain.Customer;
 import com.swam.shared.enums.DocumentType;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Past;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,6 +25,9 @@ public interface CustomerRepository extends MongoRepository<Customer, String> {
 
     // find by document type and document number
     Optional<Customer> findByDocumentTypeAndDocumentNumber(DocumentType type, String number);
+
+    // find by firstName, lastName and birthDate exact match
+    Optional<Customer> findByFirstNameAndLastNameAndBirthDate(@NotBlank String firstName, @NotBlank String lastName, @NotNull @Past LocalDate birthDate);
 
     // partial match search across firstName, lastName, and email (google-like search)
     @Query("{ '$or': [ " +

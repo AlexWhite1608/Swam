@@ -1,10 +1,11 @@
 import { api } from "@/lib/api";
-import { Booking, PaymentStatus } from "@/schemas/bookingsSchema";
+import { Booking, CreateBookingFormValues } from "@/types/bookings/types";
+import type { PaymentStatusType, SexType, DocumentTypeType, GuestTypeType, GuestRoleType } from "@/types/bookings/types";
 
 export interface CreateBookingPayload {
   resourceId: string;
-  checkIn: string; // YYYY-MM-DD
-  checkOut: string; // YYYY-MM-DD
+  checkIn: string;
+  checkOut: string;
   guestFirstName: string;
   guestLastName: string;
   guestEmail?: string;
@@ -12,20 +13,49 @@ export interface CreateBookingPayload {
   depositAmount?: number;
 }
 
-export interface CheckInPayload {
-  phone: string;
-  address: string;
-  birthDate: string; // YYYY-MM-DD
-  documentType: string;
+export interface CheckInCompanion {
+  firstName: string;
+  lastName: string;
+  sex: SexType;
+  birthDate: string;
+  email?: string;
+  phone?: string;
+  placeOfBirth?: string;
+  citizenship?: string;
+  documentType: DocumentTypeType;
   documentNumber: string;
-  country?: string;
-  guestType: string;
-  companions?: any[]; //FIXME: definisci meglio
+  documentPlaceOfIssue?: string;
+  guestType: GuestTypeType;
+  guestRole: GuestRoleType;
+  notes?: string;
+}
+
+export interface CheckInPayload {
+  firstName: string;
+  lastName: string;
+  sex: SexType;
+  birthDate: string;
+  email?: string;
+  phone: string;
+  placeOfBirth?: string;
+  citizenship?: string;
+  documentType: DocumentTypeType;
+  documentNumber: string;
+  documentPlaceOfIssue?: string;
+  guestType: GuestTypeType;
+  guestRole: GuestRoleType;
+  notes?: string; // refers to the booking
+  companions?: CheckInCompanion[];
 }
 
 export interface UnavailablePeriod {
-  start: string; // YYYY-MM-DD
-  end: string; // YYYY-MM-DD
+  start: string;
+  end: string;
+}
+
+export interface ConfirmBookingParams {
+  id: string;
+  hasPaidDeposit: boolean;
 }
 
 export interface CheckOutPayload {
@@ -59,6 +89,18 @@ export const bookingService = {
     return data;
   },
 
+  // Update booking (simple edit for pending/confirmed)
+  update: async ({
+    id,
+    payload,
+  }: {
+    id: string;
+    payload: CreateBookingFormValues;
+  }): Promise<Booking> => {
+    const { data } = await api.put(`/api/bookings/${id}`, payload);
+    return data;
+  },
+
   // Confirm Booking (Switch from PENDING to CONFIRMED)
   confirm: async ({
     id,
@@ -70,6 +112,12 @@ export const bookingService = {
     const { data } = await api.patch(`/api/bookings/${id}/confirm`, null, {
       params: { hasPaidDeposit },
     });
+    return data;
+  },
+
+  // cancel booking (set status to CANCELED)
+  cancel: async (id: string): Promise<Booking> => {
+    const { data } = await api.patch(`/api/bookings/${id}/cancel`);
     return data;
   },
 
@@ -100,9 +148,13 @@ export const bookingService = {
   // Get unavailable periods for a resource
   getUnavailablePeriods: async (
     resourceId: string,
+    excludeBookingId?: string,
   ): Promise<UnavailablePeriod[]> => {
     const { data } = await api.get("/api/bookings/unavailable-dates", {
-      params: { resourceId },
+      params: {
+        resourceId,
+        excludeBookingId,
+      },
     });
     return data;
   },
@@ -113,7 +165,7 @@ export const bookingService = {
     status,
   }: {
     id: string;
-    status: PaymentStatus;
+    status: PaymentStatusType;
   }): Promise<Booking> => {
     const { data } = await api.patch(
       `/api/bookings/${id}/payment-status`,
@@ -125,8 +177,13 @@ export const bookingService = {
     return data;
   },
 
-  //TODO: Delete Booking anche nel controller
+  // soft delete booking
   delete: async (id: string): Promise<void> => {
     await api.delete(`/api/bookings/${id}`);
+  },
+
+  // bulk delete bookings
+  bulkDelete: async (ids: string[]): Promise<void> => {
+    await api.post("/api/bookings/bulk-delete", { ids });
   },
 };

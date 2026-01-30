@@ -1,7 +1,9 @@
 package com.swam.booking.dto;
 
 import com.swam.shared.enums.DocumentType;
+import com.swam.shared.enums.GuestRole;
 import com.swam.shared.enums.GuestType;
+import com.swam.shared.enums.Sex;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,37 +18,35 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class CreateCustomerRequest {
 
-    @NotBlank(message = "Il nome è obbligatorio")
-    @Size(min = 2, max = 50)
+    @NotBlank
     private String firstName;
 
-    @NotBlank(message = "Il cognome è obbligatorio")
-    @Size(min = 2, max = 50)
+    @NotBlank
     private String lastName;
 
-    @NotBlank(message = "L'email è obbligatoria")
-    @Email(message = "L'email deve essere valida")
+    @NotNull
+    private Sex sex;
+
+    @Email
     private String email;
 
     private String phone;
 
-    @NotBlank(message = "L'indirizzo è obbligatorio")
-    private String address;
-
-    @NotNull(message = "La data di nascita è obbligatoria")
-    @Past(message = "La data di nascita deve essere nel passato")
+    @NotNull
+    @Past
     private LocalDate birthDate;
 
-    @NotBlank(message = "Il numero del documento è obbligatorio")
+    private String placeOfBirth;
+
+    private String citizenship;
+
     private String documentNumber;
-
-    @NotNull(message = "Il tipo di documento è obbligatorio")
     private DocumentType documentType;
+    private String documentPlaceOfIssue;
 
-    private String country;
-
-    @NotNull(message = "Il tipo di ospite è obbligatorio")
+    @NotNull
     private GuestType guestType;
 
-    private String notes;
+    @NotNull
+    private GuestRole guestRole;
 }

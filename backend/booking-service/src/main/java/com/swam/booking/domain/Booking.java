@@ -60,6 +60,8 @@ public class Booking {
 
     private PaymentStatus paymentStatus;
 
+    private String notes;
+
     @CreatedDate
     private LocalDateTime createdAt;
 

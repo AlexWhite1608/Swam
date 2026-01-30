@@ -4,6 +4,7 @@ import {
   CreateBookingPayload,
   CheckInPayload,
   CheckOutPayload,
+  ConfirmBookingParams,
 } from "@/services/bookingService";
 import { toast } from "sonner";
 import { bookingKeys } from "@/lib/query-keys";
@@ -51,15 +52,59 @@ export const useConfirmBooking = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: bookingService.confirm,
+    mutationFn: ({ id, hasPaidDeposit }: ConfirmBookingParams) =>
+      bookingService.confirm({ id, hasPaidDeposit }),
+
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: bookingKeys.all });
       queryClient.invalidateQueries({ queryKey: bookingKeys.detail(data.id) });
       toast.success("Prenotazione confermata");
     },
+    onError: (error: any) => {
+      toast.error("Errore conferma prenotazione", {
+        description:
+          error?.response?.data?.message ||
+          "Impossibile confermare la prenotazione",
+      });
+    },
+  });
+};
+
+// Cancel booking (set status to CANCELED)
+export const useCancelBooking = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => bookingService.cancel(id),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: bookingKeys.all });
+      queryClient.invalidateQueries({ queryKey: bookingKeys.detail(data.id) });
+      toast.success("Prenotazione cancellata");
+    },
     onError: (error: unknown) => {
-      toast.error("Errore conferma", {
+      toast.error("Errore cancellazione prenotazione", {
         description: getErrorMessage(error),
+      });
+    },
+  });
+};
+
+// Update booking (simple edit for pending/confirmed)
+export const useUpdateBooking = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (
+      data: { id: string; payload: any }, //FIXME: payload typing può essere raffinato
+    ) => bookingService.update(data),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: bookingKeys.all });
+      queryClient.invalidateQueries({ queryKey: bookingKeys.detail(data.id) });
+      toast.success("Prenotazione aggiornata");
+    },
+    onError: (error: any) => {
+      toast.error("Errore aggiornamento", {
+        description: error?.response?.data?.message || "Impossibile aggiornare",
       });
     },
   });
@@ -106,11 +151,10 @@ export const useCheckOutBooking = () => {
 };
 
 // Get unavailable dates for a resource
-export const useUnavailableDates = (resourceId: string | undefined) => {
+export const useUnavailableDates = (resourceId: string | undefined, excludeBookingId?: string) => {
   return useQuery({
-    queryKey: bookingKeys.unavailable(resourceId),
-    queryFn: () => bookingService.getUnavailablePeriods(resourceId!),
-    enabled: !!resourceId, // enable only if resourceId is provided
+    queryKey: [...bookingKeys.unavailable(resourceId), excludeBookingId], 
+    queryFn: () => bookingService.getUnavailablePeriods(resourceId!, excludeBookingId),
     staleTime: 1000 * 60 * 5,
   });
 };
@@ -123,10 +167,30 @@ export const useDeleteBooking = () => {
     mutationFn: bookingService.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: bookingKeys.all });
-      toast.success("Prenotazione cancellata");
+      toast.success("Prenotazione rimossa dal sistema");
     },
     onError: (error: unknown) => {
-      toast.error("Errore cancellazione", {
+      toast.error("Errore rimozione della prenotazione", {
+        description: getErrorMessage(error),
+      });
+    },
+  });
+};
+
+// Bulk delete bookings
+export const useBulkDeleteBookings = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (ids: string[]) => bookingService.bulkDelete(ids),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: bookingKeys.all });
+      toast.success(
+        "Prenotazioni selezionate rimosse dal sistema con successo",
+      );
+    },
+    onError: (error: unknown) => {
+      toast.error("Impossibile eliminare le prenotazioni selezionate", {
         description: getErrorMessage(error),
       });
     },

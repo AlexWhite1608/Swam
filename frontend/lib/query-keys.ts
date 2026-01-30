@@ -8,6 +8,6 @@ export const resourceKeys = {
 export const bookingKeys = {
   all: ["bookings"] as const, // ['bookings']
   detail: (id: string) => [...bookingKeys.all, id] as const, // ['bookings', id]
-  unavailable: (resourceId: string | undefined) =>
-    [...bookingKeys.all, "unavailable", resourceId] as const, // ['bookings', 'unavailable', resourceId]
+  unavailable: (resourceId: string | undefined, excludeBookingId?: string) =>
+    [...bookingKeys.all, "unavailable", resourceId, excludeBookingId] as const, // ['bookings', 'unavailable', resourceId, excludeBookingId]
 };

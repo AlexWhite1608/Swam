@@ -1,61 +1,60 @@
 package com.swam.booking.domain;
 
 import com.swam.shared.enums.DocumentType;
+import com.swam.shared.enums.GuestRole;
 import com.swam.shared.enums.GuestType;
+import com.swam.shared.enums.Sex;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 
 import java.time.LocalDate;
-import java.time.Period;
 
+@Data
 @Builder(toBuilder = true)
-@Value
+@NoArgsConstructor
+@AllArgsConstructor
 public class Guest {
 
     @Id
-    String id;
+    private String id;
 
-    // reference to customer id in customers collection
-    String customerId;
+    private String customerId;
 
-    @NotBlank(message = "Il nome è obbligatorio")
-    @Size(min = 2, max = 50, message = "Il nome deve essere tra 2 e 50 caratteri")
-    String firstName;
+    @NotBlank
+    private String firstName;
 
-    @NotBlank(message = "Il cognome è obbligatorio")
-    @Size(min = 2, max = 50, message = "Il cognome deve essere tra 2 e 50 caratteri")
-    String lastName;
+    @NotBlank
+    private String lastName;
 
-    @Email(message = "L'email non è valida")
-    String email;
+    private Sex sex;
 
-    String phone;
+    private LocalDate birthDate;
 
-    String address;
+    private String placeOfBirth;
 
-    @Past(message = "La data di nascita deve essere valida")
-    LocalDate birthDate;
+    private String citizenship; // iso code
 
-    DocumentType documentType;
+    @Email
+    private String email;
 
-    String documentNumber;
+    private String phone;
 
-    @NotNull(message = "Il tipo di ospite è obbligatorio")
-    GuestType guestType;
+    private DocumentType documentType;
 
-    String notes;
+    private String documentNumber;
 
-    boolean taxExempt;
+    private String documentPlaceOfIssue;
 
-    public String getFullName() {
-        return firstName + " " + lastName;
-    }
+    private GuestType guestType; // ADULT, CHILD, INFANT
 
-    public Integer getAge() {
-        if (birthDate == null) {
-            return null;
-        }
-        return Period.between(birthDate, LocalDate.now()).getYears();
-    }
+    private GuestRole guestRole; // HEAD_OF_FAMILY, MEMBER, HEAD_OF_GROUP
+
+    @Min(1)
+    private Integer daysOfStay; // effective days of stay, used for city tax calculation
+
+    @Builder.Default
+    private boolean taxExempt = false;
+
+    private String taxExemptReason;
 }

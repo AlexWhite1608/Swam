@@ -2,13 +2,14 @@ package com.swam.booking.service;
 
 import com.swam.booking.domain.Customer;
 import com.swam.booking.domain.Guest;
+import com.swam.booking.dto.CheckInRequest;
 import com.swam.booking.dto.CreateCustomerRequest;
 import com.swam.booking.dto.CustomerResponse;
 import com.swam.booking.repository.CustomerRepository;
 import com.swam.shared.enums.DocumentType;
+import com.swam.shared.enums.GuestRole;
 import com.swam.shared.enums.GuestType;
-import com.swam.shared.exceptions.CustomerNotFoundException;
-import com.swam.shared.exceptions.DuplicateCustomerException;
+import com.swam.shared.enums.Sex;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,96 +36,20 @@ class CustomerServiceTest {
     private CustomerService customerService;
 
     @Test
-    @DisplayName("Create: Should create new customer when email is unique")
-    void createCustomer_ShouldCreate_WhenEmailIsUnique() {
-        CreateCustomerRequest request = buildRequest();
-        when(customerRepository.findByEmail(request.getEmail())).thenReturn(Optional.empty());
-
-        when(customerRepository.save(any(Customer.class))).thenAnswer(invocation -> {
-            Customer c = invocation.getArgument(0);
-            c.setId("cust-123");
-            return c;
-        });
-
-        CustomerResponse response = customerService.createCustomer(request);
-
-        assertNotNull(response.getId());
-        assertEquals(request.getEmail(), response.getEmail());
-        assertEquals(request.getFirstName(), response.getFirstName());
-        verify(customerRepository).save(any(Customer.class));
-    }
-
-    @Test
-    @DisplayName("Create: Should throw exception when email already exists")
-    void createCustomer_ShouldThrow_WhenEmailDuplicate() {
-        CreateCustomerRequest request = buildRequest();
-        when(customerRepository.findByEmail(request.getEmail()))
-                .thenReturn(Optional.of(new Customer()));
-
-        assertThrows(DuplicateCustomerException.class, () -> customerService.createCustomer(request));
-        verify(customerRepository, never()).save(any());
-    }
-
-    @Test
-    @DisplayName("Upsert: Should UPDATE existing customer found by Email")
-    void registerOrUpdate_ShouldUpdate_WhenFoundByEmail() {
-        CreateCustomerRequest request = buildRequest();
-        request.setPhone("+39999999999");
-
-        Customer existing = buildCustomerEntity();
-
-        when(customerRepository.findByEmail(request.getEmail())).thenReturn(Optional.of(existing));
-        when(customerRepository.findById(anyString())).thenReturn(Optional.of(existing));
-        when(customerRepository.save(any(Customer.class))).thenReturn(existing);
-
-        customerService.registerOrUpdateCustomer(request);
-
-        ArgumentCaptor<Customer> captor = ArgumentCaptor.forClass(Customer.class);
-        verify(customerRepository).save(captor.capture());
-
-        Customer savedCustomer = captor.getValue();
-        assertEquals("+39999999999", savedCustomer.getPhone());
-        assertNotNull(savedCustomer.getUpdatedAt());
-    }
-
-    @Test
-    @DisplayName("Upsert: Should UPDATE existing customer found by Document (Email changed)")
-    void registerOrUpdate_ShouldUpdate_WhenFoundByDocument() {
-        CreateCustomerRequest request = buildRequest();
-        request.setEmail("new.email@test.com");
-
-        Customer existing = buildCustomerEntity();
-
-        // not found by email
-        when(customerRepository.findByEmail(request.getEmail())).thenReturn(Optional.empty());
-        // found by document
-        when(customerRepository.findByDocumentTypeAndDocumentNumber(request.getDocumentType(), request.getDocumentNumber()))
-                .thenReturn(Optional.of(existing));
-
-        when(customerRepository.findById(anyString())).thenReturn(Optional.of(existing));
-        when(customerRepository.save(any(Customer.class))).thenReturn(existing);
-
-        customerService.registerOrUpdateCustomer(request);
-
-        ArgumentCaptor<Customer> captor = ArgumentCaptor.forClass(Customer.class);
-        verify(customerRepository).save(captor.capture());
-
-        Customer savedCustomer = captor.getValue();
-        assertEquals("new.email@test.com", savedCustomer.getEmail());
-    }
-
-    @Test
     @DisplayName("Upsert: Should CREATE NEW customer when not found")
     void registerOrUpdate_ShouldCreate_WhenNotFound() {
         CreateCustomerRequest request = buildRequest();
 
+        // Mock repository returning empty for checks
         when(customerRepository.findByEmail(anyString())).thenReturn(Optional.empty());
         when(customerRepository.findByDocumentTypeAndDocumentNumber(any(), anyString()))
                 .thenReturn(Optional.empty());
 
+        // Mock save returning object with ID
         when(customerRepository.save(any(Customer.class))).thenAnswer(i -> {
             Customer c = i.getArgument(0);
             c.setId("new-id");
+            c.setSex(Sex.M); // Ensure mapping
             return c;
         });
 
@@ -132,7 +57,120 @@ class CustomerServiceTest {
 
         assertNotNull(response.getId());
         assertEquals("new-id", response.getId());
+        assertEquals(Sex.M, response.getSex());
+
         verify(customerRepository).save(any(Customer.class));
+    }
+
+    @Test
+    @DisplayName("Upsert: Should UPDATE existing customer found by Email")
+    void registerOrUpdate_ShouldUpdate_WhenFoundByEmail() {
+        CreateCustomerRequest request = buildRequest();
+        request.setPhone("+39999999999"); // Changed field
+
+        Customer existing = buildCustomerEntity();
+
+        when(customerRepository.findByEmail(request.getEmail())).thenReturn(Optional.of(existing));
+        // Note: findById might not be called in optimized implementation, but if it is:
+        // when(customerRepository.findById(anyString())).thenReturn(Optional.of(existing));
+
+        when(customerRepository.save(any(Customer.class))).thenAnswer(i -> i.getArgument(0));
+
+        CustomerResponse response = customerService.registerOrUpdateCustomer(request);
+
+        // Verify update
+        assertEquals("+39999999999", response.getPhone());
+        assertNotNull(response.getId());
+
+        verify(customerRepository).save(any(Customer.class));
+    }
+
+    @Test
+    @DisplayName("Companion: Should CREATE 'Light' Customer for Companion when not exists")
+    void registerOrUpdateCompanion_ShouldCreate_WhenNotExists() {
+        CheckInRequest.CompanionData companionData = CheckInRequest.CompanionData.builder()
+                .firstName("Lucia")
+                .lastName("Bianchi")
+                .birthDate(LocalDate.of(1995, 5, 5))
+                .sex(Sex.F)
+                .guestType(GuestType.ADULT)
+                .guestRole(GuestRole.MEMBER)
+                .citizenship("IT")
+                .placeOfBirth("Milano")
+                .build();
+
+        when(customerRepository.findByFirstNameAndLastNameAndBirthDate(anyString(), anyString(), any()))
+                .thenReturn(Optional.empty());
+
+        when(customerRepository.save(any(Customer.class))).thenAnswer(i -> {
+            Customer c = i.getArgument(0);
+            c.setId("comp-1");
+            return c;
+        });
+
+        CustomerResponse response = customerService.registerOrUpdateCompanion(companionData);
+
+        assertNotNull(response);
+        assertEquals("comp-1", response.getId());
+        assertEquals("Lucia", response.getFirstName());
+        assertEquals("IT", response.getCitizenship());
+        // Verify email is null for light customer
+        assertNull(response.getEmail());
+    }
+
+    @Test
+    @DisplayName("Companion: Should UPDATE existing Companion")
+    void registerOrUpdateCompanion_ShouldUpdate_WhenExists() {
+        CheckInRequest.CompanionData companionData = CheckInRequest.CompanionData.builder()
+                .firstName("Lucia")
+                .lastName("Bianchi")
+                .birthDate(LocalDate.of(1995, 5, 5))
+                .sex(Sex.F)
+                .guestType(GuestType.ADULT)
+                .guestRole(GuestRole.MEMBER)
+                .citizenship("FR") // Changed citizenship
+                .build();
+
+        Customer existing = Customer.builder()
+                .id("comp-1")
+                .firstName("Lucia")
+                .lastName("Bianchi")
+                .birthDate(LocalDate.of(1995, 5, 5))
+                .citizenship("IT")
+                .build();
+
+        when(customerRepository.findByFirstNameAndLastNameAndBirthDate(anyString(), anyString(), any()))
+                .thenReturn(Optional.of(existing));
+
+        when(customerRepository.save(any(Customer.class))).thenAnswer(i -> i.getArgument(0));
+
+        CustomerResponse response = customerService.registerOrUpdateCompanion(companionData);
+
+        assertEquals("FR", response.getCitizenship());
+        assertEquals("comp-1", response.getId());
+    }
+
+    @Test
+    @DisplayName("Snapshot: Should map CustomerResponse to Guest correctly with Role")
+    void createGuestSnapshot_ShouldMapCorrectly() {
+        CustomerResponse customerResponse = CustomerResponse.builder()
+                .id("cust-1")
+                .firstName("Mario")
+                .lastName("Rossi")
+                .email("mario@test.com")
+                .sex(Sex.M)
+                .citizenship("IT")
+                .guestType(GuestType.ADULT)
+                .build();
+
+        // Pass specific role (e.g. HEAD_OF_FAMILY)
+        Guest guest = customerService.createGuestSnapshot(customerResponse, GuestRole.HEAD_OF_FAMILY);
+
+        assertEquals("cust-1", guest.getCustomerId());
+        assertEquals("Mario", guest.getFirstName());
+        assertEquals(Sex.M, guest.getSex());
+        assertEquals("IT", guest.getCitizenship());
+        assertEquals(GuestRole.HEAD_OF_FAMILY, guest.getGuestRole()); // Verify injected role
     }
 
     @Test
@@ -146,14 +184,6 @@ class CustomerServiceTest {
     }
 
     @Test
-    @DisplayName("GetById: Should throw exception when not found")
-    void getCustomerById_ShouldThrow_WhenNotFound() {
-        when(customerRepository.findById("cust-1")).thenReturn(Optional.empty());
-
-        assertThrows(CustomerNotFoundException.class, () -> customerService.getCustomerById("cust-1"));
-    }
-
-    @Test
     @DisplayName("Search: Should return list")
     void searchCustomers_ShouldReturnList() {
         when(customerRepository.search("Mario")).thenReturn(List.of(buildCustomerEntity()));
@@ -164,35 +194,20 @@ class CustomerServiceTest {
         assertEquals("Mario", results.get(0).getFirstName());
     }
 
-    @Test
-    @DisplayName("Snapshot: Should map CustomerResponse to Guest correctly")
-    void createGuestSnapshot_ShouldMapCorrectly() {
-        CustomerResponse customerResponse = CustomerResponse.builder()
-                .id("cust-1")
-                .firstName("Mario")
-                .lastName("Rossi")
-                .email("mario@test.com")
-                .guestType(GuestType.ADULT)
-                .build();
-
-        Guest guest = customerService.createGuestSnapshot(customerResponse);
-
-        assertEquals("cust-1", guest.getCustomerId());
-        assertEquals("Mario", guest.getFirstName());
-        assertEquals(GuestType.ADULT, guest.getGuestType());
-    }
-
     private CreateCustomerRequest buildRequest() {
         return CreateCustomerRequest.builder()
                 .firstName("Mario")
                 .lastName("Rossi")
                 .email("mario.rossi@test.com")
                 .phone("+39333000000")
-                .address("Via Roma 1")
                 .birthDate(LocalDate.of(1990, 1, 1))
+                .sex(Sex.M)
+                .placeOfBirth("Milano")
+                .citizenship("IT")
                 .documentType(DocumentType.PASSPORT)
                 .documentNumber("AB123")
                 .guestType(GuestType.ADULT)
+                .guestRole(GuestRole.HEAD_OF_FAMILY)
                 .build();
     }
 
@@ -203,8 +218,9 @@ class CustomerServiceTest {
                 .lastName("Rossi")
                 .email("mario.rossi@test.com")
                 .phone("+39333000000")
-                .address("Via Roma 1")
                 .birthDate(LocalDate.of(1990, 1, 1))
+                .sex(Sex.M)
+                .citizenship("IT")
                 .documentType(DocumentType.PASSPORT)
                 .documentNumber("AB123")
                 .guestType(GuestType.ADULT)

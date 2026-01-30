@@ -2,7 +2,11 @@ package com.swam.booking.domain;
 
 import com.swam.shared.enums.DocumentType;
 import com.swam.shared.enums.GuestType;
-import jakarta.validation.constraints.*;
+import com.swam.shared.enums.Sex;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Past;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,7 +14,6 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDate;
@@ -26,35 +29,32 @@ public class Customer {
     @Id
     private String id;
 
-    @NotBlank(message = "Il nome è obbligatorio")
-    @Size(min = 2, max = 50)
+    @NotBlank
     private String firstName;
 
-    @NotBlank(message = "Il cognome è obbligatorio")
-    @Size(min = 2, max = 50)
+    @NotBlank
     private String lastName;
 
-    @Indexed(unique = true)
-    @NotBlank(message = "L'email è obbligatoria")
-    @Email(message = "L'email deve essere valida")
+    @NotNull
+    private Sex sex;
+
+    @NotNull
+    @Past
+    private LocalDate birthDate;
+
+    private String placeOfBirth;
+    private String citizenship;
+
+    @Email
     private String email;
 
     private String phone;
 
-    private String address;
-
-    @Past(message = "La data di nascita deve essere valida")
-    private LocalDate birthDate;
-
-    private String country;
-
-    private String documentNumber;
-
     private DocumentType documentType;
+    private String documentNumber;
+    private String documentPlaceOfIssue;
 
     private GuestType guestType;
-
-    private String notes;
 
     @CreatedDate
     private LocalDateTime createdAt;

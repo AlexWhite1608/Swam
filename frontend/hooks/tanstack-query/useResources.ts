@@ -1,6 +1,6 @@
 import { getErrorMessage } from "@/lib/api";
 import { resourceKeys } from "@/lib/query-keys";
-import { ResourceStatus } from "@/schemas/resourcesSchema";
+import { ResourceStatus } from "@/schemas/createResourceSchema";
 import { resourceService } from "@/services/resourceService";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -101,10 +101,10 @@ export const useDeleteResource = () => {
     mutationFn: resourceService.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: resourceKeys.all });
-      toast.success("Risorsa eliminata con successo");
+      toast.success("Risorsa rimossa con successo");
     },
     onError: (error: any) => {
-      toast.error("Impossibile eliminare la risorsa", {
+      toast.error("Impossibile rimuovere la risorsa", {
         description: getErrorMessage(error),
       });
     },

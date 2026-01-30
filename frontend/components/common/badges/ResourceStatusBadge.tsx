@@ -1,12 +1,18 @@
 import { Badge } from "@/components/ui/badge";
-import { ResourceStatus, statusOptions } from "@/schemas/resourcesSchema";
+import { ResourceStatus } from "@/types/resources/enums";
+import { resourceStatusOptions } from "@/types/resources/options";
+import { ResourceStatusType } from "@/types/resources/types";
 
 interface ResourceStatusBadgeProps {
-  status: ResourceStatus | string;
+  status: ResourceStatusType | string;
+  showIcon?: boolean;
 }
 
-export function ResourceStatusBadge({ status }: ResourceStatusBadgeProps) {
-  const statusObj = statusOptions.find((s) => s.value === status);
+export function ResourceStatusBadge({
+  status,
+  showIcon = true,
+}: ResourceStatusBadgeProps) {
+  const statusObj = resourceStatusOptions.find((s) => s.value === status);
   if (!statusObj) return null;
 
   let badgeClass = "";
@@ -24,8 +30,11 @@ export function ResourceStatusBadge({ status }: ResourceStatusBadgeProps) {
   const Icon = statusObj.icon;
 
   return (
-    <Badge variant="outline" className={badgeClass + " flex items-center gap-1"}>
-      <Icon className="h-4 w-4 mr-1" />
+    <Badge
+      variant="outline"
+      className={badgeClass + " flex items-center gap-1"}
+    >
+      {showIcon && Icon && <Icon className="h-4 w-4" />}
       {statusObj.label}
     </Badge>
   );

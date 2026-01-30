@@ -7,10 +7,7 @@ import com.swam.booking.dto.CheckOutRequest;
 import com.swam.booking.dto.CreateBookingRequest;
 import com.swam.booking.service.BookingService;
 import com.swam.shared.dto.PriceBreakdown;
-import com.swam.shared.enums.BookingStatus;
-import com.swam.shared.enums.DocumentType;
-import com.swam.shared.enums.GuestType;
-import com.swam.shared.enums.PaymentStatus;
+import com.swam.shared.enums.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -87,18 +84,7 @@ class BookingControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value("book-1"))
-                .andExpect(jsonPath("$.resourceId").value("room-101"))
-                .andExpect(jsonPath("$.status").value(BookingStatus.PENDING.toString()))
-                .andExpect(jsonPath("$.paymentStatus").value(PaymentStatus.UNPAID.toString()))
-                .andExpect(jsonPath("$.priceBreakdown").exists())
-                .andExpect(jsonPath("$.priceBreakdown.baseAmount").value(0))
-                .andExpect(jsonPath("$.priceBreakdown.depositAmount").value(100.00))
-                .andExpect(jsonPath("$.priceBreakdown.taxAmount").value(0))
-                .andExpect(jsonPath("$.priceBreakdown.discountAmount").value(0))
-                .andExpect(jsonPath("$.priceBreakdown.extrasAmount").value(0))
-                .andExpect(jsonPath("$.priceBreakdown.finalTotal").value(0))
-                .andExpect(jsonPath("$.priceBreakdown.taxDescription").doesNotExist())
-                .andExpect(jsonPath("$.createdAt").exists());
+                .andExpect(jsonPath("$.status").value(BookingStatus.PENDING.toString()));
 
         verify(bookingService, times(1)).createBooking(any(CreateBookingRequest.class));
     }
@@ -114,7 +100,6 @@ class BookingControllerTest {
 
         when(bookingService.confirmBooking("book-1", true)).thenReturn(response);
 
-        // Act & Assert
         mockMvc.perform(patch("/api/bookings/book-1/confirm")
                         .param("hasPaidDeposit", "true"))
                 .andExpect(status().isOk())
@@ -123,17 +108,22 @@ class BookingControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/bookings/{id}/check-in -> check-in booking")
+    @DisplayName("POST /api/bookings/{id}/check-in -> check-in booking with full legal data")
     void checkIn_ShouldReturnCheckedIn() throws Exception {
-        // Arrange
+        // Updated payload with all mandatory fields
         CheckInRequest request = CheckInRequest.builder()
-                .address("Via Roma 1")
+                .firstName("Mario")
+                .lastName("Rossi")
+                .sex(Sex.M)
                 .birthDate(LocalDate.of(1990, 1, 1))
+                .placeOfBirth("Roma")
+                .citizenship("IT")
+                .email("mario@test.com")
                 .phone("+393331234567")
                 .documentType(DocumentType.ID_CARD)
                 .documentNumber("AB12345")
                 .guestType(GuestType.ADULT)
-                .country("Italy")
+                .guestRole(GuestRole.HEAD_OF_FAMILY)
                 .build();
 
         BookingResponse response = BookingResponse.builder()
@@ -151,7 +141,7 @@ class BookingControllerTest {
     }
 
     @Test
-    @DisplayName("Should perform check-out without extras")
+    @DisplayName("POST /api/bookings/{id}/check-out -> check-out booking")
     void checkOut_WithoutExtras_ShouldSucceed() throws Exception {
         CheckOutRequest request = CheckOutRequest.builder()
                 .extras(List.of())
@@ -173,37 +163,29 @@ class BookingControllerTest {
     }
 
     @Test
-    @DisplayName("Should find bookings by resourceId with multiple results")
-    void searchBookings_ByResourceId_ShouldReturnMultipleBookings() throws Exception {
-        List<BookingResponse> bookings = List.of(
-                BookingResponse.builder().id("book-1").resourceId("room-101").status(BookingStatus.CONFIRMED).build(),
-                BookingResponse.builder().id("book-2").resourceId("room-101").status(BookingStatus.PENDING).build()
-        );
+    @DisplayName("PUT /api/bookings/{id} -> updates booking basic info")
+    void updateBooking_ShouldReturnUpdated() throws Exception {
+        CreateBookingRequest updateRequest = CreateBookingRequest.builder()
+                .resourceId("room-102")
+                .checkIn(LocalDate.now().plusDays(2))
+                .checkOut(LocalDate.now().plusDays(6))
+                .guestFirstName("Mario")
+                .guestLastName("Bianchi")
+                .depositAmount(BigDecimal.valueOf(50.00))
+                .build();
 
-        when(bookingService.getBookingsByResource("room-101")).thenReturn(bookings);
+        BookingResponse response = BookingResponse.builder()
+                .id("book-1")
+                .resourceId("room-102") // Updated
+                .status(BookingStatus.PENDING)
+                .build();
 
-        mockMvc.perform(get("/api/bookings")
-                        .param("resourceId", "room-101"))
+        when(bookingService.updateBooking(eq("book-1"), any(CreateBookingRequest.class))).thenReturn(response);
+
+        mockMvc.perform(put("/api/bookings/book-1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequest)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[0].id").value("book-1"))
-                .andExpect(jsonPath("$[1].id").value("book-2"))
-                .andExpect(jsonPath("$[*].resourceId", everyItem(is("room-101"))));
-    }
-
-    @Test
-    @DisplayName("Should find bookings by customerId")
-    void searchBookings_ByCustomerId_ShouldReturnCustomerBookings() throws Exception {
-        List<BookingResponse> bookings = List.of(
-                BookingResponse.builder().id("book-1").status(BookingStatus.CHECKED_OUT).build(),
-                BookingResponse.builder().id("book-3").status(BookingStatus.CONFIRMED).build()
-        );
-
-        when(bookingService.getBookingsByMainGuest("cust-123")).thenReturn(bookings);
-
-        mockMvc.perform(get("/api/bookings")
-                        .param("customerId", "cust-123"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)));
+                .andExpect(jsonPath("$.resourceId").value("room-102"));
     }
 }

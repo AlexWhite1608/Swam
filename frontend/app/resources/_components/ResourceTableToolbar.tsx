@@ -4,7 +4,10 @@ import { Table } from "@tanstack/react-table";
 
 import { DataTableFacetedFilter } from "@/components/data-table/data-table-faceted-filter";
 import { Input } from "@/components/ui/input";
-import { statusOptions, typeOptions } from "@/schemas/resourcesSchema";
+import {
+  resourceStatusOptions,
+  resourceTypeOptions,
+} from "@/types/resources/options";
 
 interface ResourceTableToolbarProps<TData> {
   table: Table<TData>;
@@ -32,7 +35,7 @@ export function ResourceTableToolbar<TData>({
             hasIcon
             column={table.getColumn("status")}
             title="Stato"
-            options={statusOptions}
+            options={resourceStatusOptions}
           />
         )}
         {table.getColumn("type") && (
@@ -40,7 +43,7 @@ export function ResourceTableToolbar<TData>({
             hasIcon
             column={table.getColumn("type")}
             title="Tipo"
-            options={typeOptions}
+            options={resourceTypeOptions}
           />
         )}
       </div>

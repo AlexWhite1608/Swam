@@ -14,19 +14,15 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Resource,
-  ResourceStatus,
-  statusOptions,
-  typeOptions,
-} from "@/schemas/resourcesSchema";
+import { resourceStatusOptions, resourceTypeOptions } from "@/types/resources/options";
+import { Resource, ResourceStatusType } from "@/types/resources/types";
 import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal, Pencil, Power, Trash } from "lucide-react";
 
 interface GetColumnsProps {
   onEdit: (resource: Resource) => void;
   onDelete: (resource: Resource) => void;
-  onStatusChange: (resource: Resource, status: ResourceStatus) => void;
+  onStatusChange: (resource: Resource, status: ResourceStatusType) => void;
 }
 
 export const getResourceColumns = ({
@@ -83,7 +79,7 @@ export const getResourceColumns = ({
       <DataTableColumnHeader column={column} title="Tipo" />
     ),
     cell: ({ row }) => {
-      const type = typeOptions.find((t) => t.value === row.getValue("type"));
+      const type = resourceTypeOptions.find((t) => t.value === row.getValue("type"));
       if (!type) return null;
 
       return (
@@ -159,7 +155,7 @@ export const getResourceColumns = ({
                 Stato
               </DropdownMenuSubTrigger>
               <DropdownMenuSubContent>
-                {statusOptions.map((s) => (
+                {resourceStatusOptions.map((s) => (
                   <DropdownMenuItem
                     key={s.value}
                     onClick={() => onStatusChange(row.original, s.value)}
@@ -179,7 +175,7 @@ export const getResourceColumns = ({
               className="text-red-600 focus:text-red-600 focus:bg-red-50"
             >
               <Trash className="h-4 w-4 text-red-600/70" />
-              Cancella
+              Rimuovi
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
