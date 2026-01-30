@@ -1,7 +1,7 @@
 // check-in/CheckInFormFooter.tsx
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { Loader2, LogIn } from "lucide-react";
 import { Control } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,7 +21,7 @@ export function BookingCheckInFormFooter({
 }: BookingCheckInFormFooterProps) {
   return (
     <div className="pt-4 mt-2 border-t bg-background z-10">
-      <div className="flex gap-3 items-start pb-2">
+      <div className="flex gap-3 items-end pb-2">
         <FormField
           control={control}
           name="notes"
@@ -29,8 +29,8 @@ export function BookingCheckInFormFooter({
             <FormItem className="flex-1">
               <FormControl>
                 <Textarea
-                  placeholder="Note check-in..."
-                  className="h-9 resize-none text-sm"
+                  placeholder="Eventuali note aggiuntive..."
+                  className="resize-none text-sm"
                   {...field}
                   value={field.value || ""}
                 />
@@ -45,6 +45,7 @@ export function BookingCheckInFormFooter({
           </Button>
           <Button type="submit" disabled={isLoading}>
             {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+            <LogIn className="h-4 w-4" />
             Check-in
           </Button>
         </div>
