@@ -22,12 +22,11 @@ export interface CheckInCompanion {
   phone?: string;
   placeOfBirth?: string;
   citizenship?: string;
-  documentType: DocumentTypeType;
-  documentNumber: string;
+  documentType?: DocumentTypeType;
+  documentNumber?: string;
   documentPlaceOfIssue?: string;
   guestType: GuestTypeType;
   guestRole: GuestRoleType;
-  notes?: string;
 }
 
 export interface CheckInPayload {
@@ -36,7 +35,7 @@ export interface CheckInPayload {
   sex: SexType;
   birthDate: string;
   email?: string;
-  phone: string;
+  phone?: string;
   placeOfBirth?: string;
   citizenship?: string;
   documentType: DocumentTypeType;

@@ -5,6 +5,10 @@ import { BaseDataDialog } from "@/components/dialog/BaseDataDialog";
 import { BookingForm } from "./BookingForm";
 import { BookingStatus } from "@/types/bookings/enums";
 import { Booking } from "@/types/bookings/types";
+import { BookingCheckInForm } from "./_check-in/BookingCheckInForm";
+import { BookingCheckInHeader } from "./_check-in/BookingCheckInHeader";
+import { useCheckInBooking } from "@/hooks/tanstack-query/useBookings";
+import { format } from "date-fns";
 
 //FIXME: Placeholder per i form futuri
 const FullEditForm = ({ booking }: { booking: Booking }) => (
@@ -35,6 +39,8 @@ export function BookingDialog({
   mode,
   booking,
 }: BookingDialogProps) {
+  const checkInMutation = useCheckInBooking();
+
   const getConfig = () => {
     switch (mode) {
       case "CREATE":
@@ -46,8 +52,8 @@ export function BookingDialog({
         };
       case "CHECKIN":
         return {
-          title: "Check-in Ospite",
-          description: "Registrazione documenti e dati anagrafici completi.",
+          title: booking ? <BookingCheckInHeader booking={booking} /> : "Check-in Ospite",
+          description: undefined,
           className: "sm:max-w-[800px]",
         };
       case "CHECKOUT":
@@ -62,7 +68,6 @@ export function BookingDialog({
           description: booking
             ? `Gestione prenotazione per ${booking.mainGuest.lastName} ${booking.mainGuest.firstName} `
             : "Modifica dati",
-          // if checked-in, larger dialog for more complex edit form
           className:
             booking?.status === BookingStatus.CHECKED_IN
               ? "sm:max-w-[800px]"
@@ -75,7 +80,6 @@ export function BookingDialog({
 
   const config = getConfig();
 
-  // content renderer
   const renderContent = () => {
     switch (mode) {
       case "CREATE":
@@ -93,7 +97,6 @@ export function BookingDialog({
           booking.status === BookingStatus.PENDING ||
           booking.status === BookingStatus.CONFIRMED
         ) {
-          // simple edit form for pending/confirmed bookings
           return (
             <BookingForm
               booking={booking}
@@ -104,15 +107,49 @@ export function BookingDialog({
         }
 
         if (booking.status === BookingStatus.CHECKED_IN) {
-          // full edit form for checked-in bookings
           return <FullEditForm booking={booking} />;
         }
 
-        // checkout or other statuses - read-only view and small admin corrections
         return <ReadOnlyView booking={booking} />;
 
       case "CHECKIN":
-        return <div className="p-4">Wizard Check-in (Da implementare)</div>;
+        if (!booking) return null;
+
+        return (
+          <BookingCheckInForm
+            booking={booking}
+            isLoading={checkInMutation.isPending}
+            onCancel={() => onOpenChange(false)}
+            onSubmit={(formData) => {
+              if (!formData.birthDate) {
+                return;
+              }
+
+              // Filter companions with valid birthdates
+              const validCompanions = formData.companions?.filter(
+                (c) => c.birthDate !== undefined
+              );
+
+              const payload = {
+                ...formData,
+                birthDate: format(formData.birthDate, "yyyy-MM-dd"),
+                companions: validCompanions?.map((companion) => ({
+                  ...companion,
+                  birthDate: format(companion.birthDate!, "yyyy-MM-dd"),
+                })),
+              };
+
+              checkInMutation.mutate(
+                { id: booking.id, payload },
+                {
+                  onSuccess: () => {
+                    onOpenChange(false);
+                  },
+                }
+              );
+            }}
+          />
+        );
 
       case "CHECKOUT":
         return <div className="p-4">Wizard Check-out (Da implementare)</div>;

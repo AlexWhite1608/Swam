@@ -2,7 +2,7 @@ import * as React from "react";
 import { CheckIcon, ChevronsUpDown } from "lucide-react";
 import * as RPNInput from "react-phone-number-input";
 import flags from "react-phone-number-input/flags";
-
+import italialLabels from "react-phone-number-input/locale/it.json";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -41,6 +41,8 @@ const PhoneInput: React.ForwardRefExoticComponent<PhoneInputProps> =
           inputComponent={InputComponent}
           smartCaret={false}
           value={value || undefined}
+          defaultCountry="IT"
+          labels={italialLabels}
           /**
            * Handles the onChange event.
            *

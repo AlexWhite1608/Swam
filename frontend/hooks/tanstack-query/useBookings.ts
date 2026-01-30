@@ -120,7 +120,7 @@ export const useCheckInBooking = () => {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: bookingKeys.all });
       queryClient.invalidateQueries({ queryKey: bookingKeys.detail(data.id) });
-      toast.success("Check-in effettuato");
+      toast.success("Check-in effettuato con successo");
     },
     onError: (error: unknown) => {
       toast.error("Errore Check-in", {
