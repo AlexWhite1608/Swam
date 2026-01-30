@@ -1,5 +1,4 @@
 package com.swam.booking.dto;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,7 +19,9 @@ public class PriceCalculationRequest {
     private int numAdults;
     private int numChildren;
     private int numInfants;
-    private boolean taxExempt;
+    private int numExemptAdults;
+    private int numExemptChildren;
+    private int numExemptInfants;
     private BigDecimal manualDiscount;
     private BigDecimal depositAmount;
     private List<BillableExtraItem> extras;

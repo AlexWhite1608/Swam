@@ -102,10 +102,6 @@ public class PricingEngineService {
     }
 
     private BigDecimal calculateCityTax (PriceCalculationRequest req,long totalNights){
-        if (req.isTaxExempt()) {
-            return BigDecimal.ZERO;
-        }
-
         CityTaxRule rule = taxRepository.findAll().stream().findFirst().orElse(null);
 
         if (rule == null || !rule.isEnabled()) {
@@ -122,21 +118,28 @@ public class PricingEngineService {
 
         BigDecimal totalTax = BigDecimal.ZERO;
 
-        if (req.getNumAdults() > 0 && rule.getAmountPerAdult() != null) {
+        // calculate number of exempt individuals
+        long taxableAdults = Math.max(0, req.getNumAdults() - req.getNumExemptAdults());
+
+        if (taxableAdults > 0 && rule.getAmountPerAdult() != null) {
             totalTax = totalTax.add(rule.getAmountPerAdult()
-                    .multiply(BigDecimal.valueOf(req.getNumAdults()))
+                    .multiply(BigDecimal.valueOf(taxableAdults))
                     .multiply(BigDecimal.valueOf(chargeableNights)));
         }
 
-        if (req.getNumChildren() > 0 && rule.getAmountPerChild() != null) {
+        long taxableChildren = Math.max(0, req.getNumChildren() - req.getNumExemptChildren());
+
+        if (taxableChildren > 0 && rule.getAmountPerChild() != null) {
             totalTax = totalTax.add(rule.getAmountPerChild()
-                    .multiply(BigDecimal.valueOf(req.getNumChildren()))
+                    .multiply(BigDecimal.valueOf(taxableChildren))
                     .multiply(BigDecimal.valueOf(chargeableNights)));
         }
 
-        if (req.getNumInfants() > 0 && rule.getAmountPerInfant() != null) {
+        long taxableInfants = Math.max(0, req.getNumInfants() - req.getNumExemptInfants());
+
+        if (taxableInfants > 0 && rule.getAmountPerInfant() != null) {
             totalTax = totalTax.add(rule.getAmountPerInfant()
-                    .multiply(BigDecimal.valueOf(req.getNumInfants()))
+                    .multiply(BigDecimal.valueOf(taxableInfants))
                     .multiply(BigDecimal.valueOf(chargeableNights)));
         }
 

@@ -19,7 +19,9 @@ public class PriceCalculationRequest {
     private int numAdults;
     private int numChildren;
     private int numInfants;
-    private boolean taxExempt;
+    private int numExemptAdults;
+    private int numExemptChildren;
+    private int numExemptInfants;
     private BigDecimal manualDiscount;
     private BigDecimal depositAmount;
     private List<BillableExtraItem> extras;

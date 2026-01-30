@@ -246,7 +246,7 @@ public class BookingService {
                 ))
                 .collect(Collectors.toList());
 
-        // Calcolo ospiti reali
+        // calculate total number of guests by type
         int adults = (booking.getMainGuest().getGuestType() == GuestType.ADULT ? 1 : 0) +
                 (int) booking.getCompanions().stream().filter(c -> c.getGuestType() == GuestType.ADULT).count();
 
@@ -256,6 +256,24 @@ public class BookingService {
         int infants = (booking.getMainGuest().getGuestType() == GuestType.INFANT ? 1 : 0) +
                 (int) booking.getCompanions().stream().filter(c -> c.getGuestType() == GuestType.INFANT).count();
 
+        // calculate number of tax-exempt guests by type
+        int exemptAdults = (booking.getMainGuest().getGuestType() == GuestType.ADULT && booking.getMainGuest().isTaxExempt()) ? 1 : 0;
+        int exemptChildren = (booking.getMainGuest().getGuestType() == GuestType.CHILD && booking.getMainGuest().isTaxExempt()) ? 1 : 0;
+        int exemptInfants = (booking.getMainGuest().getGuestType() == GuestType.INFANT && booking.getMainGuest().isTaxExempt()) ? 1 : 0;
+
+        // count exempt companions
+        exemptAdults += (int) booking.getCompanions().stream()
+                .filter(c -> c.getGuestType() == GuestType.ADULT && c.isTaxExempt())
+                .count();
+
+        exemptChildren += (int) booking.getCompanions().stream()
+                .filter(c -> c.getGuestType() == GuestType.CHILD && c.isTaxExempt())
+                .count();
+
+        exemptInfants += (int) booking.getCompanions().stream()
+                .filter(c -> c.getGuestType() == GuestType.INFANT && c.isTaxExempt())
+                .count();
+
         PriceCalculationRequest pricingRequest = PriceCalculationRequest.builder()
                 .resourceId(booking.getResourceId())
                 .checkIn(booking.getCheckIn())
@@ -263,7 +281,9 @@ public class BookingService {
                 .numAdults(adults)
                 .numChildren(children)
                 .numInfants(infants)
-                .taxExempt(booking.getMainGuest().isTaxExempt())
+                .numExemptAdults(exemptAdults)
+                .numExemptChildren(exemptChildren)
+                .numExemptInfants(exemptInfants)
                 .depositAmount(booking.getPriceBreakdown().getDepositAmount())
                 .extras(billableExtras)
                 .build();
