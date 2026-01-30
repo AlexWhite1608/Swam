@@ -4,6 +4,7 @@ import com.swam.pricing.domain.*;
 import com.swam.pricing.dto.PriceCalculationRequest;
 import com.swam.pricing.repository.*;
 import com.swam.shared.dto.PriceBreakdown;
+import com.swam.shared.enums.GuestType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -44,12 +45,11 @@ class PricingEngineTaxTest {
 
         rate = new SeasonalRate();
         rate.setSeasonId("S1");
-        rate.setBasePrice(new BigDecimal("100.00")); // 100€ camera
+        rate.setBasePrice(new BigDecimal("100.00"));
 
-        // CONFIGURAZIONE TASSA
         taxRule = new CityTaxRule();
         taxRule.setEnabled(true);
-        taxRule.setMaxNightsCap(4); // Cap a 4 notti
+        taxRule.setMaxNightsCap(4);
         taxRule.setAmountPerAdult(new BigDecimal("2.00"));
         taxRule.setAmountPerChild(new BigDecimal("1.00"));
         taxRule.setAmountPerInfant(BigDecimal.ZERO);
@@ -64,23 +64,32 @@ class PricingEngineTaxTest {
         LocalDate checkOut = checkIn.plusDays(3); // 3 Notti
 
         when(seasonRepository.findSeasonsInInterval(checkIn, checkOut)).thenReturn(List.of(season));
-
-        // CORREZIONE QUI: Usa "S1" come primo argomento (ID Stagione), non "ROOM-1"
         when(rateRepository.findBySeasonIdAndResourceId("S1", "ROOM-1")).thenReturn(Optional.of(rate));
-
         when(taxRepository.findAll()).thenReturn(List.of(taxRule));
+
+        // Creiamo la lista mista
+        List<PriceCalculationRequest.GuestProfile> guests = List.of(
+                // 2 Adulti paganti (3 notti)
+                createGuest(GuestType.ADULT, false, 3),
+                createGuest(GuestType.ADULT, false, 3),
+                // 1 Adulto esente (3 notti)
+                createGuest(GuestType.ADULT, true, 3),
+                // 1 Bambino pagante (3 notti)
+                createGuest(GuestType.CHILD, false, 3)
+        );
 
         PriceCalculationRequest req = PriceCalculationRequest.builder()
                 .resourceId("ROOM-1")
                 .checkIn(checkIn).checkOut(checkOut)
-                .numAdults(3)
-                .numChildren(1)
-                .numExemptAdults(1)   // 1 adulto esente
-                .numExemptChildren(0) // bambino paga
+                .guests(guests)
                 .build();
 
         PriceBreakdown result = pricingEngineService.calculatePrice(req);
 
+        // Verifica:
+        // Adulti Paganti: 2 * 2€ * 3 notti = 12€
+        // Bambini Paganti: 1 * 1€ * 3 notti = 3€
+        // Totale: 15€
         System.out.println("Tassa Calcolata: " + result.getTaxAmount());
         assertEquals(new BigDecimal("15.00"), result.getTaxAmount());
     }
@@ -94,15 +103,18 @@ class PricingEngineTaxTest {
         LocalDate checkOut = checkIn.plusDays(2);
 
         when(seasonRepository.findSeasonsInInterval(checkIn, checkOut)).thenReturn(List.of(season));
-        // CORREZIONE QUI: Usa "S1"
         when(rateRepository.findBySeasonIdAndResourceId("S1", "ROOM-1")).thenReturn(Optional.of(rate));
         when(taxRepository.findAll()).thenReturn(List.of(taxRule));
+
+        List<PriceCalculationRequest.GuestProfile> guests = List.of(
+                createGuest(GuestType.ADULT, true, 2),
+                createGuest(GuestType.ADULT, true, 2)
+        );
 
         PriceCalculationRequest req = PriceCalculationRequest.builder()
                 .resourceId("ROOM-1")
                 .checkIn(checkIn).checkOut(checkOut)
-                .numAdults(2)
-                .numExemptAdults(2) // Tutti esenti
+                .guests(guests)
                 .build();
 
         PriceBreakdown result = pricingEngineService.calculatePrice(req);
@@ -111,29 +123,11 @@ class PricingEngineTaxTest {
         assertEquals(BigDecimal.ZERO, result.getTaxAmount());
     }
 
-    @Test
-    @DisplayName("Scenario Safety: Più esenti che ospiti")
-    void testSafetyCheck() {
-        System.out.println("--- TEST: Safety ---");
-
-        LocalDate checkIn = LocalDate.now();
-        LocalDate checkOut = checkIn.plusDays(1);
-
-        when(seasonRepository.findSeasonsInInterval(checkIn, checkOut)).thenReturn(List.of(season));
-        // CORREZIONE QUI: Usa "S1"
-        when(rateRepository.findBySeasonIdAndResourceId("S1", "ROOM-1")).thenReturn(Optional.of(rate));
-        when(taxRepository.findAll()).thenReturn(List.of(taxRule));
-
-        PriceCalculationRequest req = PriceCalculationRequest.builder()
-                .resourceId("ROOM-1")
-                .checkIn(checkIn).checkOut(checkOut)
-                .numAdults(1)
-                .numExemptAdults(5) // Errore intenzionale
+    private PriceCalculationRequest.GuestProfile createGuest(GuestType type, boolean exempt, int days) {
+        return PriceCalculationRequest.GuestProfile.builder()
+                .type(type)
+                .taxExempt(exempt)
+                .days(days)
                 .build();
-
-        PriceBreakdown result = pricingEngineService.calculatePrice(req);
-
-        System.out.println("Tassa Calcolata: " + result.getTaxAmount());
-        assertEquals(BigDecimal.ZERO, result.getTaxAmount());
     }
 }

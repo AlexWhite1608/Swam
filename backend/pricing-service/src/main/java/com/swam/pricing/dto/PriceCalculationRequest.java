@@ -1,4 +1,5 @@
 package com.swam.pricing.dto;
+import com.swam.shared.enums.GuestType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,12 +17,7 @@ public class PriceCalculationRequest {
     private String resourceId;
     private LocalDate checkIn;
     private LocalDate checkOut;
-    private int numAdults;
-    private int numChildren;
-    private int numInfants;
-    private int numExemptAdults;
-    private int numExemptChildren;
-    private int numExemptInfants;
+    private List<GuestProfile> guests;
     private BigDecimal manualDiscount;
     private BigDecimal depositAmount;
     private List<BillableExtraItem> extras;
@@ -29,8 +25,18 @@ public class PriceCalculationRequest {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
+    @Builder
+    public static class GuestProfile {
+        private GuestType type;
+        private boolean taxExempt;
+        private int days;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class BillableExtraItem {
-        private BigDecimal unitPrice; // Prezzo al momento del consumo
-        private int quantity;         // Quanti extras sono stati aggiunti
+        private BigDecimal unitPrice; // Price at the time of consumption
+        private int quantity;         // how many extras were added
     }
 }

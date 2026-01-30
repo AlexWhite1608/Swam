@@ -4,6 +4,7 @@ import com.swam.pricing.domain.*;
 import com.swam.pricing.repository.*;
 import com.swam.pricing.dto.PriceCalculationRequest;
 import com.swam.shared.dto.PriceBreakdown;
+import com.swam.shared.enums.GuestType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import com.swam.shared.exceptions.CityTaxRequiredException;
@@ -27,61 +28,70 @@ public class PricingEngineService {
         List<Season> relevantSeasons = seasonRepository.findSeasonsInInterval(
                 request.getCheckIn(), request.getCheckOut());
 
-        long nights = ChronoUnit.DAYS.between(request.getCheckIn(), request.getCheckOut());
+        long totalNights = ChronoUnit.DAYS.between(request.getCheckIn(), request.getCheckOut());
 
-        for (int i = 0; i < nights; i++) {
+        // calculate base amount night by night
+        for (int i = 0; i < totalNights; i++) {
             LocalDate currentDate = request.getCheckIn().plusDays(i);
 
-            // Trova stagione per la data corrente
+            int currentNightIndex = i;
+
+            // count active guests for the night
+            long activeAdults = request.getGuests().stream()
+                    .filter(g -> g.getType() == GuestType.ADULT && g.getDays() > currentNightIndex)
+                    .count();
+
+            long activeChildren = request.getGuests().stream()
+                    .filter(g -> g.getType() == GuestType.CHILD && g.getDays() > currentNightIndex)
+                    .count();
+
+            long activeInfants = request.getGuests().stream()
+                    .filter(g -> g.getType() == GuestType.INFANT && g.getDays() > currentNightIndex)
+                    .count();
+
+            // season lookup
             Season activeSeason = relevantSeasons.stream()
                     .filter(s -> !currentDate.isBefore(s.getStartDate()) && !currentDate.isAfter(s.getEndDate()))
                     .findFirst()
                     .orElseThrow(() -> new RuntimeException("Nessuna tariffa definita per il " + currentDate));
 
-
             SeasonalRate rate = rateRepository.findBySeasonIdAndResourceId(activeSeason.getId(), request.getResourceId())
                     .orElseThrow(() -> new RuntimeException("Prezzo mancante per risorsa " + request.getResourceId()));
 
+            // calculate nightly cost for active guests
             BigDecimal nightlyCost = rate.getBasePrice();
+
             if (rate.getAdultPrice() != null) {
-                nightlyCost = nightlyCost.add(rate.getAdultPrice().multiply(BigDecimal.valueOf(request.getNumAdults())));
+                nightlyCost = nightlyCost.add(rate.getAdultPrice().multiply(BigDecimal.valueOf(activeAdults)));
             }
             if (rate.getChildPrice() != null) {
-                nightlyCost = nightlyCost.add(rate.getChildPrice().multiply(BigDecimal.valueOf(request.getNumChildren())));
+                nightlyCost = nightlyCost.add(rate.getChildPrice().multiply(BigDecimal.valueOf(activeChildren)));
             }
-            if (rate.getInfantPrice() != null && request.getNumInfants() > 0) {
-                nightlyCost = nightlyCost.add(rate.getInfantPrice().multiply(BigDecimal.valueOf(request.getNumInfants())));
+            if (rate.getInfantPrice() != null && activeInfants > 0) {
+                nightlyCost = nightlyCost.add(rate.getInfantPrice().multiply(BigDecimal.valueOf(activeInfants)));
             }
 
             baseAmount = baseAmount.add(nightlyCost);
         }
 
+        // calculate city tax
+        BigDecimal taxAmount = calculateCityTax(request);
 
-        BigDecimal taxAmount = calculateCityTax(request, nights);
-
+        // calculate extras
         BigDecimal extrasTotal = BigDecimal.ZERO;
         if (request.getExtras() != null) {
             for (PriceCalculationRequest.BillableExtraItem item : request.getExtras()) {
                 if (item.getUnitPrice() != null && item.getQuantity() > 0) {
-                    BigDecimal itemCost = item.getUnitPrice()
-                            .multiply(BigDecimal.valueOf(item.getQuantity()));
+                    BigDecimal itemCost = item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
                     extrasTotal = extrasTotal.add(itemCost);
                 }
             }
         }
 
-        BigDecimal discount = BigDecimal.ZERO;
-        if (request.getManualDiscount() != null) {
-            discount = request.getManualDiscount();
-        }
-
-        BigDecimal deposit = BigDecimal.ZERO;
-        if (request.getDepositAmount() != null) {
-            deposit = request.getDepositAmount();
-        }
+        BigDecimal discount = request.getManualDiscount() != null ? request.getManualDiscount() : BigDecimal.ZERO;
+        BigDecimal deposit = request.getDepositAmount() != null ? request.getDepositAmount() : BigDecimal.ZERO;
 
         BigDecimal subTotal = baseAmount.add(taxAmount).add(extrasTotal);
-
         BigDecimal finalTotal = subTotal.subtract(discount).subtract(deposit);
 
         if (finalTotal.compareTo(BigDecimal.ZERO) < 0) {
@@ -96,54 +106,47 @@ public class PricingEngineService {
                 .depositAmount(deposit)
                 .finalTotal(finalTotal)
                 .taxDescription(taxAmount.compareTo(BigDecimal.ZERO) > 0
-                        ? "Tassa di soggiorno applicata"
-                        : "Tassa di soggiorno esente o non dovuta")
+                        ? "Tassa applicata su presenze effettive"
+                        : "Esente tassa di soggiorno")
                 .build();
     }
 
-    private BigDecimal calculateCityTax (PriceCalculationRequest req,long totalNights){
+    private BigDecimal calculateCityTax(PriceCalculationRequest req) {
         CityTaxRule rule = taxRepository.findAll().stream().findFirst().orElse(null);
 
         if (rule == null || !rule.isEnabled()) {
-            throw new CityTaxRequiredException();
-        }
-
-        int effectiveCap = rule.getMaxNightsCap();
-
-        long chargeableNights = Math.min(totalNights, effectiveCap);
-
-        if (chargeableNights <= 0) {
-            return BigDecimal.ZERO;
+            throw new com.swam.shared.exceptions.CityTaxRequiredException();
         }
 
         BigDecimal totalTax = BigDecimal.ZERO;
+        int globalCap = rule.getMaxNightsCap();
 
-        // calculate number of exempt individuals
-        long taxableAdults = Math.max(0, req.getNumAdults() - req.getNumExemptAdults());
+        for (PriceCalculationRequest.GuestProfile guest : req.getGuests()) {
 
-        if (taxableAdults > 0 && rule.getAmountPerAdult() != null) {
-            totalTax = totalTax.add(rule.getAmountPerAdult()
-                    .multiply(BigDecimal.valueOf(taxableAdults))
-                    .multiply(BigDecimal.valueOf(chargeableNights)));
-        }
+            if (guest.isTaxExempt()) {
+                continue;
+            }
 
-        long taxableChildren = Math.max(0, req.getNumChildren() - req.getNumExemptChildren());
+            // check days of stay
+            if (guest.getDays() <= 0) {
+                continue;
+            }
 
-        if (taxableChildren > 0 && rule.getAmountPerChild() != null) {
-            totalTax = totalTax.add(rule.getAmountPerChild()
-                    .multiply(BigDecimal.valueOf(taxableChildren))
-                    .multiply(BigDecimal.valueOf(chargeableNights)));
-        }
+            // calculate chargeable nights for this guest
+            int chargeableNights = Math.min(guest.getDays(), globalCap);
 
-        long taxableInfants = Math.max(0, req.getNumInfants() - req.getNumExemptInfants());
+            // calculate rate based on guest type
+            BigDecimal rate = BigDecimal.ZERO;
 
-        if (taxableInfants > 0 && rule.getAmountPerInfant() != null) {
-            totalTax = totalTax.add(rule.getAmountPerInfant()
-                    .multiply(BigDecimal.valueOf(taxableInfants))
-                    .multiply(BigDecimal.valueOf(chargeableNights)));
+            if (guest.getType() == GuestType.ADULT) rate = rule.getAmountPerAdult();
+            else if (guest.getType() == GuestType.CHILD) rate = rule.getAmountPerChild();
+            else if (guest.getType() == GuestType.INFANT) rate = rule.getAmountPerInfant();
+
+            if (rate != null && rate.compareTo(BigDecimal.ZERO) > 0) {
+                totalTax = totalTax.add(rate.multiply(BigDecimal.valueOf(chargeableNights)));
+            }
         }
 
         return totalTax;
-
     }
 }

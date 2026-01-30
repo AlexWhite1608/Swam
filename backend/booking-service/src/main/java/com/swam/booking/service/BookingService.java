@@ -234,11 +234,9 @@ public class BookingService {
             throw new InvalidBookingDateException("Il Check-out richiede stato CHECKED_IN.");
         }
 
-        // add extras - snapshot
         List<BookingExtra> finalExtras = processExtras(request.getExtras());
         booking.setExtras(finalExtras);
 
-        // map extras for pricing request
         List<PriceCalculationRequest.BillableExtraItem> billableExtras = finalExtras.stream()
                 .map(extra -> new PriceCalculationRequest.BillableExtraItem(
                         extra.getPriceSnapshot(),
@@ -246,54 +244,44 @@ public class BookingService {
                 ))
                 .collect(Collectors.toList());
 
-        // calculate total number of guests by type
-        int adults = (booking.getMainGuest().getGuestType() == GuestType.ADULT ? 1 : 0) +
-                (int) booking.getCompanions().stream().filter(c -> c.getGuestType() == GuestType.ADULT).count();
+        // calculate max days of booking
+        int maxBookingDays = (int) java.time.temporal.ChronoUnit.DAYS.between(booking.getCheckIn(), booking.getCheckOut());
 
-        int children = (booking.getMainGuest().getGuestType() == GuestType.CHILD ? 1 : 0) +
-                (int) booking.getCompanions().stream().filter(c -> c.getGuestType() == GuestType.CHILD).count();
+        // creation of full guest list (main + companions)
+        List<Guest> allGuests = new ArrayList<>();
+        allGuests.add(booking.getMainGuest());
+        if (booking.getCompanions() != null) {
+            allGuests.addAll(booking.getCompanions());
+        }
 
-        int infants = (booking.getMainGuest().getGuestType() == GuestType.INFANT ? 1 : 0) +
-                (int) booking.getCompanions().stream().filter(c -> c.getGuestType() == GuestType.INFANT).count();
+        // mapping to GuestProfile for pricing request
+        List<PriceCalculationRequest.GuestProfile> guestProfiles = allGuests.stream()
+                .map(g -> {
+                    int realDays = (g.getDaysOfStay() == null || g.getDaysOfStay() <= 0)
+                            ? maxBookingDays
+                            : Math.min(g.getDaysOfStay(), maxBookingDays);
 
-        // calculate number of tax-exempt guests by type
-        int exemptAdults = (booking.getMainGuest().getGuestType() == GuestType.ADULT && booking.getMainGuest().isTaxExempt()) ? 1 : 0;
-        int exemptChildren = (booking.getMainGuest().getGuestType() == GuestType.CHILD && booking.getMainGuest().isTaxExempt()) ? 1 : 0;
-        int exemptInfants = (booking.getMainGuest().getGuestType() == GuestType.INFANT && booking.getMainGuest().isTaxExempt()) ? 1 : 0;
+                    return PriceCalculationRequest.GuestProfile.builder()
+                            .type(g.getGuestType())
+                            .taxExempt(g.isTaxExempt())
+                            .days(realDays)
+                            .build();
+                })
+                .collect(Collectors.toList());
 
-        // count exempt companions
-        exemptAdults += (int) booking.getCompanions().stream()
-                .filter(c -> c.getGuestType() == GuestType.ADULT && c.isTaxExempt())
-                .count();
-
-        exemptChildren += (int) booking.getCompanions().stream()
-                .filter(c -> c.getGuestType() == GuestType.CHILD && c.isTaxExempt())
-                .count();
-
-        exemptInfants += (int) booking.getCompanions().stream()
-                .filter(c -> c.getGuestType() == GuestType.INFANT && c.isTaxExempt())
-                .count();
-
+        // creation of pricing request
         PriceCalculationRequest pricingRequest = PriceCalculationRequest.builder()
                 .resourceId(booking.getResourceId())
                 .checkIn(booking.getCheckIn())
                 .checkOut(booking.getCheckOut())
-                .numAdults(adults)
-                .numChildren(children)
-                .numInfants(infants)
-                .numExemptAdults(exemptAdults)
-                .numExemptChildren(exemptChildren)
-                .numExemptInfants(exemptInfants)
+                .guests(guestProfiles)
                 .depositAmount(booking.getPriceBreakdown().getDepositAmount())
                 .extras(billableExtras)
                 .build();
 
-
-        // pricing service gives us an object Tot = Base + Tax + Extras - Deposit - Discount
+        // call pricing service to calculate final price
         PriceBreakdown finalPriceBreakdown = pricingClient.calculateQuote(pricingRequest);
-
         booking.setPriceBreakdown(finalPriceBreakdown);
-
         booking.setStatus(BookingStatus.CHECKED_OUT);
         booking.setUpdatedAt(LocalDateTime.now());
 
