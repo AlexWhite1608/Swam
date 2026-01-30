@@ -15,8 +15,6 @@ import {
   Users,
 } from "lucide-react";
 
-import { Resource } from "@/schemas/createResourceSchema";
-
 import { BookingStatusBadge } from "@/components/common/badges/BookingStatusBadge";
 import { PaymentStatusBadge } from "@/components/common/badges/PaymentStatusBadge";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
@@ -36,7 +34,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { dateRangeFilterFn, formatCurrency } from "@/lib/utils";
-import { Booking } from "@/schemas/createBookingSchema";
+import { Booking } from "@/types/bookings/types";
+import { Resource } from "@/types/resources/types";
 
 interface GetBookingColumnsProps {
   resources: Resource[];
@@ -193,6 +192,9 @@ export const getBookingColumns = ({
       const infants = allGuests.filter((g) => g.guestType === "INFANT");
 
       const totalCount = allGuests.length;
+      const hasNotCheckIn =
+        row.original.status === "PENDING" ||
+        row.original.status === "CONFIRMED";
 
       return (
         <TooltipProvider>
@@ -201,11 +203,16 @@ export const getBookingColumns = ({
               <div className="flex items-center gap-1 cursor-help w-fit">
                 <Users className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm font-medium">{totalCount}</span>
+                {hasNotCheckIn && (
+                  <span className="h-2 w-2 ml-2 rounded-full bg-yellow-300 border border-yellow-300" />
+                )}
               </div>
             </TooltipTrigger>
             <TooltipContent>
               <div className="text-xs space-y-2">
-                <p className="font-semibold border-b pb-1">Lista Ospiti:</p>
+                <p className="font-semibold border-b pb-1">
+                  Lista Ospiti {hasNotCheckIn && "(in attesa di check-in)"}
+                </p>
 
                 {adults.length > 0 && (
                   <div>

@@ -216,7 +216,6 @@ export function MainGuestSection({ control }: MainGuestSectionProps) {
                 <FormItem>
                   <FormLabel>Telefono</FormLabel>
                   <FormControl>
-                    {/* 3. Passa citizenship come defaultCountry */}
                     <PhoneInput
                       className="w-full"
                       placeholder="Inserisci telefono"
