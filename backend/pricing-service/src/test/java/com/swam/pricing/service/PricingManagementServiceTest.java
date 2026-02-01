@@ -3,6 +3,7 @@ package com.swam.pricing.service;
 import com.swam.pricing.domain.Season;
 import com.swam.pricing.dto.CreateSeasonRequest;
 import com.swam.pricing.repository.SeasonRepository;
+import com.swam.shared.exceptions.InvalidBookingDateException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,7 +38,7 @@ class PricingManagementServiceTest {
         req.setStartDate(LocalDate.of(2024, 2, 1));
         req.setEndDate(LocalDate.of(2024, 1, 1));
 
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+        Exception exception = assertThrows(InvalidBookingDateException.class, () -> {
             managementService.createSeason(req);
         });
 
@@ -61,7 +62,7 @@ class PricingManagementServiceTest {
         when(seasonRepository.findOverlappingSeasons(req.getStartDate(), req.getEndDate()))
                 .thenReturn(List.of(existingSeason));
 
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+        Exception exception = assertThrows(InvalidBookingDateException.class, () -> {
             managementService.createSeason(req);
         });
 

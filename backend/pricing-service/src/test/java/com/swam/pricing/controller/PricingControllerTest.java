@@ -13,6 +13,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import com.swam.shared.exceptions.InvalidBookingDateException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -24,6 +25,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.doThrow;
 
 @WebMvcTest(PricingController.class)
 class PricingControllerTest {
@@ -240,5 +243,75 @@ class PricingControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.finalTotal").value(200.00));
+    }
+
+
+    @Test
+    @DisplayName("PUT /seasons/{id} - Update Fail on Overlap (Conflitto Date)")
+    void updateSeason_ShouldFail_WhenDatesOverlap() throws Exception {
+        // --- 1. SCENARIO ---
+        // Tentativo: Modificare Stagione B per iniziare il 20 Ago (sovrapposizione con A)
+        String seasonIdB = "season-B";
+
+        CreateSeasonRequest request = new CreateSeasonRequest();
+        request.setName("Stagione B Modificata");
+        request.setStartDate(LocalDate.of(2024, 8, 20)); // Conflitto!
+        request.setEndDate(LocalDate.of(2024, 9, 10));
+
+        // --- 2. MOCK DEL SERVICE ---
+        // Simuliamo che il service lanci l'eccezione di dominio
+        String errorMsg = "Le nuove date si sovrappongono ad altre stagioni!";
+        doThrow(new InvalidBookingDateException(errorMsg))
+                .when(managementService).updateSeason(eq(seasonIdB), any(Season.class));
+
+        // --- 3. ESECUZIONE ---
+        // Usiamo .andReturn() alla fine per catturare il risultato in una variabile
+        var mvcResult = mockMvc.perform(put("/api/pricing/seasons/{id}", seasonIdB)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+
+                // Assertions standard di MockMvc
+                .andExpect(status().isBadRequest())
+                .andReturn();
+
+        // --- 4. REPORT VISUALE (OUTPUT CONSOLE) ---
+        printConflictTestReport(mvcResult, request);
+
+        // --- 5. ASSERTION AGGIUNTIVA ---
+        // Verifichiamo che l'eccezione catturata da Spring sia quella giusta
+        assertTrue(mvcResult.getResolvedException() instanceof InvalidBookingDateException,
+                "L'eccezione risolta dovrebbe essere InvalidBookingDateException");
+    }
+
+    // Helper per stampare il report (puoi metterlo in fondo alla classe di test)
+    private void printConflictTestReport(org.springframework.test.web.servlet.MvcResult result, CreateSeasonRequest request) throws Exception {
+        System.out.println("\n==================================================================");
+        System.out.println("   TEST REPORT: GESTIONE CONFLITTO DATE (UPDATE SEASON)");
+        System.out.println("==================================================================");
+        System.out.println("1. DATI INVIATI:");
+        System.out.println("   - Nuova Start Date: " + request.getStartDate());
+        System.out.println("   - Nuova End Date  : " + request.getEndDate());
+        System.out.println("------------------------------------------------------------------");
+        System.out.println("2. RISPOSTA CONTROLLER:");
+        System.out.println("   - HTTP Status     : " + result.getResponse().getStatus() + " (Atteso: 400)");
+
+        Exception resolvedEx = result.getResolvedException();
+        if (resolvedEx != null) {
+            System.out.println("   - Eccezione Causa : " + resolvedEx.getClass().getSimpleName());
+            System.out.println("   - Messaggio Error : \"" + resolvedEx.getMessage() + "\"");
+        } else {
+            System.out.println("   - Eccezione Causa : NESSUNA (Errore!)");
+        }
+
+        System.out.println("------------------------------------------------------------------");
+        System.out.println("3. BODY RISPOSTA (JSON):");
+        System.out.println("   " + result.getResponse().getContentAsString());
+
+        if (result.getResponse().getStatus() == 400 && resolvedEx instanceof InvalidBookingDateException) {
+            System.out.println("\n   [✓] ESITO: SUCCESSO - Il conflitto è stato bloccato correttamente.");
+        } else {
+            System.out.println("\n   [X] ESITO: FALLITO - Comportamento imprevisto.");
+        }
+        System.out.println("==================================================================\n");
     }
 }
