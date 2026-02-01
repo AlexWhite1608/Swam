@@ -29,6 +29,7 @@ public class PriceCalculationRequest {
     public static class GuestProfile {
         private GuestType type;
         private boolean taxExempt;
+        private String taxExemptMotivation;
         private int days;
     }
 

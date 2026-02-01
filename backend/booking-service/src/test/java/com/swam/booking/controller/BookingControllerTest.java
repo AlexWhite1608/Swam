@@ -63,7 +63,6 @@ class BookingControllerTest {
                 .discountAmount(BigDecimal.ZERO)
                 .extrasAmount(BigDecimal.ZERO)
                 .finalTotal(BigDecimal.ZERO)
-                .taxDescription(null)
                 .build();
 
         BookingResponse response = BookingResponse.builder()

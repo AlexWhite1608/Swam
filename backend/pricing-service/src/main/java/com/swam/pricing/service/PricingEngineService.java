@@ -105,9 +105,6 @@ public class PricingEngineService {
                 .discountAmount(discount)
                 .depositAmount(deposit)
                 .finalTotal(finalTotal)
-                .taxDescription(taxAmount.compareTo(BigDecimal.ZERO) > 0
-                        ? "Tassa applicata su presenze effettive"
-                        : "Esente tassa di soggiorno")
                 .build();
     }
 

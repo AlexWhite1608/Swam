@@ -62,7 +62,6 @@ public class BookingService {
                         .discountAmount(BigDecimal.ZERO)
                         .extrasAmount(BigDecimal.ZERO)
                         .finalTotal(BigDecimal.ZERO)
-                        .taxDescription(null)
                         .build())
                 .createdAt(LocalDateTime.now())
                 .updatedAt(null)
@@ -265,6 +264,7 @@ public class BookingService {
                             .type(g.getGuestType())
                             .taxExempt(g.isTaxExempt())
                             .days(realDays)
+                            .taxExemptMotivation(g.getTaxExemptReason())
                             .build();
                 })
                 .collect(Collectors.toList());
@@ -430,7 +430,6 @@ public class BookingService {
                     .discountAmount(booking.getPriceBreakdown().getDiscountAmount())
                     .extrasAmount(booking.getPriceBreakdown().getExtrasAmount())
                     .finalTotal(booking.getPriceBreakdown().getFinalTotal())
-                    .taxDescription(booking.getPriceBreakdown().getTaxDescription())
                     .build();
         }
 
