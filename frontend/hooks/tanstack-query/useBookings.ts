@@ -111,6 +111,29 @@ export const useUpdateBooking = () => {
   });
 };
 
+// Update Check-In details (for checked-in bookings)
+export const useUpdateBookingCheckIn = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: { id: string; payload: CheckInPayload }) =>
+      bookingService.updateCheckIn(data),
+    onSuccess: (data) => {
+
+      console.log("Check-in updated:", data);
+
+      queryClient.invalidateQueries({ queryKey: bookingKeys.all });
+      queryClient.invalidateQueries({ queryKey: bookingKeys.detail(data.id) });
+      toast.success("Check in aggiornato con successo");
+    },
+    onError: (error: any) => {
+      toast.error("Errore aggiornamento dati", {
+        description: error?.response?.data?.message || "Impossibile aggiornare",
+      });
+    },
+  });
+};
+
 // Update payment status
 export const useUpdatePaymentStatus = () => {
   const queryClient = useQueryClient();

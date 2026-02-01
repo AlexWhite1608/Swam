@@ -171,8 +171,6 @@ export function CompanionCard({
             nationalityField={`companions.${index}.citizenship`}
             placeField={`companions.${index}.placeOfBirth`}
             label="Luogo di Nascita"
-            className=""
-            labelClassName=""
           />
         </div>
 

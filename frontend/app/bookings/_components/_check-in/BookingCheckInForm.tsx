@@ -31,6 +31,7 @@ export function BookingCheckInForm({
   const form = useForm<CheckInFormValues>({
     resolver: zodResolver(mainGuestCheckInSchema),
     defaultValues: {
+      customerId: booking.mainGuest.customerId || undefined,
       firstName: booking.mainGuest.firstName || "",
       lastName: booking.mainGuest.lastName || "",
       email: booking.mainGuest.email || "",
@@ -42,21 +43,26 @@ export function BookingCheckInForm({
       guestRole: booking.mainGuest.guestRole || "HEAD_OF_GROUP",
       documentType: booking.mainGuest.documentType || "ID_CARD",
       documentNumber: booking.mainGuest.documentNumber || "",
+      documentPlaceOfIssue: booking.mainGuest.documentPlaceOfIssue || "",
       birthDate: booking.mainGuest.birthDate
         ? new Date(booking.mainGuest.birthDate)
         : undefined,
       companions:
         booking.companions?.map((c) => ({
+          customerId: c.customerId || undefined,
           firstName: c.firstName,
           lastName: c.lastName,
           sex: c.sex || "M",
           birthDate: c.birthDate ? new Date(c.birthDate) : new Date(),
           citizenship: c.citizenship || "IT",
+          placeOfBirth: c.placeOfBirth || "",
           guestType: c.guestType || "ADULT",
           guestRole: c.guestRole || "MEMBER",
         })) || [],
     },
   });
+
+  console.log(form.formState.errors);
 
   return (
     <Form {...form}>

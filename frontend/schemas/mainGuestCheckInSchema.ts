@@ -11,6 +11,8 @@ import { companionCheckInSchema } from "./companionCheckInSchema";
 export const mainGuestCheckInSchema = z
   .object({
     // main guest details
+    customerId: z.string().optional(),
+    
     firstName: z.string().min(1, { message: "" }),
     lastName: z.string().min(1, { message: "" }),
     sex: z.enum(Sex),

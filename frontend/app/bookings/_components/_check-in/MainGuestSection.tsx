@@ -27,7 +27,6 @@ import {
   sexOptions,
 } from "@/types/bookings/options";
 import { User } from "lucide-react";
-import { useEffect } from "react";
 import { Control, useWatch } from "react-hook-form";
 import { Country } from "react-phone-number-input";
 
@@ -36,14 +35,6 @@ interface MainGuestSectionProps {
 }
 
 export function MainGuestSection({ control }: MainGuestSectionProps) {
-  const handleDateChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    onChange: (...event: any[]) => void,
-  ) => {
-    const dateVal = e.target.value ? new Date(e.target.value) : undefined;
-    onChange(dateVal);
-  };
-
   // watch citizenship
   const citizenship = useWatch({
     control,

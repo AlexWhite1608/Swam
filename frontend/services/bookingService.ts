@@ -14,6 +14,7 @@ export interface CreateBookingPayload {
 }
 
 export interface CheckInCompanion {
+  customerId?: string;
   firstName: string;
   lastName: string;
   sex: SexType;
@@ -30,6 +31,7 @@ export interface CheckInCompanion {
 }
 
 export interface CheckInPayload {
+  customerId?: string;
   firstName: string;
   lastName: string;
   sex: SexType;
@@ -97,6 +99,18 @@ export const bookingService = {
     payload: CreateBookingFormValues;
   }): Promise<Booking> => {
     const { data } = await api.put(`/api/bookings/${id}`, payload);
+    return data;
+  },
+
+  // Update Check-In details (for checked-in bookings)
+  updateCheckIn: async ({
+    id,
+    payload,
+  }: {
+    id: string;
+    payload: CheckInPayload;
+  }): Promise<Booking> => {
+    const { data } = await api.put(`/api/bookings/${id}/update-check-in`, payload);
     return data;
   },
 

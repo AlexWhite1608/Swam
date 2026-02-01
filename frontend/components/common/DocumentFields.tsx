@@ -73,6 +73,7 @@ export function DocumentFields({ control }: DocumentFieldsProps) {
 
         <PlaceInput
           control={control}
+          nationalityField="citizenship"
           placeField="documentPlaceOfIssue"
           label="Rilasciato a"
           className="w-full"

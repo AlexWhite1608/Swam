@@ -384,6 +384,56 @@ public class BookingService {
         return mapToResponse(bookingRepository.save(booking));
     }
 
+    // update booking guests during CHECKED_IN status
+    @Transactional
+    public BookingResponse updateBookingCheckIn(String bookingId, CheckInRequest request) {
+        Booking booking = getBookingOrThrow(bookingId);
+
+        if (booking.getStatus() != BookingStatus.CHECKED_IN) {
+            throw new IllegalStateException("Modifica consentita solo per prenotazioni nello stato CHECKED_IN.");
+        }
+
+        CreateCustomerRequest mainGuestData = CreateCustomerRequest.builder()
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .sex(request.getSex())
+                .birthDate(request.getBirthDate())
+                .email(request.getEmail())
+                .phone(request.getPhone())
+                .placeOfBirth(request.getPlaceOfBirth())
+                .citizenship(request.getCitizenship())
+                .documentType(request.getDocumentType())
+                .documentNumber(request.getDocumentNumber())
+                .documentPlaceOfIssue(request.getDocumentPlaceOfIssue())
+                .guestType(request.getGuestType())
+                .build();
+
+        CustomerResponse mainCustomer = customerService.registerOrUpdateCustomer(mainGuestData);
+
+        Guest mainGuestSnapshot = customerService.createGuestSnapshot(mainCustomer, request.getGuestRole());
+        booking.setMainGuest(mainGuestSnapshot);
+
+        if (request.getNotes() != null) {
+            booking.setNotes(request.getNotes());
+        }
+
+        List<Guest> companionSnapshots = new ArrayList<>();
+
+        if (request.getCompanions() != null) {
+            for (CheckInRequest.CompanionData compData : request.getCompanions()) {
+                CustomerResponse compCustomer = customerService.registerOrUpdateCompanion(compData);
+
+                Guest companionSnapshot = customerService.createGuestSnapshot(compCustomer, compData.getGuestRole());
+                companionSnapshots.add(companionSnapshot);
+            }
+        }
+
+        booking.setCompanions(companionSnapshots);
+
+        booking.setUpdatedAt(LocalDateTime.now());
+        return mapToResponse(bookingRepository.save(booking));
+    }
+
     private void validatePaymentStatusTransition(PaymentStatus current, PaymentStatus next) {
         if (current == PaymentStatus.PAID_IN_FULL && next == PaymentStatus.DEPOSIT_PAID) {
             throw new IllegalStateException("Non puoi tornare a DEPOSIT_PAID da PAID_IN_FULL");

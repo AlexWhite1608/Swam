@@ -7,18 +7,8 @@ import { BookingStatus } from "@/types/bookings/enums";
 import { Booking } from "@/types/bookings/types";
 import { BookingCheckInForm } from "./_check-in/BookingCheckInForm";
 import { BookingCheckInHeader } from "./_check-in/BookingCheckInHeader";
-import { useCheckInBooking } from "@/hooks/tanstack-query/useBookings";
+import { useCheckInBooking, useUpdateBookingCheckIn } from "@/hooks/tanstack-query/useBookings";
 import { format } from "date-fns";
-
-//FIXME: Placeholder per i form futuri
-const FullEditForm = ({ booking }: { booking: Booking }) => (
-  <div className="p-4 bg-purple-50 text-purple-800 rounded">
-    Form di modifica "Full" per {booking.mainGuest.lastName} (Stato:{" "}
-    {booking.status})
-    <br />
-    Tabs: Anagrafica Completa, Documenti, Extra, Estensione Soggiorno.
-  </div>
-);
 
 const ReadOnlyView = ({ booking }: { booking: Booking }) => (
   <div className="p-4 bg-gray-100 text-gray-800 rounded">
@@ -40,6 +30,7 @@ export function BookingDialog({
   booking,
 }: BookingDialogProps) {
   const checkInMutation = useCheckInBooking();
+  const updateCheckInMutation = useUpdateBookingCheckIn();
 
   const getConfig = () => {
     switch (mode) {
@@ -52,7 +43,11 @@ export function BookingDialog({
         };
       case "CHECKIN":
         return {
-          title: booking ? <BookingCheckInHeader booking={booking} /> : "Check-in Ospite",
+          title: booking ? (
+            <BookingCheckInHeader booking={booking} />
+          ) : (
+            "Modifica Check-in" // fixme: riusa l'header cambiando il titolo
+          ),
           description: undefined,
           className: "sm:max-w-[800px]",
         };
@@ -107,7 +102,37 @@ export function BookingDialog({
         }
 
         if (booking.status === BookingStatus.CHECKED_IN) {
-          return <FullEditForm booking={booking} />;
+          // edit during check-in uses the check-in form but updates via mutation
+          return (
+            <BookingCheckInForm
+              booking={booking}
+              isLoading={updateCheckInMutation.isPending}
+              onCancel={() => onOpenChange(false)}
+              onSubmit={(formData) => {
+                if (!formData.birthDate) return;
+
+                const validCompanions = formData.companions?.filter(
+                  (c) => c.birthDate !== undefined,
+                );
+
+                const payload = {
+                  ...formData,
+                  birthDate: format(formData.birthDate, "yyyy-MM-dd"),
+                  companions: validCompanions?.map((companion) => ({
+                    ...companion,
+                    birthDate: format(companion.birthDate!, "yyyy-MM-dd"),
+                  })),
+                };
+
+                updateCheckInMutation.mutate(
+                  { id: booking.id, payload },
+                  {
+                    onSuccess: () => onOpenChange(false),
+                  },
+                );
+              }}
+            />
+          );
         }
 
         return <ReadOnlyView booking={booking} />;
@@ -127,7 +152,7 @@ export function BookingDialog({
 
               // Filter companions with valid birthdates
               const validCompanions = formData.companions?.filter(
-                (c) => c.birthDate !== undefined
+                (c) => c.birthDate !== undefined,
               );
 
               const payload = {
@@ -145,7 +170,7 @@ export function BookingDialog({
                   onSuccess: () => {
                     onOpenChange(false);
                   },
-                }
+                },
               );
             }}
           />

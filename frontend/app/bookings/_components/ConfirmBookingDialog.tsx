@@ -13,7 +13,8 @@ import { Separator } from "@/components/ui/separator";
 import { useConfirmBooking } from "@/hooks/tanstack-query/useBookings";
 import { useResource } from "@/hooks/tanstack-query/useResources";
 import { NAV_ITEMS } from "@/lib/navigation";
-import { Booking } from "@/schemas/createBookingSchema";
+import { Booking } from "@/types/bookings/types";
+import { PaymentStatus } from "@/types/bookings/enums";
 
 interface ConfirmBookingDialogProps {
   isOpen: boolean;
@@ -43,6 +44,9 @@ export function ConfirmBookingDialog({
 
   const depositAmount = booking.priceBreakdown?.depositAmount || 0;
   const hasDeposit = depositAmount > 0;
+  const hasAlreadyPaidDeposit =
+    booking.paymentStatus === PaymentStatus.DEPOSIT_PAID ||
+    booking.paymentStatus === PaymentStatus.PAID_IN_FULL;
 
   const ResourceIcon = NAV_ITEMS.find(
     (item) => item.href === "/resources",
@@ -98,8 +102,8 @@ export function ConfirmBookingDialog({
 
         <Separator />
 
-        {/* deposit logic */}
-        {hasDeposit ? (
+        {/* has to pay deposit AND not already paid */}
+        {hasDeposit && !hasAlreadyPaidDeposit && (
           <div className="flex flex-col gap-3 rounded-lg border bg-muted/20 p-4 transition-all">
             {/* amount */}
             <div className="flex items-center justify-between">
@@ -129,11 +133,28 @@ export function ConfirmBookingDialog({
               </Label>
             </div>
           </div>
-        ) : (
+        )}
+
+        {/* no deposit */}
+        {!hasDeposit && !hasAlreadyPaidDeposit && (
           <div className="rounded-lg border p-4 flex items-center justify-between bg-muted/20">
             <div className="flex items-center gap-3">
               <div className="space-y-0.5">
                 <p className="text-sm font-medium">Nessun acconto richiesto</p>
+                <p className="text-xs text-muted-foreground">
+                  La prenotazione verrà confermata immediatamente.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* already paid deposit */}
+        {hasAlreadyPaidDeposit && (
+          <div className="rounded-lg border p-4 flex items-center justify-between bg-muted/20">
+            <div className="flex items-center gap-3">
+              <div className="space-y-0.5">
+                <p className="text-sm font-medium">Acconto già saldato</p>
                 <p className="text-xs text-muted-foreground">
                   La prenotazione verrà confermata immediatamente.
                 </p>
