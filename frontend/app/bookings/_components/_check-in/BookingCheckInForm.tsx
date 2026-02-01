@@ -85,6 +85,7 @@ export function BookingCheckInForm({
 
         {/* Footer */}
         <BookingCheckInFormFooter
+          isEditCheckIn={booking.status === "CHECKED_IN"}
           control={form.control}
           isLoading={isLoading}
           onCancel={onCancel}

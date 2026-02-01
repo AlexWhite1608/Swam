@@ -9,9 +9,10 @@ import { it } from "date-fns/locale";
 
 interface BookingCheckInHeaderProps {
   booking: Booking;
+  isEditMode?: boolean;
 }
 
-export function BookingCheckInHeader({ booking }: BookingCheckInHeaderProps) {
+export function BookingCheckInHeader({ booking, isEditMode = false }: BookingCheckInHeaderProps) {
   const { data: resource } = useResource(booking.resourceId);
 
   const formatDate = (dateStr: string) => {
@@ -22,7 +23,7 @@ export function BookingCheckInHeader({ booking }: BookingCheckInHeaderProps) {
     <div className="flex items-center">
       <div className="flex flex-col gap-1">
         <h3 className="text-lg font-semibold">
-          Check-in {booking.mainGuest.lastName} {booking.mainGuest.firstName}
+          {isEditMode ? "Modifica Check-in" : "Check-in"} {booking.mainGuest.lastName} {booking.mainGuest.firstName}
         </h3>
         <span className="text-xs text-muted-foreground">
           {resource?.name} • {formatDate(booking.checkIn)} -{" "}

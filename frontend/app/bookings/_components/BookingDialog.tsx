@@ -7,7 +7,10 @@ import { BookingStatus } from "@/types/bookings/enums";
 import { Booking } from "@/types/bookings/types";
 import { BookingCheckInForm } from "./_check-in/BookingCheckInForm";
 import { BookingCheckInHeader } from "./_check-in/BookingCheckInHeader";
-import { useCheckInBooking, useUpdateBookingCheckIn } from "@/hooks/tanstack-query/useBookings";
+import {
+  useCheckInBooking,
+  useUpdateBookingCheckIn,
+} from "@/hooks/tanstack-query/useBookings";
 import { format } from "date-fns";
 
 const ReadOnlyView = ({ booking }: { booking: Booking }) => (
@@ -44,9 +47,9 @@ export function BookingDialog({
       case "CHECKIN":
         return {
           title: booking ? (
-            <BookingCheckInHeader booking={booking} />
+            <BookingCheckInHeader booking={booking} isEditMode={false} />
           ) : (
-            "Modifica Check-in" // fixme: riusa l'header cambiando il titolo
+            "Check-in"
           ),
           description: undefined,
           className: "sm:max-w-[800px]",
@@ -59,10 +62,16 @@ export function BookingDialog({
         };
       case "EDIT":
         return {
-          title: `Modifica Prenotazione`,
-          description: booking
-            ? `Gestione prenotazione per ${booking.mainGuest.lastName} ${booking.mainGuest.firstName} `
-            : "Modifica dati",
+          title:
+            booking?.status === BookingStatus.CHECKED_IN && booking ? (
+              <BookingCheckInHeader booking={booking} isEditMode={true} />
+            ) : (
+              `Modifica Prenotazione`
+            ),
+          description:
+            booking?.status !== BookingStatus.CHECKED_IN && booking
+              ? `Gestione prenotazione per ${booking.mainGuest.lastName} ${booking.mainGuest.firstName} `
+              : undefined,
           className:
             booking?.status === BookingStatus.CHECKED_IN
               ? "sm:max-w-[800px]"

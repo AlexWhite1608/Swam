@@ -1,7 +1,7 @@
 // check-in/CheckInFormFooter.tsx
 "use client";
 
-import { Loader2, LogIn } from "lucide-react";
+import { Loader2, LogIn, Save } from "lucide-react";
 import { Control } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,12 +11,14 @@ import { CheckInFormValues } from "@/schemas/mainGuestCheckInSchema";
 interface BookingCheckInFormFooterProps {
   control: Control<CheckInFormValues>;
   isLoading?: boolean;
+  isEditCheckIn?: boolean;
   onCancel: () => void;
 }
 
 export function BookingCheckInFormFooter({
   control,
   isLoading,
+  isEditCheckIn,
   onCancel,
 }: BookingCheckInFormFooterProps) {
   return (
@@ -45,8 +47,12 @@ export function BookingCheckInFormFooter({
           </Button>
           <Button type="submit" disabled={isLoading}>
             {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-            <LogIn className="h-4 w-4" />
-            Check-in
+            {isEditCheckIn ? (
+              <Save className="h-4 w-4" />
+            ) : (
+              <LogIn className="h-4 w-4" />
+            )}
+            {isEditCheckIn ? "Salva" : "Check-in"}
           </Button>
         </div>
       </div>
