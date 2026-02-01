@@ -1,4 +1,3 @@
-// companionCheckInSchema.ts
 import { GuestRole, GuestType, Sex } from "@/types/bookings/enums";
 import { z } from "zod";
 
@@ -11,8 +10,8 @@ export const companionCheckInSchema = z
 
     birthDate: z.date().optional(),
 
-    placeOfBirth: z.string().optional(),
-    citizenship: z.string().optional(), // iso code
+    placeOfBirth: z.string().min(1, { message: "" }),
+    citizenship: z.string().min(1, { message: "" }), 
 
     guestType: z.enum(GuestType),
     guestRole: z.enum(GuestRole),
