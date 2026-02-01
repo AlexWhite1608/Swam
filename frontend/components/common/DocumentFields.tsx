@@ -1,9 +1,5 @@
-// check-in/DocumentFields.tsx
 "use client";
 
-import { CreditCard } from "lucide-react";
-import { Control } from "react-hook-form";
-import { Input } from "@/components/ui/input";
 import {
   FormControl,
   FormField,
@@ -11,6 +7,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -18,9 +15,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DocumentType } from "@/types/bookings/enums";
 import { CheckInFormValues } from "@/schemas/mainGuestCheckInSchema";
 import { documentTypeOptions } from "@/types/bookings/options";
+import { Control } from "react-hook-form";
+import { PlaceInput } from "../ui/place-input";
 
 interface DocumentFieldsProps {
   control: Control<CheckInFormValues>;
@@ -72,23 +70,12 @@ export function DocumentFields({ control }: DocumentFieldsProps) {
             </FormItem>
           )}
         />
-        {/* //FIXME: anche qui si deve avere la select con autocomplete dei comuni */}
-        <FormField
+
+        <PlaceInput
           control={control}
-          name="documentPlaceOfIssue"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Rilasciato a</FormLabel>
-              <FormControl>
-                <Input
-                  className="bg-background"
-                  {...field}
-                  value={field.value || ""}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          placeField="documentPlaceOfIssue"
+          label="Rilasciato a"
+          className="w-full"
         />
       </div>
     </div>

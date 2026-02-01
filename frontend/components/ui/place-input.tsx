@@ -1,7 +1,18 @@
 "use client";
 
+import { cn } from "@/lib/utils";
+import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
+import { useState } from "react";
 import { Control, useWatch } from "react-hook-form";
-import { Input } from "@/components/ui/input";
+
+import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import {
   FormControl,
   FormField,
@@ -10,26 +21,17 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { cn } from "@/lib/utils";
-
-// Mock data - da sostituire con libreria reale
-const ITALIAN_CITIES = [
-  { name: "Milano", province: "MI" },
-  { name: "Roma", province: "RM" },
-  { name: "Napoli", province: "NA" },
-  { name: "Torino", province: "TO" },
-  { name: "Firenze", province: "FI" },
-];
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useItalianPlaces } from "@/hooks/tanstack-query/useItalianCities";
+import { CountrySelect } from "./country-select";
 
 interface PlaceInputProps {
   control: Control<any>;
-  nationalityField: string;
+  nationalityField?: string;
   placeField: string;
   label: string;
   className?: string;
@@ -44,36 +46,125 @@ export function PlaceInput({
   className,
   labelClassName,
 }: PlaceInputProps) {
-  const citizenship = useWatch({ control, name: nationalityField });
-  const isItaly = citizenship === "IT";
+  const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // get citizenship value from form if nationalityField is provided
+  const citizenship = useWatch({
+    control,
+    name: nationalityField || "citizenship", 
+  });
+
+  // if no nationalityField provided, assume Italy for place input
+  const isItaly = nationalityField ? citizenship === "IT" : true;
+
+  const { data: cities, isLoading } = useItalianPlaces();
+
+  const filteredCities =
+    isItaly && cities && searchQuery.length > 0
+      ? cities
+          .filter((city) =>
+            city.name.toLowerCase().includes(searchQuery.toLowerCase()),
+          )
+          .slice(0, 50)
+      : [];
 
   return (
     <FormField
       control={control}
       name={placeField}
       render={({ field }) => (
-        <FormItem>
+        <FormItem className={cn("flex flex-col", className)}>
           <FormLabel className={cn(labelClassName)}>{label}</FormLabel>
           <FormControl>
             {isItaly ? (
-              <Select onValueChange={field.onChange} value={field.value}>
-                <SelectTrigger className={cn("w-full", className)}>
-                  <SelectValue placeholder="Comune" />
-                </SelectTrigger>
-                <SelectContent>
-                  {ITALIAN_CITIES.map((c) => (
-                    <SelectItem key={c.name} value={c.name}>
-                      {c.name} ({c.province})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={open} onOpenChange={setOpen} modal={true}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={open}
+                    className={cn(
+                      "w-full justify-between pl-3 font-normal",
+                      !field.value && "text-muted-foreground",
+                      className,
+                    )}
+                  >
+                    {field.value ? field.value : "Comune"}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+
+                <PopoverContent className="w-[300px] p-0" align="start">
+                  <Command shouldFilter={false}>
+                    <CommandInput
+                      placeholder="Cerca comune..."
+                      value={searchQuery}
+                      onValueChange={setSearchQuery}
+                    />
+                    <CommandList>
+                      {isLoading && (
+                        <div className="py-6 text-center text-sm text-muted-foreground">
+                          <Loader2 className="h-4 w-4 animate-spin mx-auto mb-2" />
+                          Caricamento comuni...
+                        </div>
+                      )}
+
+                      {!isLoading &&
+                        filteredCities.length === 0 &&
+                        searchQuery.length > 0 && (
+                          <div className="py-6 text-center text-sm text-muted-foreground">
+                            Nessun comune trovato.
+                          </div>
+                        )}
+
+                      {!isLoading && searchQuery.length === 0 && (
+                        <div className="py-4 text-center text-sm text-muted-foreground">
+                          Digita per cercare...
+                        </div>
+                      )}
+
+                      <CommandGroup>
+                        <ScrollArea className="h-[200px]">
+                          {filteredCities.map((city) => (
+                            <CommandItem
+                              key={city.istatCode}
+                              value={city.name}
+                              onSelect={() => {
+                                field.onChange(city.name);
+                                setOpen(false);
+                              }}
+                            >
+                              <div className="flex items-baseline gap-2 min-w-0 flex-1">
+                                <span className="font-medium truncate">
+                                  {city.name}
+                                </span>
+                                <span className="text-xs text-muted-foreground flex-shrink-0">
+                                  ({city.province})
+                                </span>
+                              </div>
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4 flex-shrink-0",
+                                  field.value === city.name
+                                    ? "opacity-100"
+                                    : "opacity-0",
+                                )}
+                              />
+                            </CommandItem>
+                          ))}
+                        </ScrollArea>
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             ) : (
-              // nation select input
-              <Input
-                placeholder="Nazione"
-                className={cn("w-full", className)}
-                {...field}
+              <CountrySelect
+                value={field.value || citizenship}
+                onChange={field.onChange}
+                className={className}
+                placeholder="Stato"
               />
             )}
           </FormControl>
