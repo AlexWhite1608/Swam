@@ -9,6 +9,7 @@ import {
   useBulkDeleteBookings,
   useCancelBooking,
   useDeleteBooking,
+  useUpdatePaymentStatus,
 } from "../tanstack-query/useBookings";
 import { Booking } from "@/types/bookings/types";
 
@@ -37,6 +38,7 @@ export const useBookingsPage = () => {
   const deleteBookingMutation = useDeleteBooking();
   const cancelBookingMutation = useCancelBooking();
   const useBulkDeleteMutation = useBulkDeleteBookings();
+  const updatePaymentStatusMutation = useUpdatePaymentStatus();
 
   // dialog states
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -71,6 +73,14 @@ export const useBookingsPage = () => {
     setSelectedBooking(booking);
     setDialogMode("EDIT");
     setIsDialogOpen(true);
+  };
+
+  // confirm deposit payment
+  const handleConfirmDeposit = (booking: Booking) => {
+    updatePaymentStatusMutation.mutate({
+      id: booking.id,
+      status: "DEPOSIT_PAID",
+    });
   };
 
   // opens the dialog in CHECK-IN mode
@@ -154,6 +164,7 @@ export const useBookingsPage = () => {
         onCheckOut: openCheckOutDialog,
         onConfirm: openConfirmDialog,
         onCancel: openCancelDialog,
+        onConfirmDeposit: handleConfirmDeposit,
       }),
     [resources],
   );
@@ -189,6 +200,7 @@ export const useBookingsPage = () => {
     isDeleting: deleteBookingMutation.isPending,
     isCanceling: cancelBookingMutation.isPending,
     isBulkDeleting: useBulkDeleteMutation.isPending,
+    isUpdatingPayment: updatePaymentStatusMutation.isPending,
 
     // Reset Trigger
     resetSelectionTrigger,
