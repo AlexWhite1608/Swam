@@ -38,6 +38,7 @@ public class PricingController {
         return ResponseEntity.ok(managementService.getAllSeasons());
     }
 
+
     @DeleteMapping("/seasons/{id}")
     public ResponseEntity<Void> deleteSeason(@PathVariable String id) {
         managementService.deleteSeason(id);
@@ -52,6 +53,19 @@ public class PricingController {
     @GetMapping("/rates")
     public ResponseEntity<List<SeasonalRate>> getRates(@RequestParam String seasonId) {
         return ResponseEntity.ok(managementService.getRatesBySeason(seasonId));
+    }
+
+    // 4. UPDATE (Nuovo)
+    @PutMapping("/rates/{id}")
+    public ResponseEntity<SeasonalRate> updateRate(@PathVariable String id, @RequestBody SetRateRequest request) {
+        return ResponseEntity.ok(managementService.updateRate(id, request));
+    }
+
+    // 5. DELETE (Nuovo)
+    @DeleteMapping("/rates/{id}")
+    public ResponseEntity<Void> deleteRate(@PathVariable String id) {
+        managementService.deleteRate(id);
+        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/city-tax")

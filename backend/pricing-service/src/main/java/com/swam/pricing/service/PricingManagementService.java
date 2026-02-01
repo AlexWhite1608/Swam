@@ -5,6 +5,7 @@ import com.swam.pricing.dto.*;
 import com.swam.pricing.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,6 +18,8 @@ public class PricingManagementService {
     private final SeasonalRateRepository rateRepository;
     private final CityTaxRuleRepository taxRepository;
 
+    //seasons crud
+    @Transactional
     public Season createSeason(CreateSeasonRequest request) {
         if (request.getStartDate().isAfter(request.getEndDate())) {
             throw new IllegalArgumentException("La data di inizio deve essere precedente alla data di fine.");
@@ -35,55 +38,7 @@ public class PricingManagementService {
         return seasonRepository.save(season);
     }
 
-    public List<Season> getAllSeasons() {
-        return seasonRepository.findAll();
-    }
-
-    public void deleteSeason(String seasonId) {
-        seasonRepository.deleteById(seasonId);
-    }
-
-
-    public SeasonalRate setRate(SetRateRequest request) {
-        Optional<SeasonalRate> existing = rateRepository.findBySeasonIdAndResourceId(
-                request.getSeasonId(), request.getResourceId());
-
-        SeasonalRate rate;
-        if (existing.isPresent()) {
-            rate = existing.get();
-        } else {
-            rate = new SeasonalRate();
-            rate.setSeasonId(request.getSeasonId());
-            rate.setResourceId(request.getResourceId());
-        }
-
-        rate.setBasePrice(request.getBasePrice());
-        rate.setAdultPrice(request.getAdultPrice());
-        rate.setChildPrice(request.getChildPrice());
-        rate.setInfantPrice(request.getInfantPrice());
-
-        return rateRepository.save(rate);
-    }
-
-
-    public CityTaxRule updateCityTax(CityTaxConfig config) {
-        taxRepository.deleteAll();
-
-        CityTaxRule rule = new CityTaxRule();
-        rule.setEnabled(config.isEnabled());
-        rule.setAmountPerAdult(config.getAmountPerAdult());
-        rule.setAmountPerChild(config.getAmountPerChild());
-        rule.setAmountPerInfant(config.getAmountPerInfant());
-        rule.setMinAge(config.getMinAge());
-        rule.setMaxNightsCap(config.getMaxNightsCap());
-
-        return taxRepository.save(rule);
-    }
-
-    public CityTaxRule getCityTax() {
-        return taxRepository.findAll().stream().findFirst().orElse(new CityTaxRule());
-    }
-
+    @Transactional
     public Season updateSeason(String id, Season updatedData) {
         Season existing = seasonRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Stagione non trovata"));
@@ -105,7 +60,85 @@ public class PricingManagementService {
         return seasonRepository.save(existing);
     }
 
+    public List<Season> getAllSeasons() {
+        return seasonRepository.findAll();
+    }
+
+    @Transactional
+    public void deleteSeason(String seasonId) {
+        seasonRepository.deleteById(seasonId);
+    }
+
+
+    //rates crud
+    @Transactional
+    public SeasonalRate setRate(SetRateRequest request) {
+        Optional<SeasonalRate> existing = rateRepository.findBySeasonIdAndResourceId(
+                request.getSeasonId(), request.getResourceId());
+
+        SeasonalRate rate;
+        if (existing.isPresent()) {
+            rate = existing.get();
+        } else {
+            rate = new SeasonalRate();
+            rate.setSeasonId(request.getSeasonId());
+            rate.setResourceId(request.getResourceId());
+        }
+
+        rate.setBasePrice(request.getBasePrice());
+        rate.setAdultPrice(request.getAdultPrice());
+        rate.setChildPrice(request.getChildPrice());
+        rate.setInfantPrice(request.getInfantPrice());
+
+        return rateRepository.save(rate);
+    }
+
+    @Transactional
+    public SeasonalRate updateRate(String id, SetRateRequest request) {
+        SeasonalRate rate = rateRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Tariffa non trovata con ID: " + id));
+
+        rate.setBasePrice(request.getBasePrice());
+        rate.setAdultPrice(request.getAdultPrice());
+        rate.setChildPrice(request.getChildPrice());
+        rate.setInfantPrice(request.getInfantPrice());
+        rate.setSeasonId(request.getSeasonId());
+        rate.setResourceId(request.getResourceId());
+
+        return rateRepository.save(rate);
+    }
+
+    @Transactional
+    public void deleteRate(String id) {
+        if (!rateRepository.existsById(id)) {
+            throw new RuntimeException("Tariffa non trovata con ID: " + id);
+        }
+        rateRepository.deleteById(id);
+    }
+
     public List<SeasonalRate> getRatesBySeason(String seasonId) {
         return rateRepository.findBySeasonId(seasonId);
     }
+
+
+    //city tax crud
+    @Transactional
+    public CityTaxRule updateCityTax(CityTaxConfig config) {
+        taxRepository.deleteAll();
+
+        CityTaxRule rule = new CityTaxRule();
+        rule.setEnabled(config.isEnabled());
+        rule.setAmountPerAdult(config.getAmountPerAdult());
+        rule.setAmountPerChild(config.getAmountPerChild());
+        rule.setAmountPerInfant(config.getAmountPerInfant());
+        rule.setMinAge(config.getMinAge());
+        rule.setMaxNightsCap(config.getMaxNightsCap());
+
+        return taxRepository.save(rule);
+    }
+
+    public CityTaxRule getCityTax() {
+        return taxRepository.findAll().stream().findFirst().orElse(new CityTaxRule());
+    }
+
 }
