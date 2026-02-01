@@ -3,8 +3,8 @@
 import countries from "i18n-iso-countries";
 import itLocale from "i18n-iso-countries/langs/it.json";
 import { Check, ChevronsUpDown } from "lucide-react";
-import * as React from "react";
 import * as RPNInput from "react-phone-number-input";
+import { useState, useMemo } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -26,7 +26,7 @@ import { FlagComponent } from "./phone-input";
 
 countries.registerLocale(itLocale);
 
-// conutry list in italian
+// country list in italian
 const countryObj = countries.getNames("it");
 
 const countryList = Object.entries(countryObj)
@@ -51,11 +51,43 @@ export function CountrySelect({
   className,
   disabled,
 }: CountrySelectProps) {
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const selectedCountryName = value
     ? countries.getName(value, "it")
     : undefined;
+
+  // Logica di filtro e ordinamento manuale (uguale a PlaceInput)
+  const filteredCountryList = useMemo(() => {
+    if (!searchQuery) return countryList;
+
+    const query = searchQuery.toLowerCase();
+
+    return countryList
+      .filter(({ name, code }) =>
+        // find both by name and code
+        name.toLowerCase().includes(query) || code.toLowerCase().includes(query)
+      )
+      .sort((a, b) => {
+        const nameA = a.name.toLowerCase();
+        const nameB = b.name.toLowerCase();
+
+        // max priority: Exact match
+        if (nameA === query && nameB !== query) return -1;
+        if (nameB === query && nameA !== query) return 1;
+
+        // high priority: Starts with query
+        const startsA = nameA.startsWith(query);
+        const startsB = nameB.startsWith(query);
+
+        if (startsA && !startsB) return -1;
+        if (!startsA && startsB) return 1;
+
+        // fallback: alphabetical
+        return nameA.localeCompare(nameB);
+      });
+  }, [searchQuery]);
 
   return (
     <Popover open={open} onOpenChange={setOpen} modal={true}>
@@ -89,28 +121,26 @@ export function CountrySelect({
       </PopoverTrigger>
 
       <PopoverContent className="w-[280px] p-0" align="start">
-        <Command
-          // custom filter to search by name or code
-          filter={(value, search) => {
-            const cleanSearch = search.toLowerCase();
-            const cleanValue = value.toLowerCase();
-            if (cleanValue.includes(cleanSearch)) return 1;
-            return 0;
-          }}
-        >
-          <CommandInput placeholder="Cerca nazione..." />
+        <Command shouldFilter={false}>
+          <CommandInput 
+            placeholder="Cerca nazione..." 
+            value={searchQuery}
+            onValueChange={setSearchQuery}
+          />
           <CommandList>
-            <CommandEmpty>Nessuna nazione trovata.</CommandEmpty>
+            {filteredCountryList.length === 0 && (
+              <CommandEmpty>Nessuna nazione trovata.</CommandEmpty>
+            )}
             <CommandGroup>
               <ScrollArea className="h-[240px]">
-                {countryList.map(({ code, name }) => (
+                {filteredCountryList.map(({ code, name }) => (
                   <CommandItem
                     key={code}
                     value={name}
-                    keywords={[code, name]}
                     onSelect={() => {
                       onChange(code);
                       setOpen(false);
+                      setSearchQuery("");
                     }}
                   >
                     <div className="flex items-center gap-2 w-full">

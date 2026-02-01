@@ -2,8 +2,8 @@
 
 import { cn } from "@/lib/utils";
 import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
-import { useState } from "react";
-import { Control, useWatch } from "react-hook-form";
+import { useState, useEffect, useRef } from "react";
+import { Control, useWatch, useFormContext } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -49,14 +49,29 @@ export function PlaceInput({
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
+  const { setValue } = useFormContext() || {};
+
   // get citizenship value from form if nationalityField is provided
   const citizenship = useWatch({
     control,
-    name: nationalityField || "citizenship", 
+    name: nationalityField || "citizenship",
   });
 
   // if no nationalityField provided, assume Italy for place input
   const isItaly = nationalityField ? citizenship === "IT" : true;
+
+  // reset field when switching between Italy and other countries
+  const prevIsItaly = useRef(isItaly);
+
+  useEffect(() => {
+    if (!prevIsItaly.current && isItaly) {
+      if (setValue) {
+        setValue(placeField, "");
+        setSearchQuery("");
+      }
+    }
+    prevIsItaly.current = isItaly;
+  }, [isItaly, placeField, setValue]);
 
   const { data: cities, isLoading } = useItalianPlaces();
 
@@ -66,6 +81,25 @@ export function PlaceInput({
           .filter((city) =>
             city.name.toLowerCase().includes(searchQuery.toLowerCase()),
           )
+          .sort((a, b) => {
+            const nameA = a.name.toLowerCase();
+            const nameB = b.name.toLowerCase();
+            const query = searchQuery.toLowerCase();
+
+            // max priority: Exact match
+            if (nameA === query && nameB !== query) return -1;
+            if (nameB === query && nameA !== query) return 1;
+
+            // high priority: Starts with query
+            const startsA = nameA.startsWith(query);
+            const startsB = nameB.startsWith(query);
+
+            if (startsA && !startsB) return -1;
+            if (!startsA && startsB) return 1;
+
+            // fallback: Alphabetical order
+            return nameA.localeCompare(nameB);
+          })
           .slice(0, 50)
       : [];
 
