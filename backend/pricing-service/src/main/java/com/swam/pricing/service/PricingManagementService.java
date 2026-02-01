@@ -3,6 +3,8 @@ package com.swam.pricing.service;
 import com.swam.pricing.domain.*;
 import com.swam.pricing.dto.*;
 import com.swam.pricing.repository.*;
+import com.swam.shared.exceptions.InvalidBookingDateException;
+import com.swam.shared.exceptions.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,12 +24,12 @@ public class PricingManagementService {
     @Transactional
     public Season createSeason(CreateSeasonRequest request) {
         if (request.getStartDate().isAfter(request.getEndDate())) {
-            throw new IllegalArgumentException("La data di inizio deve essere precedente alla data di fine.");
+            throw new InvalidBookingDateException("La data di inizio deve essere precedente alla data di fine.");
         }
 
         List<Season> overlaps = seasonRepository.findOverlappingSeasons(request.getStartDate(), request.getEndDate());
         if (!overlaps.isEmpty()) {
-            throw new IllegalArgumentException("Errore: Le date indicate si sovrappongono alla stagione esistente: " + overlaps.get(0).getName());
+            throw new InvalidBookingDateException("Errore: Le date indicate si sovrappongono alla stagione esistente: " + overlaps.get(0).getName());
         }
 
         Season season = new Season();
@@ -41,7 +43,7 @@ public class PricingManagementService {
     @Transactional
     public Season updateSeason(String id, Season updatedData) {
         Season existing = seasonRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Stagione non trovata"));
+                .orElseThrow(() -> new ResourceNotFoundException(id));
 
         if (!existing.getStartDate().equals(updatedData.getStartDate()) ||
                 !existing.getEndDate().equals(updatedData.getEndDate())) {
@@ -49,7 +51,7 @@ public class PricingManagementService {
             overlaps.removeIf(s -> s.getId().equals(id));
 
             if (!overlaps.isEmpty()) {
-                throw new IllegalArgumentException("Le nuove date si sovrappongono ad altre stagioni!");
+                throw new InvalidBookingDateException("Le nuove date si sovrappongono ad altre stagioni!");
             }
         }
 
@@ -96,7 +98,7 @@ public class PricingManagementService {
     @Transactional
     public SeasonalRate updateRate(String id, SetRateRequest request) {
         SeasonalRate rate = rateRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Tariffa non trovata con ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException(id));
 
         rate.setBasePrice(request.getBasePrice());
         rate.setAdultPrice(request.getAdultPrice());
@@ -111,7 +113,7 @@ public class PricingManagementService {
     @Transactional
     public void deleteRate(String id) {
         if (!rateRepository.existsById(id)) {
-            throw new RuntimeException("Tariffa non trovata con ID: " + id);
+            throw new ResourceNotFoundException(id);
         }
         rateRepository.deleteById(id);
     }
