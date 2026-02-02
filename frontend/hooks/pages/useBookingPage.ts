@@ -46,7 +46,6 @@ export const useBookingsPage = () => {
   const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
   const [isConfirmDepositDialogOpen, setIsConfirmDepositDialogOpen] =
     useState(false);
-  const [isUpdateStayOpen, setIsUpdateStayOpen] = useState(false);
   const [isExtendSplitOpen, setIsExtendSplitOpen] = useState(false);
 
   // dialog for managing different modes (CREATE, EDIT, CHECKIN, CHECKOUT)
@@ -87,12 +86,6 @@ export const useBookingsPage = () => {
   const handleConfirmDeposit = (booking: Booking) => {
     setBookingForDeposit(booking);
     setIsConfirmDepositDialogOpen(true);
-  };
-
-  // opens the dialog to update stay details
-  const openUpdateStayDialog = (booking: Booking) => {
-    setBookingToUpdateStay(booking);
-    setIsUpdateStayOpen(true);
   };
 
   // opens the dialog to extend stay with split for new booking
@@ -183,7 +176,6 @@ export const useBookingsPage = () => {
         onConfirm: openConfirmDialog,
         onCancel: openCancelDialog,
         onConfirmDeposit: handleConfirmDeposit,
-        onUpdateStay: openUpdateStayDialog,
         onExtendSplit: openExtendSplitDialog,
       }),
     [resources],
@@ -207,7 +199,6 @@ export const useBookingsPage = () => {
       isCancelOpen: isCancelDialogOpen,
       isBulkDeleteOpen: isBulkDeleteDialogOpen,
       isConfirmDepositOpen: isConfirmDepositDialogOpen,
-      isUpdateStayOpen: isUpdateStayOpen,
       isExtendSplitOpen: isExtendSplitOpen,
     },
 
@@ -238,7 +229,6 @@ export const useBookingsPage = () => {
       setCancelOpen: setIsCancelDialogOpen,
       setBulkDeleteOpen: setIsBulkDeleteDialogOpen,
       setConfirmDepositOpen: setIsConfirmDepositDialogOpen,
-      setUpdateStayOpen: setIsUpdateStayOpen,
       setExtendSplitOpen: setIsExtendSplitOpen,
 
       openCreateDialog,
@@ -246,7 +236,6 @@ export const useBookingsPage = () => {
       openCheckInDialog,
       openCheckOutDialog,
       openConfirmDialog,
-      openUpdateStayDialog,
       openExtendSplitDialog,
       confirmDelete,
       confirmCancel,

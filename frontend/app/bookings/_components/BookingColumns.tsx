@@ -53,7 +53,6 @@ interface GetBookingColumnsProps {
   onConfirm: (booking: Booking) => void;
   onCancel: (booking: Booking) => void;
   onConfirmDeposit: (booking: Booking) => void;
-  onUpdateStay: (booking: Booking) => void;
   onExtendSplit: (booking: Booking) => void;
 }
 
@@ -66,7 +65,6 @@ export const getBookingColumns = ({
   onConfirm,
   onCancel,
   onConfirmDeposit,
-  onUpdateStay,
   onExtendSplit,
 }: GetBookingColumnsProps): ColumnDef<Booking>[] => [
   // select
@@ -465,13 +463,6 @@ export const getBookingColumns = ({
                 Modifica
               </DropdownMenuItem>
 
-              {(isCheckedIn || isConfirmed) && (
-                <DropdownMenuItem onClick={() => onUpdateStay(row.original)}>
-                  <CalendarPlus className="h-4 w-4 hover:text-foreground" />{" "}
-                  Assegna Nuovo Soggiorno {/* //fixme: elimina */}
-                </DropdownMenuItem>
-              )}
-
               {hasDepositToPay && !isCancelled && (
                 <DropdownMenuItem
                   onClick={() => onConfirmDeposit(row.original)}
@@ -488,14 +479,10 @@ export const getBookingColumns = ({
                 </DropdownMenuItem>
               )}
 
-              {/* cannot extend if it has already been extended? */}
-              {row.original.groupId === null &&
-                row.original.status === "CHECKED_IN" && (
-                  <DropdownMenuItem onClick={() => onExtendSplit(row.original)}>
-                    <Split className="h-4 w-4 hover:text-foreground" />
-                    Estendi Soggiorno
-                  </DropdownMenuItem>
-                )}
+              <DropdownMenuItem onClick={() => onExtendSplit(row.original)}>
+                <Split className="h-4 w-4 hover:text-foreground" />
+                Estendi Soggiorno
+              </DropdownMenuItem>
 
               {row.original.status === "CONFIRMED" && (
                 <DropdownMenuItem onClick={() => onCheckIn(row.original)}>

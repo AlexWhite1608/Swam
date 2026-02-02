@@ -36,9 +36,8 @@ import {
 } from "@/hooks/tanstack-query/useBookings";
 import { useResources } from "@/hooks/tanstack-query/useResources";
 import { useDisabledDays } from "@/hooks/useDisabledDays";
-import { Booking } from "@/types/bookings/types";
 import { NAV_ITEMS } from "@/lib/navigation";
-import { Separator } from "@radix-ui/react-dropdown-menu";
+import { Booking } from "@/types/bookings/types";
 
 const extendSchema = z.object({
   newCheckOut: z.date({ error: "" }),
@@ -278,22 +277,23 @@ export function ExtendStayDialog({
             />
 
             {isConflict && (
-              <Alert className="border p-4 bg-muted/20">
-                <AlertDescription>
-                  La risorsa in cui si trova attualmente l'ospite non è disponibile fino alla nuova data.
-                  Seleziona una nuova risorsa per creare uno spostamento.
+              <Alert className="bg-amber-50 border-amber-200">
+                <AlertDescription className="text-amber-800">
+                  <strong>{assignedResource?.name}</strong> è occupata nel nuovo
+                  periodo selezionato. Scegli una risorsa alternativa per
+                  completare l&apos;estensione.
                 </AlertDescription>
               </Alert>
             )}
 
             {isConflict && (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <FormField
                   control={form.control}
                   name="newResourceId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Sposta ospite su</FormLabel>
+                      <FormLabel>Nuova Risorsa</FormLabel>
                       <FormControl>
                         <ResourceSelect
                           value={field.value}
@@ -307,30 +307,27 @@ export function ExtendStayDialog({
                   )}
                 />
 
-                {/* Show success message when new resource is valid */}
+                {/* Success: new resource is available */}
                 {newResourceId && !isNewResourceInvalid && (
-                  <Alert className="bg-green-50 border-green-200 text-green-800">
-                    <Check className="h-4 w-4" />
-                    <AlertTitle>Risorsa Disponibile</AlertTitle>
-                    <AlertDescription>
-                      <strong>{resourceToCheckId?.name}</strong> è libera nel
-                      periodo selezionato. Puoi confermare lo spostamento.
+                  <Alert className="bg-green-50 border-green-200">
+                    <AlertDescription className="text-green-800">
+                      <strong>{resourceToCheckId?.name}</strong> è libera per
+                      l&apos;intero periodo. Puoi procedere con lo spostamento.
                     </AlertDescription>
                   </Alert>
                 )}
 
-                {/* Show error message when new resource is also occupied */}
+                {/* Error: new resource is also occupied */}
                 {isNewResourceInvalid && newResourceId && (
-                  <Alert
-                    variant="destructive"
-                    className="bg-red-50 border-red-200 text-red-800"
-                  >
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>Attenzione</AlertTitle>
-                    <AlertDescription>
-                      La nuova risorsa selezionata è anch&apos;essa occupata nel
-                      periodo indicato. Scegli un&apos;altra risorsa o cambia le
-                      date.
+                  <Alert className="bg-red-50 border-red-200">
+                    <AlertTriangle className="h-4 w-4 text-red-600" />
+                    <AlertTitle className="text-red-900">
+                      Risorsa Occupata
+                    </AlertTitle>
+                    <AlertDescription className="text-red-800">
+                      <strong>{resourceToCheckId?.name}</strong> non è
+                      disponibile per il periodo indicato. Seleziona
+                      un&apos;altra risorsa o modifica le date.
                     </AlertDescription>
                   </Alert>
                 )}

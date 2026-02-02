@@ -127,13 +127,6 @@ public class BookingService {
             throw new IllegalStateException("Non puoi modificare una prenotazione conclusa o cancellata.");
         }
 
-        if (booking.getStatus() == BookingStatus.CHECKED_IN) {
-            // if already checked-in, cannot move check-in to future
-            if (request.getCheckIn().isAfter(LocalDate.now())) {
-                throw new InvalidBookingDateException("Il check-in non può essere spostato nel futuro per una prenotazione in corso.");
-            }
-        }
-
         // check availability if dates or resource changed (excluding current booking)
         boolean changed = !booking.getResourceId().equals(request.getResourceId()) ||
                 !booking.getCheckIn().equals(request.getCheckIn()) ||
@@ -472,9 +465,7 @@ public class BookingService {
 
         Guest mainGuestSnapshot = customerService.createGuestSnapshot(mainCustomer, request.getGuestRole());
 
-        if (request.getNotes() != null) {
-            currentBooking.setNotes(request.getNotes());
-        }
+        currentBooking.setNotes(request.getNotes());
 
         List<Guest> companionSnapshots = new ArrayList<>();
         if (request.getCompanions() != null) {
@@ -502,9 +493,7 @@ public class BookingService {
 
             b.setCompanions(new ArrayList<>(companionSnapshots));
 
-            if (request.getNotes() != null) {
-                b.setNotes(request.getNotes());
-            }
+            b.setNotes(request.getNotes());
 
             b.setUpdatedAt(LocalDateTime.now());
         }
@@ -603,6 +592,7 @@ public class BookingService {
                 .mainGuest(booking.getMainGuest())
                 .companions(booking.getCompanions())
                 .extras(booking.getExtras())
+                .notes(booking.getNotes())
                 .createdAt(booking.getCreatedAt())
                 .updatedAt(booking.getUpdatedAt())
                 .build();

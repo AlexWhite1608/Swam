@@ -16,7 +16,6 @@ import { BookingDialog } from "./_components/BookingDialog";
 import { BookingTableFilters } from "./_components/BookingTableFilters";
 import { ConfirmBookingDialog } from "./_components/ConfirmBookingDialog";
 import { ConfirmDepositDialog } from "./_components/ConfirmDepositDialog";
-import { UpdateStayDialog } from "./_components/UpdateStayDialog";
 import { ExtendStayDialog } from "./_components/ExtendStayDialog";
 
 export default function BookingsPage() {
@@ -136,13 +135,6 @@ export default function BookingsPage() {
         }
         confirmText="Conferma"
         isLoading={isCanceling}
-      />
-
-      {/* //fixme: elimina */}
-      <UpdateStayDialog
-        isOpen={dialogs.isUpdateStayOpen}
-        onOpenChange={actions.setUpdateStayOpen}
-        booking={selections.bookingToUpdateStay}
       />
 
       <ExtendStayDialog

@@ -35,6 +35,8 @@ public class BookingResponse {
 
     private PriceBreakdown priceBreakdown;
 
+    private String notes;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
