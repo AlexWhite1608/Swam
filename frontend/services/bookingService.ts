@@ -61,6 +61,11 @@ export interface UpdateStayPayload {
   checkOut: string;
 }
 
+export interface ExtendBookingPayload {
+  newResourceId: string;
+  newCheckOutDate: string;
+}
+
 export interface UnavailablePeriod {
   start: string;
   end: string;
@@ -114,6 +119,7 @@ export const bookingService = {
     return data;
   },
 
+  // Update Stay (change check-in/check-out dates or resource)
   updateStay: async ({
     id,
     payload,
@@ -122,6 +128,18 @@ export const bookingService = {
     payload: UpdateStayPayload;
   }): Promise<Booking> => {
     const { data } = await api.patch(`/api/bookings/${id}/stay`, payload);
+    return data;
+  },
+
+  // Extend or Split Booking by creating a new booking for the extended period
+  extendWithSplit: async ({
+    id,
+    payload,
+  }: {
+    id: string;
+    payload: ExtendBookingPayload;
+  }): Promise<Booking> => {
+    const { data } = await api.post(`/api/bookings/${id}/extend-split`, payload);
     return data;
   },
 

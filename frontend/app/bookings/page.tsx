@@ -17,6 +17,7 @@ import { BookingTableFilters } from "./_components/BookingTableFilters";
 import { ConfirmBookingDialog } from "./_components/ConfirmBookingDialog";
 import { ConfirmDepositDialog } from "./_components/ConfirmDepositDialog";
 import { UpdateStayDialog } from "./_components/UpdateStayDialog";
+import { ExtendStayDialog } from "./_components/ExtendStayDialog";
 
 export default function BookingsPage() {
   const {
@@ -137,11 +138,17 @@ export default function BookingsPage() {
         isLoading={isCanceling}
       />
 
-      {/* update stay dialog */}
+      {/* //fixme: elimina */}
       <UpdateStayDialog
         isOpen={dialogs.isUpdateStayOpen}
         onOpenChange={actions.setUpdateStayOpen}
         booking={selections.bookingToUpdateStay}
+      />
+
+      <ExtendStayDialog
+        isOpen={dialogs.isExtendSplitOpen}
+        onOpenChange={actions.setExtendSplitOpen}
+        booking={selections.bookingToExtend}
       />
 
       {/* bulk delete */}

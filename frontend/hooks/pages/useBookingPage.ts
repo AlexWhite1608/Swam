@@ -47,6 +47,7 @@ export const useBookingsPage = () => {
   const [isConfirmDepositDialogOpen, setIsConfirmDepositDialogOpen] =
     useState(false);
   const [isUpdateStayOpen, setIsUpdateStayOpen] = useState(false);
+  const [isExtendSplitOpen, setIsExtendSplitOpen] = useState(false);
 
   // dialog for managing different modes (CREATE, EDIT, CHECKIN, CHECKOUT)
   const [dialogMode, setDialogMode] = useState<BookingDialogMode>("CREATE");
@@ -63,6 +64,7 @@ export const useBookingsPage = () => {
   );
   const [bookingToUpdateStay, setBookingToUpdateStay] =
     useState<Booking | null>(null);
+  const [bookingToExtend, setBookingToExtend] = useState<Booking | null>(null);
 
   // table reset callback
   const [resetSelectionTrigger, setResetSelectionTrigger] = useState(0);
@@ -87,11 +89,17 @@ export const useBookingsPage = () => {
     setIsConfirmDepositDialogOpen(true);
   };
 
-  // opens the dialog in UPDATE STAY mode
+  // opens the dialog to update stay details
   const openUpdateStayDialog = (booking: Booking) => {
     setBookingToUpdateStay(booking);
     setIsUpdateStayOpen(true);
   };
+
+  // opens the dialog to extend stay with split for new booking
+  const openExtendSplitDialog = (booking: Booking) => {
+    setBookingToExtend(booking);
+    setIsExtendSplitOpen(true);
+};
 
   // opens the dialog in CHECK-IN mode
   const openCheckInDialog = (booking: Booking) => {
@@ -176,6 +184,7 @@ export const useBookingsPage = () => {
         onCancel: openCancelDialog,
         onConfirmDeposit: handleConfirmDeposit,
         onUpdateStay: openUpdateStayDialog,
+        onExtendSplit: openExtendSplitDialog,
       }),
     [resources],
   );
@@ -199,6 +208,7 @@ export const useBookingsPage = () => {
       isBulkDeleteOpen: isBulkDeleteDialogOpen,
       isConfirmDepositOpen: isConfirmDepositDialogOpen,
       isUpdateStayOpen: isUpdateStayOpen,
+      isExtendSplitOpen: isExtendSplitOpen,
     },
 
     // Data State
@@ -209,6 +219,7 @@ export const useBookingsPage = () => {
       bookingsToBulkDelete,
       bookingForDeposit,
       bookingToUpdateStay,
+      bookingToExtend,
     },
 
     // Mutation State
@@ -228,6 +239,7 @@ export const useBookingsPage = () => {
       setBulkDeleteOpen: setIsBulkDeleteDialogOpen,
       setConfirmDepositOpen: setIsConfirmDepositDialogOpen,
       setUpdateStayOpen: setIsUpdateStayOpen,
+      setExtendSplitOpen: setIsExtendSplitOpen,
 
       openCreateDialog,
       openEditDialog,
@@ -235,6 +247,7 @@ export const useBookingsPage = () => {
       openCheckOutDialog,
       openConfirmDialog,
       openUpdateStayDialog,
+      openExtendSplitDialog,
       confirmDelete,
       confirmCancel,
       requestBulkDelete,

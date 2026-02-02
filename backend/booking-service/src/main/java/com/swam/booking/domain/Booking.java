@@ -14,6 +14,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDate;
@@ -31,6 +32,12 @@ public class Booking {
 
     @Id
     private String id;
+
+    @Indexed
+    private String groupId;
+
+    // refers to previusly booking fragment in case of split bookings
+    private String parentBookingId;
 
     @NotNull
     private String resourceId;

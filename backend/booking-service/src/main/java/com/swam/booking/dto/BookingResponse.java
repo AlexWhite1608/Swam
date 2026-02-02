@@ -16,6 +16,8 @@ import java.util.List;
 @Builder
 public class BookingResponse {
     private String id;
+    private String groupId;
+    private String parentBookingId;
     private String resourceId;
     private LocalDate checkIn;
     private LocalDate checkOut;

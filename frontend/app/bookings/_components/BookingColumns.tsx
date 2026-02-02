@@ -5,15 +5,20 @@ import { differenceInCalendarDays, format, parseISO } from "date-fns";
 import { it } from "date-fns/locale";
 import {
   ArrowRight,
+  BedDouble,
   CalendarDays,
+  CalendarPlus,
   Check,
   CircleX,
   Euro,
+  Link,
   LogIn,
   LogOut,
   MoreHorizontal,
   Pencil,
+  Split,
   Trash,
+  User,
   Users,
 } from "lucide-react";
 
@@ -49,6 +54,7 @@ interface GetBookingColumnsProps {
   onCancel: (booking: Booking) => void;
   onConfirmDeposit: (booking: Booking) => void;
   onUpdateStay: (booking: Booking) => void;
+  onExtendSplit: (booking: Booking) => void;
 }
 
 export const getBookingColumns = ({
@@ -61,6 +67,7 @@ export const getBookingColumns = ({
   onCancel,
   onConfirmDeposit,
   onUpdateStay,
+  onExtendSplit,
 }: GetBookingColumnsProps): ColumnDef<Booking>[] => [
   // select
   {
@@ -108,14 +115,95 @@ export const getBookingColumns = ({
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Ospite Principale" />
     ),
-    cell: ({ row }) => {
+    cell: ({ row, table }) => {
       const guest = row.original.mainGuest;
+      const isChained = !!row.original.groupId;
+      const parentBookingId = row.original.parentBookingId;
+      const groupId = row.original.groupId;
+
+      // Find related bookings in the same group
+      const allBookings = table
+        .getRowModel()
+        .rows.map((r: { original: any }) => r.original);
+      const linkedBookings = allBookings.filter(
+        (b: { groupId: string | undefined; id: string }) =>
+          b.groupId === groupId && b.id !== row.original.id,
+      );
+
+      // Find parent booking if exists
+      const parentBooking = parentBookingId
+        ? allBookings.find((b: { id: string }) => b.id === parentBookingId)
+        : null;
+
       return (
         <div className="flex items-center gap-3 min-w-0">
           <div className="flex flex-col min-w-0 flex-1">
-            <span className="font-medium text-sm leading-tight truncate mb-0.5">
-              {guest.lastName} {guest.firstName}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="font-medium text-sm leading-tight truncate">
+                {guest.lastName} {guest.firstName}
+              </span>
+
+              {/* show if booking is linked to another */}
+              {isChained && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <div className="bg-blue-100 text-blue-600 p-0.5 rounded-sm">
+                        <Link className="h-3 w-3" />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <div className="space-y-2 text-xs">
+                        <p className="font-semibold border-b pb-1">
+                          Prenotazione Collegata
+                        </p>
+
+                        <div className="space-y-1">
+                          {linkedBookings.length > 0 && (
+                            <>
+                              <div className="space-y-1.5 max-h-32 overflow-y-auto">
+                                {linkedBookings.map((linked: Booking) => (
+                                  <div
+                                    key={linked.id}
+                                    className="p-1.5 bg-muted/50 rounded text-[10px] space-y-0.5"
+                                  >
+                                    <div className="font-medium">
+                                      <User className="h-3 w-3 mr-1 mb-0.5 inline-block text-muted-foreground" />
+                                      {linked.mainGuest.lastName}{" "}
+                                      {linked.mainGuest.firstName}
+                                    </div>
+                                    <div className="text-muted-foreground">
+                                      <CalendarDays className="h-3 w-3 mr-1 mb-0.5 inline-block text-muted-foreground" />
+                                      {format(
+                                        parseISO(linked.checkIn),
+                                        "dd/MM/yy",
+                                        { locale: it },
+                                      )}{" "}
+                                      -{" "}
+                                      {format(
+                                        parseISO(linked.checkOut),
+                                        "dd/MM/yy",
+                                        { locale: it },
+                                      )}
+                                    </div>
+                                    <div className="text-muted-foreground">
+                                      <BedDouble className="h-3 w-3 mr-1 mb-0.5 inline-block text-muted-foreground" />
+                                      {resources.find(
+                                        (r) => r.id === linked.resourceId,
+                                      )?.name || "-"}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </div>
             <span className="text-xs text-muted-foreground truncate ">
               {guest.email || guest.phone || "-"}
             </span>
@@ -379,9 +467,8 @@ export const getBookingColumns = ({
 
               {(isCheckedIn || isConfirmed) && (
                 <DropdownMenuItem onClick={() => onUpdateStay(row.original)}>
-                  <CalendarDays className="h-4 w-4 hover:text-foreground" />{" "}
-                  {/* Importa icona */}
-                  Modifica Soggiorno
+                  <CalendarPlus className="h-4 w-4 hover:text-foreground" />{" "}
+                  Assegna Nuovo Soggiorno {/* //fixme: elimina */}
                 </DropdownMenuItem>
               )}
 
@@ -400,6 +487,15 @@ export const getBookingColumns = ({
                   Conferma Prenotazione
                 </DropdownMenuItem>
               )}
+
+              {/* cannot extend if it has already been extended? */}
+              {row.original.groupId === null &&
+                row.original.status === "CHECKED_IN" && (
+                  <DropdownMenuItem onClick={() => onExtendSplit(row.original)}>
+                    <Split className="h-4 w-4 hover:text-foreground" />
+                    Estendi Soggiorno
+                  </DropdownMenuItem>
+                )}
 
               {row.original.status === "CONFIRMED" && (
                 <DropdownMenuItem onClick={() => onCheckIn(row.original)}>

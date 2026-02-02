@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 
@@ -78,6 +79,14 @@ public class BookingController {
             @PathVariable String id,
             @Valid @RequestBody CheckInRequest request) {
         return ResponseEntity.ok(bookingService.updateBookingCheckIn(id, request));
+    }
+
+    // extends the stay of an existing booking, splitting it into two bookings if necessary
+    @PostMapping("/{id}/extend-split")
+    public ResponseEntity<BookingResponse> extendBookingWithSplit(
+            @PathVariable String id,
+            @Valid @RequestBody ExtendBookingRequest request) {
+        return ResponseEntity.ok(bookingService.extendStayWithSplit(id, request));
     }
 
     //TODO: endpoint PUT /api/bookings/{id}/extras per modifica extra del booking

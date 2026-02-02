@@ -151,6 +151,24 @@ export const useUpdateStay = () => {
   });
 };
 
+// Extend or Split Booking by creating a new booking for the extended period
+export const useExtendBookingWithSplit = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: bookingService.extendWithSplit,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: bookingKeys.all });
+      toast.success("Prenotazione estesa e collegata con successo");
+    },
+    onError: (error: any) => {
+      toast.error("Errore estensione", {
+        description: getErrorMessage(error),
+      });
+    },
+  });
+};
+
 // Update payment status
 export const useUpdatePaymentStatus = () => {
   const queryClient = useQueryClient();

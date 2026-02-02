@@ -254,6 +254,7 @@ public class BookingService {
         return mapToResponse(bookingRepository.save(booking));
     }
 
+    //TODO: gestione prenotazione split da unificare con check-out
     @Transactional
     public BookingResponse checkOut(String bookingId, CheckOutRequest request) {
         Booking booking = getBookingOrThrow(bookingId);
@@ -492,6 +493,57 @@ public class BookingService {
         return mapToResponse(bookingRepository.save(booking));
     }
 
+    // extend an existing booking by creating a new linked booking segment
+    @Transactional
+    public BookingResponse extendStayWithSplit(String currentBookingId, ExtendBookingRequest request) {
+        Booking currentBooking = getBookingOrThrow(currentBookingId);
+
+        // new time interval for the extension, starts from current check-out
+        LocalDate newCheckInDate = currentBooking.getCheckOut();
+        LocalDate newCheckOutDate = request.getNewCheckOutDate();
+
+        if (!newCheckOutDate.isAfter(newCheckInDate)) {
+            throw new InvalidBookingDateException("La data di fine estensione deve essere successiva alla fine del soggiorno attuale.");
+        }
+
+        // check validity and availability of new segment (NO EXCLUSION here. because it's a new booking)
+        validateDates(request.getNewResourceId(), newCheckInDate, newCheckOutDate, null);
+
+        // groupId management
+        String groupId = currentBooking.getGroupId();
+        if (groupId == null) {
+            // if it's the first extension, create a new groupId and assign to current booking
+            groupId = java.util.UUID.randomUUID().toString();
+            currentBooking.setGroupId(groupId);
+            bookingRepository.save(currentBooking); // update father booking
+        }
+
+        // clone existing data for the new segment
+        Booking extension = Booking.builder()
+                .resourceId(request.getNewResourceId())
+                .checkIn(newCheckInDate)
+                .checkOut(newCheckOutDate)
+
+                // born as CONFIRMED, will be checked-in later with existing guest data
+                .status(currentBooking.getStatus())
+                .paymentStatus(currentBooking.getPaymentStatus())
+
+                // clone main guest and companions data
+                .mainGuest(currentBooking.getMainGuest())
+                .companions(new ArrayList<>(currentBooking.getCompanions()))
+
+                // link to group and parent booking
+                .groupId(groupId)
+                .parentBookingId(currentBooking.getId())
+                .priceBreakdown(currentBooking.getPriceBreakdown())
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        Booking savedExtension = bookingRepository.save(extension);
+
+        return mapToResponse(savedExtension);
+    }
+
     private void validatePaymentStatusTransition(PaymentStatus current, PaymentStatus next) {
         if (current == PaymentStatus.PAID_IN_FULL && next == PaymentStatus.DEPOSIT_PAID) {
             throw new IllegalStateException("Non puoi tornare a DEPOSIT_PAID da PAID_IN_FULL");
@@ -514,6 +566,8 @@ public class BookingService {
 
         return BookingResponse.builder()
                 .id(booking.getId())
+                .groupId(booking.getGroupId())
+                .parentBookingId(booking.getParentBookingId())
                 .resourceId(booking.getResourceId())
                 .checkIn(booking.getCheckIn())
                 .checkOut(booking.getCheckOut())
