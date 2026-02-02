@@ -446,12 +446,13 @@ public class BookingService {
     // update booking guests during CHECKED_IN status
     @Transactional
     public BookingResponse updateBookingCheckIn(String bookingId, CheckInRequest request) {
-        Booking booking = getBookingOrThrow(bookingId);
+        Booking currentBooking = getBookingOrThrow(bookingId);
 
-        if (booking.getStatus() != BookingStatus.CHECKED_IN) {
+        if (currentBooking.getStatus() != BookingStatus.CHECKED_IN) {
             throw new IllegalStateException("Modifica consentita solo per prenotazioni nello stato CHECKED_IN.");
         }
 
+        // main guest customer data
         CreateCustomerRequest mainGuestData = CreateCustomerRequest.builder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
@@ -470,27 +471,52 @@ public class BookingService {
         CustomerResponse mainCustomer = customerService.registerOrUpdateCustomer(mainGuestData);
 
         Guest mainGuestSnapshot = customerService.createGuestSnapshot(mainCustomer, request.getGuestRole());
-        booking.setMainGuest(mainGuestSnapshot);
 
         if (request.getNotes() != null) {
-            booking.setNotes(request.getNotes());
+            currentBooking.setNotes(request.getNotes());
         }
 
         List<Guest> companionSnapshots = new ArrayList<>();
-
         if (request.getCompanions() != null) {
             for (CheckInRequest.CompanionData compData : request.getCompanions()) {
                 CustomerResponse compCustomer = customerService.registerOrUpdateCompanion(compData);
-
                 Guest companionSnapshot = customerService.createGuestSnapshot(compCustomer, compData.getGuestRole());
                 companionSnapshots.add(companionSnapshot);
             }
         }
 
-        booking.setCompanions(companionSnapshots);
+        // find all bookings to update
+        List<Booking> bookingsToUpdate = new ArrayList<>();
 
-        booking.setUpdatedAt(LocalDateTime.now());
-        return mapToResponse(bookingRepository.save(booking));
+        if (currentBooking.getGroupId() != null) {
+            // if it's part of a group, update all bookings in the group
+            bookingsToUpdate.addAll(bookingRepository.findByGroupId(currentBooking.getGroupId()));
+        } else {
+            // otherwise, only the current booking
+            bookingsToUpdate.add(currentBooking);
+        }
+
+        // apply updates to all relevant bookings
+        for (Booking b : bookingsToUpdate) {
+            b.setMainGuest(mainGuestSnapshot);
+
+            b.setCompanions(new ArrayList<>(companionSnapshots));
+
+            if (request.getNotes() != null) {
+                b.setNotes(request.getNotes());
+            }
+
+            b.setUpdatedAt(LocalDateTime.now());
+        }
+
+        bookingRepository.saveAll(bookingsToUpdate);
+
+        Booking updatedCurrent = bookingsToUpdate.stream()
+                .filter(b -> b.getId().equals(bookingId))
+                .findFirst()
+                .orElse(currentBooking);
+
+        return mapToResponse(updatedCurrent);
     }
 
     // extend an existing booking by creating a new linked booking segment

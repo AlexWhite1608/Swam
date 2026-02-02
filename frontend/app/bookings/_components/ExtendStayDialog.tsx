@@ -4,12 +4,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { format, isAfter, isBefore, parseISO } from "date-fns";
 import { it } from "date-fns/locale";
 import {
-    AlertTriangle,
-    Calendar,
-    CalendarPlus,
-    Loader2,
-    Split,
-    User
+  AlertTriangle,
+  Calendar,
+  CalendarPlus,
+  Check,
+  Loader2,
+  Split,
+  User,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -20,18 +21,18 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
 } from "@/components/ui/form";
 import { ResourceSelect } from "@/components/ui/resource-select";
 import {
-    useExtendBookingWithSplit,
-    useUnavailableDates,
-    useUpdateStay,
+  useExtendBookingWithSplit,
+  useUnavailableDates,
+  useUpdateStay,
 } from "@/hooks/tanstack-query/useBookings";
 import { useResources } from "@/hooks/tanstack-query/useResources";
 import { useDisabledDays } from "@/hooks/useDisabledDays";
@@ -279,9 +280,8 @@ export function ExtendStayDialog({
             {isConflict && (
               <Alert className="border p-4 bg-muted/20">
                 <AlertDescription>
-                  <strong>{resourceToCheckId?.name}</strong> non è disponibile
-                  fino alla nuova data. Seleziona una nuova risorsa per creare
-                  uno spostamento.
+                  La risorsa in cui si trova attualmente l'ospite non è disponibile fino alla nuova data.
+                  Seleziona una nuova risorsa per creare uno spostamento.
                 </AlertDescription>
               </Alert>
             )}
@@ -307,6 +307,19 @@ export function ExtendStayDialog({
                   )}
                 />
 
+                {/* Show success message when new resource is valid */}
+                {newResourceId && !isNewResourceInvalid && (
+                  <Alert className="bg-green-50 border-green-200 text-green-800">
+                    <Check className="h-4 w-4" />
+                    <AlertTitle>Risorsa Disponibile</AlertTitle>
+                    <AlertDescription>
+                      <strong>{resourceToCheckId?.name}</strong> è libera nel
+                      periodo selezionato. Puoi confermare lo spostamento.
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {/* Show error message when new resource is also occupied */}
                 {isNewResourceInvalid && newResourceId && (
                   <Alert
                     variant="destructive"
@@ -334,7 +347,11 @@ export function ExtendStayDialog({
               </Button>
               <Button
                 type="submit"
-                disabled={isPending || isNewResourceInvalid || (isConflict && !newResourceId)}
+                disabled={
+                  isPending ||
+                  isNewResourceInvalid ||
+                  (isConflict && !newResourceId)
+                }
               >
                 {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {isConflict ? (
