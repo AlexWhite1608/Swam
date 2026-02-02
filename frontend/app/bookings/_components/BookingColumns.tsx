@@ -479,10 +479,13 @@ export const getBookingColumns = ({
                 </DropdownMenuItem>
               )}
 
-              <DropdownMenuItem onClick={() => onExtendSplit(row.original)}>
-                <Split className="h-4 w-4 hover:text-foreground" />
-                Estendi Soggiorno
-              </DropdownMenuItem>
+              {/* cannot extend if it is not check in */}
+              {row.original.status === "CHECKED_IN" && (
+                <DropdownMenuItem onClick={() => onExtendSplit(row.original)}>
+                  <Split className="h-4 w-4 hover:text-foreground" />
+                  Estendi Soggiorno
+                </DropdownMenuItem>
+              )}
 
               {row.original.status === "CONFIRMED" && (
                 <DropdownMenuItem onClick={() => onCheckIn(row.original)}>
