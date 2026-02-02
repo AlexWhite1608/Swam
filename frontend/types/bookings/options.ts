@@ -37,6 +37,7 @@ export const guestRoleOptions = [
   { label: "Capofamiglia", value: GuestRole.HEAD_OF_FAMILY },
   { label: "Capogruppo", value: GuestRole.HEAD_OF_GROUP },
   { label: "Membro", value: GuestRole.MEMBER },
+  { label: "Ospite Singolo", value: GuestRole.SINGLE_GUEST },
 ];
 
 export const guestTypeOptions = [

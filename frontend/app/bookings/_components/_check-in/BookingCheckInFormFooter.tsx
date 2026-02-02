@@ -2,7 +2,7 @@
 "use client";
 
 import { Loader2, LogIn, Save } from "lucide-react";
-import { Control } from "react-hook-form";
+import { Control, useWatch } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { FormControl, FormField, FormItem } from "@/components/ui/form";
@@ -21,6 +21,18 @@ export function BookingCheckInFormFooter({
   isEditCheckIn,
   onCancel,
 }: BookingCheckInFormFooterProps) {
+  
+  // Watch guestRole to disable button if SINGLE_GUEST
+  const guestRole = useWatch({
+    control,
+    name: "guestRole",
+  });
+
+  const companions = useWatch({
+    control,
+    name: "companions",
+  })?.length;
+
   return (
     <div className="pt-4 mt-2 border-t bg-background z-10">
       <div className="flex gap-3 items-end pb-2">
@@ -45,7 +57,13 @@ export function BookingCheckInFormFooter({
           <Button type="button" variant="outline" onClick={onCancel}>
             Annulla
           </Button>
-          <Button type="submit" disabled={isLoading}>
+          <Button
+            type="submit"
+            disabled={
+              isLoading ||
+              (guestRole === "SINGLE_GUEST" && (companions ?? 0) > 0)
+            }
+          >
             {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
             {isEditCheckIn ? (
               <Save className="h-4 w-4" />
