@@ -1,0 +1,189 @@
+package com.swam.pricing.service;
+
+import com.swam.pricing.domain.*;
+import com.swam.pricing.dto.PriceCalculationRequest;
+import com.swam.pricing.repository.*;
+import com.swam.shared.dto.PriceBreakdown;
+import com.swam.shared.enums.GuestType;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class PricingEngineEdgeCasesTest {
+
+    @Mock private SeasonRepository seasonRepository;
+    @Mock private SeasonalRateRepository rateRepository;
+    @Mock private CityTaxRuleRepository taxRepository;
+
+    @InjectMocks
+    private PricingEngineService pricingEngineService;
+
+    // --- TEST 1: PRENOTAZIONE LUNGA SU 3 STAGIONI ---
+    @Test
+    @DisplayName("Edge Case: Prenotazione attraverso 3 stagioni")
+    void testTripleSeason() {
+        mockCityTax();
+
+        System.out.println("--- TEST EDGE: 3 Stagioni ---");
+
+        LocalDate checkIn = LocalDate.of(2024, 1, 10);
+        LocalDate checkOut = LocalDate.of(2024, 1, 25); // 15 Notti
+
+        Season bassa = createSeason("LOW", 2024, 1, 1, 2024, 1, 14);
+        SeasonalRate rateBassa = createRate("LOW", "50.00");
+
+        Season media = createSeason("MID", 2024, 1, 15, 2024, 1, 20);
+        SeasonalRate rateMedia = createRate("MID", "75.00");
+
+        Season alta = createSeason("HIGH", 2024, 1, 21, 2024, 1, 31);
+        SeasonalRate rateAlta = createRate("HIGH", "100.00");
+
+        when(seasonRepository.findSeasonsInInterval(checkIn, checkOut)).thenReturn(List.of(bassa, media, alta));
+        when(rateRepository.findBySeasonIdAndResourceId("LOW", "ROOM-1")).thenReturn(Optional.of(rateBassa));
+        when(rateRepository.findBySeasonIdAndResourceId("MID", "ROOM-1")).thenReturn(Optional.of(rateMedia));
+        when(rateRepository.findBySeasonIdAndResourceId("HIGH", "ROOM-1")).thenReturn(Optional.of(rateAlta));
+
+        // Creiamo 1 Ospite Adulto che sta per tutto il periodo (15 notti)
+        List<PriceCalculationRequest.GuestProfile> guests = List.of(
+                createGuest(GuestType.ADULT, 15)
+        );
+
+        PriceCalculationRequest req = PriceCalculationRequest.builder()
+                .resourceId("ROOM-1")
+                .checkIn(checkIn).checkOut(checkOut)
+                .guests(guests) // <--- NUOVA LOGICA
+                .build();
+
+        PriceBreakdown result = pricingEngineService.calculatePrice(req);
+
+        System.out.println("Totale Calcolato: " + result.getBaseAmount());
+        assertEquals(new BigDecimal("1100.00"), result.getBaseAmount());
+    }
+
+    // --- TEST 2: CAPODANNO ---
+    @Test
+    @DisplayName("Edge Case: Capodanno")
+    void testYearCrossover() {
+        mockCityTax();
+
+        System.out.println("--- TEST EDGE: Capodanno ---");
+
+        LocalDate checkIn = LocalDate.of(2023, 12, 30);
+        LocalDate checkOut = LocalDate.of(2024, 1, 2); // 3 Notti
+
+        Season dic23 = createSeason("S-2023", 2023, 12, 1, 2023, 12, 31);
+        SeasonalRate rate23 = createRate("S-2023", "100.00");
+
+        Season gen24 = createSeason("S-2024", 2024, 1, 1, 2024, 1, 31);
+        SeasonalRate rate24 = createRate("S-2024", "120.00");
+
+        when(seasonRepository.findSeasonsInInterval(checkIn, checkOut)).thenReturn(List.of(dic23, gen24));
+        when(rateRepository.findBySeasonIdAndResourceId("S-2023", "ROOM-1")).thenReturn(Optional.of(rate23));
+        when(rateRepository.findBySeasonIdAndResourceId("S-2024", "ROOM-1")).thenReturn(Optional.of(rate24));
+
+        List<PriceCalculationRequest.GuestProfile> guests = List.of(
+                createGuest(GuestType.ADULT, 3)
+        );
+
+        PriceCalculationRequest req = PriceCalculationRequest.builder()
+                .resourceId("ROOM-1")
+                .checkIn(checkIn).checkOut(checkOut)
+                .guests(guests)
+                .build();
+
+        PriceBreakdown result = pricingEngineService.calculatePrice(req);
+
+        System.out.println("Totale Calcolato: " + result.getBaseAmount());
+        assertEquals(new BigDecimal("320.00"), result.getBaseAmount());
+    }
+
+    // --- TEST 3: TASSA CON CAP ---
+    @Test
+    @DisplayName("Edge Case: Tax Cap")
+    void testTaxCapLimit() {
+        System.out.println("--- TEST EDGE: Tax Cap ---");
+
+        LocalDate checkIn = LocalDate.of(2024, 5, 1);
+        LocalDate checkOut = LocalDate.of(2024, 5, 11); // 10 Notti
+
+        Season season = createSeason("MAY", 2024, 5, 1, 2024, 5, 31);
+        SeasonalRate rate = createRate("MAY", "100.00");
+
+        CityTaxRule taxRule = new CityTaxRule();
+        taxRule.setEnabled(true);
+        taxRule.setMaxNightsCap(4); // Cap a 4 notti
+        taxRule.setAmountPerAdult(new BigDecimal("2.00"));
+        taxRule.setAmountPerChild(new BigDecimal("1.00"));
+
+        when(seasonRepository.findSeasonsInInterval(checkIn, checkOut)).thenReturn(List.of(season));
+        when(rateRepository.findBySeasonIdAndResourceId("MAY", "ROOM-1")).thenReturn(Optional.of(rate));
+        when(taxRepository.findAll()).thenReturn(List.of(taxRule));
+
+        // 2 Adulti (stanno 10 notti) + 1 Bambino (sta 10 notti)
+        List<PriceCalculationRequest.GuestProfile> guests = List.of(
+                createGuest(GuestType.ADULT, 10),
+                createGuest(GuestType.ADULT, 10),
+                createGuest(GuestType.CHILD, 10)
+        );
+
+        PriceCalculationRequest req = PriceCalculationRequest.builder()
+                .resourceId("ROOM-1")
+                .checkIn(checkIn).checkOut(checkOut)
+                .guests(guests)
+                .build();
+
+        PriceBreakdown result = pricingEngineService.calculatePrice(req);
+
+        // Verifica: (2 Adulti * 2€ * 4 notti) + (1 Bambino * 1€ * 4 notti) = 16 + 4 = 20€
+        System.out.println("Tassa Calcolata: " + result.getTaxAmount());
+        assertEquals(new BigDecimal("20.00"), result.getTaxAmount());
+    }
+
+    // Helpers
+    private void mockCityTax() {
+        CityTaxRule dummyRule = new CityTaxRule();
+        dummyRule.setEnabled(true);
+        dummyRule.setMaxNightsCap(10);
+        dummyRule.setAmountPerAdult(BigDecimal.ZERO);
+        dummyRule.setAmountPerChild(BigDecimal.ZERO);
+        dummyRule.setAmountPerInfant(BigDecimal.ZERO);
+        when(taxRepository.findAll()).thenReturn(List.of(dummyRule));
+    }
+
+    private Season createSeason(String id, int y1, int m1, int d1, int y2, int m2, int d2) {
+        Season s = new Season();
+        s.setId(id);
+        s.setStartDate(LocalDate.of(y1, m1, d1));
+        s.setEndDate(LocalDate.of(y2, m2, d2));
+        return s;
+    }
+
+    private SeasonalRate createRate(String seasonId, String price) {
+        SeasonalRate r = new SeasonalRate();
+        r.setSeasonId(seasonId);
+        r.setBasePrice(new BigDecimal(price));
+        r.setAdultPrice(BigDecimal.ZERO);
+        return r;
+    }
+
+    private PriceCalculationRequest.GuestProfile createGuest(GuestType type, int days) {
+        return PriceCalculationRequest.GuestProfile.builder()
+                .type(type)
+                .taxExempt(false)
+                .days(days)
+                .build();
+    }
+}
