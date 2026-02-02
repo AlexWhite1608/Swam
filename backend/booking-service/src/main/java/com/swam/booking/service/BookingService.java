@@ -1,5 +1,6 @@
 package com.swam.booking.service;
 
+import com.swam.booking.client.PricingServiceClient;
 import com.swam.booking.domain.*;
 import com.swam.booking.dto.*;
 import com.swam.booking.repository.BookingRepository;
@@ -30,6 +31,7 @@ public class BookingService {
     private final BookingRepository bookingRepository;
     private final CustomerService customerService;
     private final ExtraOptionService extraOptionService;
+    private final PricingServiceClient pricingClient;
 
     @Transactional
     public BookingResponse createBooking(CreateBookingRequest request) {
@@ -60,7 +62,6 @@ public class BookingService {
                         .discountAmount(BigDecimal.ZERO)
                         .extrasAmount(BigDecimal.ZERO)
                         .finalTotal(BigDecimal.ZERO)
-                        .taxDescription(null)
                         .build())
                 .createdAt(LocalDateTime.now())
                 .updatedAt(null)
@@ -232,24 +233,55 @@ public class BookingService {
             throw new InvalidBookingDateException("Il Check-out richiede stato CHECKED_IN.");
         }
 
-        // add extras
         List<BookingExtra> finalExtras = processExtras(request.getExtras());
         booking.setExtras(finalExtras);
 
-        // TODO: calcola prezzo finale nel pricing service
-        PriceBreakdown finalPrice = PriceBreakdown.builder()
-                .baseAmount(BigDecimal.ZERO)      // TODO: calcolare;
-                .depositAmount(booking.getPriceBreakdown().getDepositAmount())
-                .taxAmount(BigDecimal.ZERO)       // TODO: calcolare
-                .discountAmount(BigDecimal.ZERO)  // TODO: calcolare
-                .extrasAmount(finalExtras.stream()
-                        .map(extra -> extra.getPriceSnapshot().multiply(BigDecimal.valueOf(extra.getQuantity())))
-                        .reduce(BigDecimal.ZERO, BigDecimal::add))
-                .finalTotal(BigDecimal.ZERO)      // TODO: calcolare
-                .taxDescription(null)             // TODO: aggiungere descrizione tasse
-                .build();
-        booking.setPriceBreakdown(finalPrice);
+        List<PriceCalculationRequest.BillableExtraItem> billableExtras = finalExtras.stream()
+                .map(extra -> new PriceCalculationRequest.BillableExtraItem(
+                        extra.getPriceSnapshot(),
+                        extra.getQuantity()
+                ))
+                .collect(Collectors.toList());
 
+        // calculate max days of booking
+        int maxBookingDays = (int) java.time.temporal.ChronoUnit.DAYS.between(booking.getCheckIn(), booking.getCheckOut());
+
+        // creation of full guest list (main + companions)
+        List<Guest> allGuests = new ArrayList<>();
+        allGuests.add(booking.getMainGuest());
+        if (booking.getCompanions() != null) {
+            allGuests.addAll(booking.getCompanions());
+        }
+
+        // mapping to GuestProfile for pricing request
+        List<PriceCalculationRequest.GuestProfile> guestProfiles = allGuests.stream()
+                .map(g -> {
+                    int realDays = (g.getDaysOfStay() == null || g.getDaysOfStay() <= 0)
+                            ? maxBookingDays
+                            : Math.min(g.getDaysOfStay(), maxBookingDays);
+
+                    return PriceCalculationRequest.GuestProfile.builder()
+                            .type(g.getGuestType())
+                            .taxExempt(g.isTaxExempt())
+                            .days(realDays)
+                            .taxExemptMotivation(g.getTaxExemptReason())
+                            .build();
+                })
+                .collect(Collectors.toList());
+
+        // creation of pricing request
+        PriceCalculationRequest pricingRequest = PriceCalculationRequest.builder()
+                .resourceId(booking.getResourceId())
+                .checkIn(booking.getCheckIn())
+                .checkOut(booking.getCheckOut())
+                .guests(guestProfiles)
+                .depositAmount(booking.getPriceBreakdown().getDepositAmount())
+                .extras(billableExtras)
+                .build();
+
+        // call pricing service to calculate final price
+        PriceBreakdown finalPriceBreakdown = pricingClient.calculateQuote(pricingRequest);
+        booking.setPriceBreakdown(finalPriceBreakdown);
         booking.setStatus(BookingStatus.CHECKED_OUT);
         booking.setUpdatedAt(LocalDateTime.now());
 
@@ -375,12 +407,9 @@ public class BookingService {
     @Transactional
     public BookingResponse updatePaymentStatus(String bookingId, PaymentStatus newStatus) {
         Booking booking = getBookingOrThrow(bookingId);
-
         validatePaymentStatusTransition(booking.getPaymentStatus(), newStatus);
-
         booking.setPaymentStatus(newStatus);
         booking.setUpdatedAt(LocalDateTime.now());
-
         return mapToResponse(bookingRepository.save(booking));
     }
 
@@ -388,12 +417,8 @@ public class BookingService {
         if (current == PaymentStatus.PAID_IN_FULL && next == PaymentStatus.DEPOSIT_PAID) {
             throw new IllegalStateException("Non puoi tornare a DEPOSIT_PAID da PAID_IN_FULL");
         }
-
-        // TODO: Aggiungere altre regole di transizione se necessario
     }
 
-
-    // mapToResponse omesso per brevità (identico a prima)
     private BookingResponse mapToResponse(Booking booking) {
         PriceBreakdown pbResponse = null;
 
@@ -405,7 +430,6 @@ public class BookingService {
                     .discountAmount(booking.getPriceBreakdown().getDiscountAmount())
                     .extrasAmount(booking.getPriceBreakdown().getExtrasAmount())
                     .finalTotal(booking.getPriceBreakdown().getFinalTotal())
-                    .taxDescription(booking.getPriceBreakdown().getTaxDescription())
                     .build();
         }
 
