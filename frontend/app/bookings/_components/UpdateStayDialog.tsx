@@ -1,40 +1,34 @@
 "use client";
 
-import { useEffect } from "react";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { format, parseISO } from "date-fns";
 import { Calendar, Loader2, Save, User } from "lucide-react";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 import { BaseDataDialog } from "@/components/dialog/BaseDataDialog";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from "@/components/ui/form";
 import { ResourceSelect } from "@/components/ui/resource-select";
 import {
-  useUpdateStay,
-  useUnavailableDates,
+    useUnavailableDates,
+    useUpdateStay,
 } from "@/hooks/tanstack-query/useBookings";
 import { useResources } from "@/hooks/tanstack-query/useResources";
 import { useDisabledDays } from "@/hooks/useDisabledDays";
-import { Booking } from "@/types/bookings/types";
 import { NAV_ITEMS } from "@/lib/navigation";
+import { updateStaySchema } from "@/schemas/updateStaySchema";
+import { Booking } from "@/types/bookings/types";
 import { it } from "date-fns/locale";
-
-//fixme: sposta in file  Schema di validazione locale
-const updateStaySchema = z.object({
-  resourceId: z.string().min(1, ""),
-  checkIn: z.date({ error: "" }),
-  checkOut: z.date({ error: "" }),
-});
 
 type UpdateStayFormValues = z.infer<typeof updateStaySchema>;
 
