@@ -1,6 +1,12 @@
 import { api } from "@/lib/api";
 import { Booking, CreateBookingFormValues } from "@/types/bookings/types";
-import type { PaymentStatusType, SexType, DocumentTypeType, GuestTypeType, GuestRoleType } from "@/types/bookings/types";
+import type {
+  PaymentStatusType,
+  SexType,
+  DocumentTypeType,
+  GuestTypeType,
+  GuestRoleType,
+} from "@/types/bookings/types";
 
 export interface CreateBookingPayload {
   resourceId: string;
@@ -47,6 +53,12 @@ export interface CheckInPayload {
   guestRole: GuestRoleType;
   notes?: string; // refers to the booking
   companions?: CheckInCompanion[];
+}
+
+export interface UpdateStayPayload {
+  resourceId: string;
+  checkIn: string;
+  checkOut: string;
 }
 
 export interface UnavailablePeriod {
@@ -102,6 +114,17 @@ export const bookingService = {
     return data;
   },
 
+  updateStay: async ({
+    id,
+    payload,
+  }: {
+    id: string;
+    payload: UpdateStayPayload;
+  }): Promise<Booking> => {
+    const { data } = await api.patch(`/api/bookings/${id}/stay`, payload);
+    return data;
+  },
+
   // Update Check-In details (for checked-in bookings)
   updateCheckIn: async ({
     id,
@@ -110,7 +133,10 @@ export const bookingService = {
     id: string;
     payload: CheckInPayload;
   }): Promise<Booking> => {
-    const { data } = await api.put(`/api/bookings/${id}/update-check-in`, payload);
+    const { data } = await api.put(
+      `/api/bookings/${id}/update-check-in`,
+      payload,
+    );
     return data;
   },
 

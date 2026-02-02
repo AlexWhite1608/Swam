@@ -9,7 +9,6 @@ import {
   useBulkDeleteBookings,
   useCancelBooking,
   useDeleteBooking,
-  useUpdatePaymentStatus,
 } from "../tanstack-query/useBookings";
 import { Booking } from "@/types/bookings/types";
 
@@ -38,7 +37,6 @@ export const useBookingsPage = () => {
   const deleteBookingMutation = useDeleteBooking();
   const cancelBookingMutation = useCancelBooking();
   const useBulkDeleteMutation = useBulkDeleteBookings();
-  const updatePaymentStatusMutation = useUpdatePaymentStatus();
 
   // dialog states
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -46,6 +44,9 @@ export const useBookingsPage = () => {
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
+  const [isConfirmDepositDialogOpen, setIsConfirmDepositDialogOpen] =
+    useState(false);
+  const [isUpdateStayOpen, setIsUpdateStayOpen] = useState(false);
 
   // dialog for managing different modes (CREATE, EDIT, CHECKIN, CHECKOUT)
   const [dialogMode, setDialogMode] = useState<BookingDialogMode>("CREATE");
@@ -57,6 +58,11 @@ export const useBookingsPage = () => {
   const [bookingsToBulkDelete, setBookingsToBulkDelete] = useState<Booking[]>(
     [],
   );
+  const [bookingForDeposit, setBookingForDeposit] = useState<Booking | null>(
+    null,
+  );
+  const [bookingToUpdateStay, setBookingToUpdateStay] =
+    useState<Booking | null>(null);
 
   // table reset callback
   const [resetSelectionTrigger, setResetSelectionTrigger] = useState(0);
@@ -77,10 +83,14 @@ export const useBookingsPage = () => {
 
   // confirm deposit payment
   const handleConfirmDeposit = (booking: Booking) => {
-    updatePaymentStatusMutation.mutate({
-      id: booking.id,
-      status: "DEPOSIT_PAID",
-    });
+    setBookingForDeposit(booking);
+    setIsConfirmDepositDialogOpen(true);
+  };
+
+  // opens the dialog in UPDATE STAY mode
+  const openUpdateStayDialog = (booking: Booking) => {
+    setBookingToUpdateStay(booking);
+    setIsUpdateStayOpen(true);
   };
 
   // opens the dialog in CHECK-IN mode
@@ -165,6 +175,7 @@ export const useBookingsPage = () => {
         onConfirm: openConfirmDialog,
         onCancel: openCancelDialog,
         onConfirmDeposit: handleConfirmDeposit,
+        onUpdateStay: openUpdateStayDialog,
       }),
     [resources],
   );
@@ -186,6 +197,8 @@ export const useBookingsPage = () => {
       isConfirmOpen: isConfirmDialogOpen,
       isCancelOpen: isCancelDialogOpen,
       isBulkDeleteOpen: isBulkDeleteDialogOpen,
+      isConfirmDepositOpen: isConfirmDepositDialogOpen,
+      isUpdateStayOpen: isUpdateStayOpen,
     },
 
     // Data State
@@ -194,13 +207,14 @@ export const useBookingsPage = () => {
       bookingToDelete,
       bookingToCancel,
       bookingsToBulkDelete,
+      bookingForDeposit,
+      bookingToUpdateStay,
     },
 
     // Mutation State
     isDeleting: deleteBookingMutation.isPending,
     isCanceling: cancelBookingMutation.isPending,
     isBulkDeleting: useBulkDeleteMutation.isPending,
-    isUpdatingPayment: updatePaymentStatusMutation.isPending,
 
     // Reset Trigger
     resetSelectionTrigger,
@@ -212,12 +226,15 @@ export const useBookingsPage = () => {
       setConfirmOpen: setIsConfirmDialogOpen,
       setCancelOpen: setIsCancelDialogOpen,
       setBulkDeleteOpen: setIsBulkDeleteDialogOpen,
+      setConfirmDepositOpen: setIsConfirmDepositDialogOpen,
+      setUpdateStayOpen: setIsUpdateStayOpen,
 
       openCreateDialog,
       openEditDialog,
       openCheckInDialog,
       openCheckOutDialog,
       openConfirmDialog,
+      openUpdateStayDialog,
       confirmDelete,
       confirmCancel,
       requestBulkDelete,

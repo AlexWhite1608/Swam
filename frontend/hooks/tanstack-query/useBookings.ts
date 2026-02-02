@@ -119,7 +119,6 @@ export const useUpdateBookingCheckIn = () => {
     mutationFn: (data: { id: string; payload: CheckInPayload }) =>
       bookingService.updateCheckIn(data),
     onSuccess: (data) => {
-
       console.log("Check-in updated:", data);
 
       queryClient.invalidateQueries({ queryKey: bookingKeys.all });
@@ -129,6 +128,24 @@ export const useUpdateBookingCheckIn = () => {
     onError: (error: any) => {
       toast.error("Errore aggiornamento dati", {
         description: error?.response?.data?.message || "Impossibile aggiornare",
+      });
+    },
+  });
+};
+
+// Update stay details (for changing resource, dates)
+export const useUpdateStay = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: bookingService.updateStay,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: bookingKeys.all });
+      queryClient.invalidateQueries({ queryKey: bookingKeys.detail(data.id) });
+      toast.success("Soggiorno modificato con successo");
+    },
+    onError: (error: any) => {
+      toast.error("Errore modifica soggiorno", {
+        description: getErrorMessage(error),
       });
     },
   });

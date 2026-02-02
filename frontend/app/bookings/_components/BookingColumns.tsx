@@ -5,6 +5,7 @@ import { differenceInCalendarDays, format, parseISO } from "date-fns";
 import { it } from "date-fns/locale";
 import {
   ArrowRight,
+  CalendarDays,
   Check,
   CircleX,
   Euro,
@@ -47,6 +48,7 @@ interface GetBookingColumnsProps {
   onConfirm: (booking: Booking) => void;
   onCancel: (booking: Booking) => void;
   onConfirmDeposit: (booking: Booking) => void;
+  onUpdateStay: (booking: Booking) => void;
 }
 
 export const getBookingColumns = ({
@@ -58,6 +60,7 @@ export const getBookingColumns = ({
   onConfirm,
   onCancel,
   onConfirmDeposit,
+  onUpdateStay,
 }: GetBookingColumnsProps): ColumnDef<Booking>[] => [
   // select
   {
@@ -356,6 +359,8 @@ export const getBookingColumns = ({
       const hasDepositToPay =
         (breakdown?.depositAmount ?? 0) > 0 && !isDepositPaid;
       const isCancelled = row.original.status === "CANCELLED";
+      const isCheckedIn = row.original.status === "CHECKED_IN";
+      const isConfirmed = row.original.status === "CONFIRMED";
 
       return (
         <div onClick={(e) => e.stopPropagation()}>
@@ -371,6 +376,14 @@ export const getBookingColumns = ({
                 <Pencil className="h-4 w-4 hover:text-foreground" />
                 Modifica
               </DropdownMenuItem>
+
+              {(isCheckedIn || isConfirmed) && (
+                <DropdownMenuItem onClick={() => onUpdateStay(row.original)}>
+                  <CalendarDays className="h-4 w-4 hover:text-foreground" />{" "}
+                  {/* Importa icona */}
+                  Modifica Soggiorno
+                </DropdownMenuItem>
+              )}
 
               {hasDepositToPay && !isCancelled && (
                 <DropdownMenuItem

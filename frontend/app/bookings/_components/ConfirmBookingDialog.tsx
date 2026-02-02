@@ -2,7 +2,7 @@
 
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
-import { Calendar, Loader2, User } from "lucide-react";
+import { Calendar, Check, Loader2, User } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { BaseDataDialog } from "@/components/dialog/BaseDataDialog";
@@ -172,6 +172,7 @@ export function ConfirmBookingDialog({
             {confirmMutation.isPending && (
               <Loader2 className="h-4 w-4 animate-spin" />
             )}
+            <Check className="h-4 w-4" />
             Conferma
           </Button>
         </div>

@@ -111,15 +111,44 @@ public class BookingService {
 
         booking.setMainGuest(updatedGuest);
 
-        // customer sync (if linked)
-        if (updatedGuest.getCustomerId() != null) {
-            // TODO: Implementare aggiornamento anagrafica cliente nella tabella Customer?
-        }
-
         // update deposit amount
         booking.getPriceBreakdown().setDepositAmount(request.getDepositAmount());
 
         booking.setUpdatedAt(LocalDateTime.now());
+        return mapToResponse(bookingRepository.save(booking));
+    }
+
+    // edit stay details (dates, resource) of an existing booking
+    @Transactional
+    public BookingResponse updateBookingStay(String bookingId, EditBookingStayRequest request) {
+        Booking booking = getBookingOrThrow(bookingId);
+
+        if (booking.getStatus() == BookingStatus.CANCELLED || booking.getStatus() == BookingStatus.CHECKED_OUT) {
+            throw new IllegalStateException("Non puoi modificare una prenotazione conclusa o cancellata.");
+        }
+
+        if (booking.getStatus() == BookingStatus.CHECKED_IN) {
+            // if already checked-in, cannot move check-in to future
+            if (request.getCheckIn().isAfter(LocalDate.now())) {
+                throw new InvalidBookingDateException("Il check-in non può essere spostato nel futuro per una prenotazione in corso.");
+            }
+        }
+
+        // check availability if dates or resource changed (excluding current booking)
+        boolean changed = !booking.getResourceId().equals(request.getResourceId()) ||
+                !booking.getCheckIn().equals(request.getCheckIn()) ||
+                !booking.getCheckOut().equals(request.getCheckOut());
+
+        if (changed) {
+            validateDates(request.getResourceId(), request.getCheckIn(), request.getCheckOut(), bookingId);
+
+            booking.setResourceId(request.getResourceId());
+            booking.setCheckIn(request.getCheckIn());
+            booking.setCheckOut(request.getCheckOut());
+
+            booking.setUpdatedAt(LocalDateTime.now());
+        }
+
         return mapToResponse(bookingRepository.save(booking));
     }
 
