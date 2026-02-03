@@ -245,7 +245,17 @@ export function EditStayDialog({
     >
       <div className="space-y-4">
         {/* //fixme: aggiusta */}
-        <BookingInfoCard booking={booking} />
+        <BookingInfoCard
+          booking={booking}
+          newCheckOut={mode === "extend" ? newCheckOut : undefined}
+          newResourceId={
+            mode === "extend"
+              ? hasConflict
+                ? extendResourceId
+                : undefined
+              : splitResourceId
+          }
+        />
 
         <Tabs value={mode} onValueChange={(v) => setMode(v as OperationMode)}>
           <TabsList className="grid w-full grid-cols-2">
