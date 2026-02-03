@@ -3,13 +3,13 @@ import { z } from "zod";
 // create booking form schema with essential fields only
 export const createBookingSchema = z
   .object({
-    resourceId: z.string().min(1, "Seleziona una risorsa"),
+    resourceId: z.string().min(1, { message: "" }),
 
     checkIn: z.date().optional(),
     checkOut: z.date().optional(),
 
-    guestFirstName: z.string().min(2, "Nome richiesto"),
-    guestLastName: z.string().min(2, "Cognome richiesto"),
+    guestFirstName: z.string().min(1, { message: "" }),
+    guestLastName: z.string().min(1, { message: "" }),
     guestEmail: z.email("Email non valida").optional().or(z.literal("")),
     guestPhone: z.string().optional().or(z.literal("")),
 
@@ -22,7 +22,7 @@ export const createBookingSchema = z
     if (missingCheckIn && missingCheckOut) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Seleziona il periodo",
+        message: "",
         path: ["checkIn"],
       });
     }

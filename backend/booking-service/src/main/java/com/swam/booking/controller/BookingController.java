@@ -64,7 +64,21 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.updateBooking(id, request));
     }
 
-    //TODO: endpoint PUT /api/bookings/{id}/guests per modifica dati del check-in guest
+    // updates the stay details of an existing booking
+    @PatchMapping("/{id}/stay")
+    public ResponseEntity<BookingResponse> updateBookingStay(
+            @PathVariable String id,
+            @Valid @RequestBody EditBookingStayRequest request) {
+        return ResponseEntity.ok(bookingService.updateBookingStay(id, request));
+    }
+
+    // update check in guests info
+    @PutMapping("/{id}/update-check-in")
+    public ResponseEntity<BookingResponse> updateBookingCheckIn(
+            @PathVariable String id,
+            @Valid @RequestBody CheckInRequest request) {
+        return ResponseEntity.ok(bookingService.updateBookingCheckIn(id, request));
+    }
 
     //TODO: endpoint PUT /api/bookings/{id}/extras per modifica extra del booking
 

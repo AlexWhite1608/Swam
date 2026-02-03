@@ -1,17 +1,24 @@
 import { GuestRole, GuestType, Sex } from "@/types/bookings/enums";
 import { z } from "zod";
 
-export const companionCheckInSchema = z.object({
-  firstName: z.string().min(1, "Il nome è obbligatorio"),
-  lastName: z.string().min(1, "Il cognome è obbligatorio"),
+export const companionCheckInSchema = z
+  .object({
+    customerId: z.string().optional(),
 
-  sex: z.enum(Sex, "Seleziona il sesso dell'ospite"),
+    firstName: z.string().min(1, { message: "" }),
+    lastName: z.string().min(1, { message: "" }),
 
-  birthDate: z.date("Data di nascita obbligatoria"),
+    sex: z.enum(Sex),
 
-  placeOfBirth: z.string().optional(),
-  citizenship: z.string().optional(), // iso code
+    birthDate: z.date().optional(),
 
-  guestType: z.enum(GuestType, "Seleziona il tipo di ospite"),
-  guestRole: z.enum(GuestRole, "Seleziona il ruolo dell'ospite"),
-});
+    placeOfBirth: z.string().min(1, { message: "" }),
+    citizenship: z.string().min(1, { message: "" }),
+
+    guestType: z.enum(GuestType),
+    guestRole: z.enum(GuestRole),
+  })
+  .refine((data) => data.birthDate !== undefined, {
+    message: "",
+    path: ["birthDate"],
+  });

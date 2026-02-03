@@ -111,15 +111,44 @@ public class BookingService {
 
         booking.setMainGuest(updatedGuest);
 
-        // customer sync (if linked)
-        if (updatedGuest.getCustomerId() != null) {
-            // TODO: Implementare aggiornamento anagrafica cliente nella tabella Customer?
-        }
-
         // update deposit amount
         booking.getPriceBreakdown().setDepositAmount(request.getDepositAmount());
 
         booking.setUpdatedAt(LocalDateTime.now());
+        return mapToResponse(bookingRepository.save(booking));
+    }
+
+    // edit stay details (dates, resource) of an existing booking
+    @Transactional
+    public BookingResponse updateBookingStay(String bookingId, EditBookingStayRequest request) {
+        Booking booking = getBookingOrThrow(bookingId);
+
+        if (booking.getStatus() == BookingStatus.CANCELLED || booking.getStatus() == BookingStatus.CHECKED_OUT) {
+            throw new IllegalStateException("Non puoi modificare una prenotazione conclusa o cancellata.");
+        }
+
+        if (booking.getStatus() == BookingStatus.CHECKED_IN) {
+            // if already checked-in, cannot move check-in to future
+            if (request.getCheckIn().isAfter(LocalDate.now())) {
+                throw new InvalidBookingDateException("Il check-in non può essere spostato nel futuro per una prenotazione in corso.");
+            }
+        }
+
+        // check availability if dates or resource changed (excluding current booking)
+        boolean changed = !booking.getResourceId().equals(request.getResourceId()) ||
+                !booking.getCheckIn().equals(request.getCheckIn()) ||
+                !booking.getCheckOut().equals(request.getCheckOut());
+
+        if (changed) {
+            validateDates(request.getResourceId(), request.getCheckIn(), request.getCheckOut(), bookingId);
+
+            booking.setResourceId(request.getResourceId());
+            booking.setCheckIn(request.getCheckIn());
+            booking.setCheckOut(request.getCheckOut());
+
+            booking.setUpdatedAt(LocalDateTime.now());
+        }
+
         return mapToResponse(bookingRepository.save(booking));
     }
 
@@ -409,6 +438,56 @@ public class BookingService {
         Booking booking = getBookingOrThrow(bookingId);
         validatePaymentStatusTransition(booking.getPaymentStatus(), newStatus);
         booking.setPaymentStatus(newStatus);
+        booking.setUpdatedAt(LocalDateTime.now());
+        return mapToResponse(bookingRepository.save(booking));
+    }
+
+    // update booking guests during CHECKED_IN status
+    @Transactional
+    public BookingResponse updateBookingCheckIn(String bookingId, CheckInRequest request) {
+        Booking booking = getBookingOrThrow(bookingId);
+
+        if (booking.getStatus() != BookingStatus.CHECKED_IN) {
+            throw new IllegalStateException("Modifica consentita solo per prenotazioni nello stato CHECKED_IN.");
+        }
+
+        CreateCustomerRequest mainGuestData = CreateCustomerRequest.builder()
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .sex(request.getSex())
+                .birthDate(request.getBirthDate())
+                .email(request.getEmail())
+                .phone(request.getPhone())
+                .placeOfBirth(request.getPlaceOfBirth())
+                .citizenship(request.getCitizenship())
+                .documentType(request.getDocumentType())
+                .documentNumber(request.getDocumentNumber())
+                .documentPlaceOfIssue(request.getDocumentPlaceOfIssue())
+                .guestType(request.getGuestType())
+                .build();
+
+        CustomerResponse mainCustomer = customerService.registerOrUpdateCustomer(mainGuestData);
+
+        Guest mainGuestSnapshot = customerService.createGuestSnapshot(mainCustomer, request.getGuestRole());
+        booking.setMainGuest(mainGuestSnapshot);
+
+        if (request.getNotes() != null) {
+            booking.setNotes(request.getNotes());
+        }
+
+        List<Guest> companionSnapshots = new ArrayList<>();
+
+        if (request.getCompanions() != null) {
+            for (CheckInRequest.CompanionData compData : request.getCompanions()) {
+                CustomerResponse compCustomer = customerService.registerOrUpdateCompanion(compData);
+
+                Guest companionSnapshot = customerService.createGuestSnapshot(compCustomer, compData.getGuestRole());
+                companionSnapshots.add(companionSnapshot);
+            }
+        }
+
+        booking.setCompanions(companionSnapshots);
+
         booking.setUpdatedAt(LocalDateTime.now());
         return mapToResponse(bookingRepository.save(booking));
     }

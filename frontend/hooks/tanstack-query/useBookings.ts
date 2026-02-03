@@ -9,6 +9,7 @@ import {
 import { toast } from "sonner";
 import { bookingKeys } from "@/lib/query-keys";
 import { getErrorMessage } from "@/lib/api";
+import { PaymentStatusType } from "@/types/bookings/types";
 
 // Get all bookings
 export const useBookings = () => {
@@ -110,6 +111,66 @@ export const useUpdateBooking = () => {
   });
 };
 
+// Update Check-In details (for checked-in bookings)
+export const useUpdateBookingCheckIn = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: { id: string; payload: CheckInPayload }) =>
+      bookingService.updateCheckIn(data),
+    onSuccess: (data) => {
+      console.log("Check-in updated:", data);
+
+      queryClient.invalidateQueries({ queryKey: bookingKeys.all });
+      queryClient.invalidateQueries({ queryKey: bookingKeys.detail(data.id) });
+      toast.success("Check in aggiornato con successo");
+    },
+    onError: (error: any) => {
+      toast.error("Errore aggiornamento dati", {
+        description: error?.response?.data?.message || "Impossibile aggiornare",
+      });
+    },
+  });
+};
+
+// Update stay details (for changing resource, dates)
+export const useUpdateStay = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: bookingService.updateStay,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: bookingKeys.all });
+      queryClient.invalidateQueries({ queryKey: bookingKeys.detail(data.id) });
+      toast.success("Soggiorno modificato con successo");
+    },
+    onError: (error: any) => {
+      toast.error("Errore modifica soggiorno", {
+        description: getErrorMessage(error),
+      });
+    },
+  });
+};
+
+// Update payment status
+export const useUpdatePaymentStatus = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: { id: string; status: PaymentStatusType }) =>
+      bookingService.updatePaymentStatus(data),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: bookingKeys.all });
+      queryClient.invalidateQueries({ queryKey: bookingKeys.detail(data.id) });
+      toast.success("Stato pagamento aggiornato con successo");
+    },
+    onError: (error: unknown) => {
+      toast.error("Errore aggiornamento pagamento", {
+        description: getErrorMessage(error),
+      });
+    },
+  });
+};
+
 // Check-in booking
 export const useCheckInBooking = () => {
   const queryClient = useQueryClient();
@@ -120,7 +181,7 @@ export const useCheckInBooking = () => {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: bookingKeys.all });
       queryClient.invalidateQueries({ queryKey: bookingKeys.detail(data.id) });
-      toast.success("Check-in effettuato");
+      toast.success("Check-in effettuato con successo");
     },
     onError: (error: unknown) => {
       toast.error("Errore Check-in", {
@@ -151,10 +212,14 @@ export const useCheckOutBooking = () => {
 };
 
 // Get unavailable dates for a resource
-export const useUnavailableDates = (resourceId: string | undefined, excludeBookingId?: string) => {
+export const useUnavailableDates = (
+  resourceId: string | undefined,
+  excludeBookingId?: string,
+) => {
   return useQuery({
-    queryKey: [...bookingKeys.unavailable(resourceId), excludeBookingId], 
-    queryFn: () => bookingService.getUnavailablePeriods(resourceId!, excludeBookingId),
+    queryKey: [...bookingKeys.unavailable(resourceId), excludeBookingId],
+    queryFn: () =>
+      bookingService.getUnavailablePeriods(resourceId!, excludeBookingId),
     staleTime: 1000 * 60 * 5,
   });
 };

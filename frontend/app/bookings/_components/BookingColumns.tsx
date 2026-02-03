@@ -5,8 +5,10 @@ import { differenceInCalendarDays, format, parseISO } from "date-fns";
 import { it } from "date-fns/locale";
 import {
   ArrowRight,
+  CalendarDays,
   Check,
   CircleX,
+  Euro,
   LogIn,
   LogOut,
   MoreHorizontal,
@@ -14,8 +16,6 @@ import {
   Trash,
   Users,
 } from "lucide-react";
-
-import { Resource } from "@/schemas/createResourceSchema";
 
 import { BookingStatusBadge } from "@/components/common/badges/BookingStatusBadge";
 import { PaymentStatusBadge } from "@/components/common/badges/PaymentStatusBadge";
@@ -36,7 +36,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { dateRangeFilterFn, formatCurrency } from "@/lib/utils";
-import { Booking } from "@/schemas/createBookingSchema";
+import { Booking } from "@/types/bookings/types";
+import { Resource } from "@/types/resources/types";
 
 interface GetBookingColumnsProps {
   resources: Resource[];
@@ -46,6 +47,8 @@ interface GetBookingColumnsProps {
   onCheckOut: (booking: Booking) => void;
   onConfirm: (booking: Booking) => void;
   onCancel: (booking: Booking) => void;
+  onConfirmDeposit: (booking: Booking) => void;
+  onUpdateStay: (booking: Booking) => void;
 }
 
 export const getBookingColumns = ({
@@ -56,6 +59,8 @@ export const getBookingColumns = ({
   onCheckOut,
   onConfirm,
   onCancel,
+  onConfirmDeposit,
+  onUpdateStay,
 }: GetBookingColumnsProps): ColumnDef<Booking>[] => [
   // select
   {
@@ -193,6 +198,9 @@ export const getBookingColumns = ({
       const infants = allGuests.filter((g) => g.guestType === "INFANT");
 
       const totalCount = allGuests.length;
+      const hasNotCheckIn =
+        row.original.status === "PENDING" ||
+        row.original.status === "CONFIRMED";
 
       return (
         <TooltipProvider>
@@ -201,11 +209,16 @@ export const getBookingColumns = ({
               <div className="flex items-center gap-1 cursor-help w-fit">
                 <Users className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm font-medium">{totalCount}</span>
+                {hasNotCheckIn && (
+                  <span className="h-2 w-2 ml-2 rounded-full bg-yellow-300 border border-yellow-300" />
+                )}
               </div>
             </TooltipTrigger>
             <TooltipContent>
               <div className="text-xs space-y-2">
-                <p className="font-semibold border-b pb-1">Lista Ospiti:</p>
+                <p className="font-semibold border-b pb-1">
+                  Lista Ospiti {hasNotCheckIn && "(in attesa di check-in)"}
+                </p>
 
                 {adults.length > 0 && (
                   <div>
@@ -340,61 +353,88 @@ export const getBookingColumns = ({
   {
     id: "actions",
     header: () => <span>Azioni</span>,
-    cell: ({ row }) => (
-      <div onClick={(e) => e.stopPropagation()}>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="h-8 w-8 p-0">
-              <span className="sr-only">Apri menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onEdit(row.original)}>
-              <Pencil className="h-4 w-4 hover:text-foreground" />
-              Modifica
-            </DropdownMenuItem>
+    cell: ({ row }) => {
+      const breakdown = row.original.priceBreakdown;
+      const isDepositPaid = row.original.paymentStatus === "DEPOSIT_PAID";
+      const hasDepositToPay =
+        (breakdown?.depositAmount ?? 0) > 0 && !isDepositPaid;
+      const isCancelled = row.original.status === "CANCELLED";
+      const isCheckedIn = row.original.status === "CHECKED_IN";
+      const isConfirmed = row.original.status === "CONFIRMED";
 
-            {row.original.status === "PENDING" && (
-              <DropdownMenuItem onClick={() => onConfirm(row.original)}>
-                <Check className="h-4 w-4 hover:text-foreground" />
-                Conferma
+      return (
+        <div onClick={(e) => e.stopPropagation()}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="h-8 w-8 p-0">
+                <span className="sr-only">Apri menu</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => onEdit(row.original)}>
+                <Pencil className="h-4 w-4 hover:text-foreground" />
+                Modifica
               </DropdownMenuItem>
-            )}
 
-            {row.original.status === "CONFIRMED" && (
-              <DropdownMenuItem onClick={() => onCheckIn(row.original)}>
-                <LogIn className="h-4 w-4 hover:text-foreground" /> Esegui
-                Check-in
+              {(isCheckedIn || isConfirmed) && (
+                <DropdownMenuItem onClick={() => onUpdateStay(row.original)}>
+                  <CalendarDays className="h-4 w-4 hover:text-foreground" />{" "}
+                  {/* Importa icona */}
+                  Modifica Soggiorno
+                </DropdownMenuItem>
+              )}
+
+              {hasDepositToPay && !isCancelled && (
+                <DropdownMenuItem
+                  onClick={() => onConfirmDeposit(row.original)}
+                >
+                  <Euro className="h-4 w-4 hover:text-foreground" />
+                  Conferma Acconto
+                </DropdownMenuItem>
+              )}
+
+              {row.original.status === "PENDING" && (
+                <DropdownMenuItem onClick={() => onConfirm(row.original)}>
+                  <Check className="h-4 w-4 hover:text-foreground" />
+                  Conferma Prenotazione
+                </DropdownMenuItem>
+              )}
+
+              {row.original.status === "CONFIRMED" && (
+                <DropdownMenuItem onClick={() => onCheckIn(row.original)}>
+                  <LogIn className="h-4 w-4 hover:text-foreground" /> Esegui
+                  Check-in
+                </DropdownMenuItem>
+              )}
+
+              {row.original.status === "CHECKED_IN" && (
+                <DropdownMenuItem onClick={() => onCheckOut(row.original)}>
+                  <LogOut className="h-4 w-4 hover:text-foreground" /> Esegui
+                  Check-out
+                </DropdownMenuItem>
+              )}
+
+              {(row.original.status === "PENDING" ||
+                row.original.status === "CONFIRMED") && (
+                <DropdownMenuItem onClick={() => onCancel(row.original)}>
+                  <CircleX className="h-4 w-4 hover:text-foreground" />
+                  Cancella Prenotazione
+                </DropdownMenuItem>
+              )}
+
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => onDelete(row.original)}
+                className="text-red-600 focus:text-red-600 focus:bg-red-50"
+              >
+                <Trash className="h-4 w-4 text-red-600/70" />
+                Rimuovi
               </DropdownMenuItem>
-            )}
-
-            {row.original.status === "CHECKED_IN" && (
-              <DropdownMenuItem onClick={() => onCheckOut(row.original)}>
-                <LogOut className="h-4 w-4 hover:text-foreground" /> Esegui
-                Check-out
-              </DropdownMenuItem>
-            )}
-
-            {(row.original.status === "PENDING" ||
-              row.original.status === "CONFIRMED") && (
-              <DropdownMenuItem onClick={() => onCancel(row.original)}>
-                <CircleX className="h-4 w-4 hover:text-foreground" />
-                Cancella Prenotazione
-              </DropdownMenuItem>
-            )}
-
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => onDelete(row.original)}
-              className="text-red-600 focus:text-red-600 focus:bg-red-50"
-            >
-              <Trash className="h-4 w-4 text-red-600/70" />
-              Rimuovi
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-    ),
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      );
+    },
   },
 ];

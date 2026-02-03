@@ -1,6 +1,12 @@
 import { api } from "@/lib/api";
 import { Booking, CreateBookingFormValues } from "@/types/bookings/types";
-import type { PaymentStatusType, SexType, DocumentTypeType, GuestTypeType, GuestRoleType } from "@/types/bookings/types";
+import type {
+  PaymentStatusType,
+  SexType,
+  DocumentTypeType,
+  GuestTypeType,
+  GuestRoleType,
+} from "@/types/bookings/types";
 
 export interface CreateBookingPayload {
   resourceId: string;
@@ -14,6 +20,24 @@ export interface CreateBookingPayload {
 }
 
 export interface CheckInCompanion {
+  customerId?: string;
+  firstName: string;
+  lastName: string;
+  sex: SexType;
+  birthDate: string;
+  email?: string;
+  phone?: string;
+  placeOfBirth?: string;
+  citizenship?: string;
+  documentType?: DocumentTypeType;
+  documentNumber?: string;
+  documentPlaceOfIssue?: string;
+  guestType: GuestTypeType;
+  guestRole: GuestRoleType;
+}
+
+export interface CheckInPayload {
+  customerId?: string;
   firstName: string;
   lastName: string;
   sex: SexType;
@@ -27,25 +51,14 @@ export interface CheckInCompanion {
   documentPlaceOfIssue?: string;
   guestType: GuestTypeType;
   guestRole: GuestRoleType;
-  notes?: string;
-}
-
-export interface CheckInPayload {
-  firstName: string;
-  lastName: string;
-  sex: SexType;
-  birthDate: string;
-  email?: string;
-  phone: string;
-  placeOfBirth?: string;
-  citizenship?: string;
-  documentType: DocumentTypeType;
-  documentNumber: string;
-  documentPlaceOfIssue?: string;
-  guestType: GuestTypeType;
-  guestRole: GuestRoleType;
   notes?: string; // refers to the booking
   companions?: CheckInCompanion[];
+}
+
+export interface UpdateStayPayload {
+  resourceId: string;
+  checkIn: string;
+  checkOut: string;
 }
 
 export interface UnavailablePeriod {
@@ -98,6 +111,32 @@ export const bookingService = {
     payload: CreateBookingFormValues;
   }): Promise<Booking> => {
     const { data } = await api.put(`/api/bookings/${id}`, payload);
+    return data;
+  },
+
+  updateStay: async ({
+    id,
+    payload,
+  }: {
+    id: string;
+    payload: UpdateStayPayload;
+  }): Promise<Booking> => {
+    const { data } = await api.patch(`/api/bookings/${id}/stay`, payload);
+    return data;
+  },
+
+  // Update Check-In details (for checked-in bookings)
+  updateCheckIn: async ({
+    id,
+    payload,
+  }: {
+    id: string;
+    payload: CheckInPayload;
+  }): Promise<Booking> => {
+    const { data } = await api.put(
+      `/api/bookings/${id}/update-check-in`,
+      payload,
+    );
     return data;
   },
 

@@ -28,12 +28,8 @@ import { PhoneInput } from "@/components/ui/phone-input";
 import { ResourceSelect } from "@/components/ui/resource-select";
 import { Separator } from "@/components/ui/separator";
 import { useDisabledDays } from "@/hooks/useDisabledDays";
-import {
-  Booking,
-  createBookingSchema,
-  CreateBookingFormValues,
-} from "@/schemas/createBookingSchema";
-import italialLabels from "react-phone-number-input/locale/it.json";
+import { createBookingSchema } from "@/schemas/createBookingSchema";
+import { Booking, CreateBookingFormValues } from "@/types/bookings/types";
 
 interface BookingFormProps {
   booking?: Booking; // optional - if provided, it's edit mode
@@ -251,8 +247,6 @@ export function BookingForm({
                       placeholder="Inserisci telefono"
                       value={field.value}
                       onChange={field.onChange}
-                      defaultCountry="IT"
-                      labels={italialLabels}
                     />
                   </FormControl>
                   <FormMessage />
@@ -274,6 +268,7 @@ export function BookingForm({
                 <FormLabel>Acconto</FormLabel>
                 <FormControl>
                   <CurrencyInput
+                    disabled={booking?.paymentStatus === "DEPOSIT_PAID"}
                     placeholder="0.00"
                     value={field.value ?? ""}
                     onChange={(e) => {
@@ -307,7 +302,7 @@ export function BookingForm({
             ) : (
               <Plus className="h-4 w-4" />
             )}
-            {isEditMode ? "Salva Modifiche" : "Inserisci"}
+            {isEditMode ? "Salva" : "Inserisci"}
           </Button>
         </div>
       </form>

@@ -35,4 +35,5 @@ export const GuestRole = {
   HEAD_OF_FAMILY: "HEAD_OF_FAMILY",
   HEAD_OF_GROUP: "HEAD_OF_GROUP",
   MEMBER: "MEMBER",
+  SINGLE_GUEST: "SINGLE_GUEST",
 } as const;
