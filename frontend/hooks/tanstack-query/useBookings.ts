@@ -151,6 +151,27 @@ export const useUpdateStay = () => {
   });
 };
 
+// Split booking given a split date and new resource
+export const useSplitBooking = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: {
+      id: string;
+      payload: { splitDate: string; newResourceId: string };
+    }) => bookingService.split(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: bookingKeys.all });
+      toast.success("Cambio risorsa effettuato con successo");
+    },
+    onError: (error: any) => {
+      toast.error("Errore cambio di risorsa nella prenotazione", {
+        description: getErrorMessage(error),
+      });
+    },
+  });
+};
+
 // Extend or Split Booking by creating a new booking for the extended period
 export const useExtendBookingWithSplit = () => {
   const queryClient = useQueryClient();

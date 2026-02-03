@@ -7,7 +7,6 @@ import {
   ArrowRight,
   BedDouble,
   CalendarDays,
-  CalendarPlus,
   Check,
   CircleX,
   Euro,
@@ -15,7 +14,6 @@ import {
   LogIn,
   LogOut,
   MoreHorizontal,
-  Pencil,
   Split,
   Trash,
   User,
@@ -458,10 +456,11 @@ export const getBookingColumns = ({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onEdit(row.original)}>
+              {/* //fixme: rimuovi?? */}
+              {/* <DropdownMenuItem onClick={() => onEdit(row.original)}>
                 <Pencil className="h-4 w-4 hover:text-foreground" />
                 Modifica
-              </DropdownMenuItem>
+              </DropdownMenuItem> */}
 
               {hasDepositToPay && !isCancelled && (
                 <DropdownMenuItem
@@ -483,7 +482,7 @@ export const getBookingColumns = ({
               {row.original.status === "CHECKED_IN" && (
                 <DropdownMenuItem onClick={() => onExtendSplit(row.original)}>
                   <Split className="h-4 w-4 hover:text-foreground" />
-                  Estendi Soggiorno
+                  Modifica Soggiorno
                 </DropdownMenuItem>
               )}
 

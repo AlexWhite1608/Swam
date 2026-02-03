@@ -139,7 +139,22 @@ export const bookingService = {
     id: string;
     payload: ExtendBookingPayload;
   }): Promise<Booking> => {
-    const { data } = await api.post(`/api/bookings/${id}/extend-split`, payload);
+    const { data } = await api.post(
+      `/api/bookings/${id}/extend-split`,
+      payload,
+    );
+    return data;
+  },
+
+  // Split booking given a split date and new resource
+  split: async ({
+    id,
+    payload,
+  }: {
+    id: string;
+    payload: { splitDate: string; newResourceId: string };
+  }): Promise<Booking> => {
+    const { data } = await api.post(`/api/bookings/${id}/split`, payload);
     return data;
   },
 

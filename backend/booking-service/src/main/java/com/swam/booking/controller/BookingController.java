@@ -89,6 +89,14 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.extendStayWithSplit(id, request));
     }
 
+    // Splits an existing booking into two segments for a resource change
+    @PostMapping("/{id}/split")
+    public ResponseEntity<List<BookingResponse>> splitBooking(
+            @PathVariable String id,
+            @Valid @RequestBody SplitBookingRequest request) {
+        return ResponseEntity.ok(bookingService.splitBooking(id, request));
+    }
+
     //TODO: endpoint PUT /api/bookings/{id}/extras per modifica extra del booking
 
     // cancels an existing booking by setting its status to CANCELLED

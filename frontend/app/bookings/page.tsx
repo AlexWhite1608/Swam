@@ -16,7 +16,7 @@ import { BookingDialog } from "./_components/BookingDialog";
 import { BookingTableFilters } from "./_components/BookingTableFilters";
 import { ConfirmBookingDialog } from "./_components/ConfirmBookingDialog";
 import { ConfirmDepositDialog } from "./_components/ConfirmDepositDialog";
-import { ExtendStayDialog } from "./_components/ExtendStayDialog";
+import { EditStayDialog } from "./_components/EditStayDialog";
 
 export default function BookingsPage() {
   const {
@@ -137,7 +137,7 @@ export default function BookingsPage() {
         isLoading={isCanceling}
       />
 
-      <ExtendStayDialog
+      <EditStayDialog
         isOpen={dialogs.isExtendSplitOpen}
         onOpenChange={actions.setExtendSplitOpen}
         booking={selections.bookingToExtend}

@@ -197,7 +197,7 @@ export function PlaceInput({
               </Popover>
             ) : (
               <CountrySelect
-                value={field.value || citizenship}
+                value={field.value}
                 onChange={field.onChange}
                 className={className}
                 placeholder="Stato"

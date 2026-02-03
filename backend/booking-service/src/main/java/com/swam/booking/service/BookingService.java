@@ -513,50 +513,74 @@ public class BookingService {
     public BookingResponse extendStayWithSplit(String currentBookingId, ExtendBookingRequest request) {
         Booking currentBooking = getBookingOrThrow(currentBookingId);
 
-        // new time interval for the extension, starts from current check-out
-        LocalDate newCheckInDate = currentBooking.getCheckOut();
-        LocalDate newCheckOutDate = request.getNewCheckOutDate();
+        LocalDate newSegmentStart = currentBooking.getCheckOut();
+        LocalDate newSegmentEnd = request.getNewCheckOutDate();
 
-        if (!newCheckOutDate.isAfter(newCheckInDate)) {
-            throw new InvalidBookingDateException("La data di fine estensione deve essere successiva alla fine del soggiorno attuale.");
+        if (!newSegmentEnd.isAfter(newSegmentStart)) {
+            throw new InvalidBookingDateException("La data di fine estensione deve essere futura.");
         }
 
-        // check validity and availability of new segment (NO EXCLUSION here. because it's a new booking)
-        validateDates(request.getNewResourceId(), newCheckInDate, newCheckOutDate, null);
+        // check availability for new segment
+        validateDates(request.getNewResourceId(), newSegmentStart, newSegmentEnd, null);
 
-        // groupId management
-        String groupId = currentBooking.getGroupId();
-        if (groupId == null) {
-            // if it's the first extension, create a new groupId and assign to current booking
-            groupId = java.util.UUID.randomUUID().toString();
-            currentBooking.setGroupId(groupId);
-            bookingRepository.save(currentBooking); // update father booking
+        // build new linked booking segment
+        Booking extension = createLinkedSegment(currentBooking, request.getNewResourceId(), newSegmentStart, newSegmentEnd);
+
+        return mapToResponse(extension);
+    }
+
+    // split an existing booking into two linked segments at the specified date
+    @Transactional
+    public List<BookingResponse> splitBooking(String bookingId, SplitBookingRequest request) {
+        Booking original = getBookingOrThrow(bookingId);
+        LocalDate splitDate = request.getSplitDate();
+
+        // new resource must be free for the second part
+        validateDates(request.getNewResourceId(), splitDate, original.getCheckOut(), null);
+
+        LocalDate originalEndDate = original.getCheckOut();
+
+        // update original booking to end at split date
+        original.setCheckOut(splitDate);
+        Booking savedOriginal = bookingRepository.save(original);
+
+        // creates the second booking segment
+        Booking secondPart = createLinkedSegment(savedOriginal, request.getNewResourceId(), splitDate, originalEndDate);
+
+        return List.of(mapToResponse(savedOriginal), mapToResponse(secondPart));
+    }
+
+    // creates a new booking segment linked to the original booking
+    private Booking createLinkedSegment(Booking original, String newResourceId, LocalDate from, LocalDate to) {
+        // manage groupId
+        if (original.getGroupId() == null) {
+            original.setGroupId(java.util.UUID.randomUUID().toString());
+            bookingRepository.save(original);
         }
 
-        // clone existing data for the new segment
-        Booking extension = Booking.builder()
-                .resourceId(request.getNewResourceId())
-                .checkIn(newCheckInDate)
-                .checkOut(newCheckOutDate)
+        // clone
+        Booking nextSegment = Booking.builder()
+                .resourceId(newResourceId)
+                .checkIn(from)
+                .checkOut(to)
 
-                // born as CONFIRMED, will be checked-in later with existing guest data
-                .status(currentBooking.getStatus())
-                .paymentStatus(currentBooking.getPaymentStatus())
+                .status(original.getStatus())
+                .paymentStatus(original.getPaymentStatus())
 
-                // clone main guest and companions data
-                .mainGuest(currentBooking.getMainGuest())
-                .companions(new ArrayList<>(currentBooking.getCompanions()))
+                // guest and companions copy
+                .mainGuest(original.getMainGuest())
+                .companions(new ArrayList<>(original.getCompanions()))
 
-                // link to group and parent booking
-                .groupId(groupId)
-                .parentBookingId(currentBooking.getId())
-                .priceBreakdown(currentBooking.getPriceBreakdown())
+                // chaining
+                .groupId(original.getGroupId())
+                .parentBookingId(original.getId())
+
+                .priceBreakdown(original.getPriceBreakdown())
+
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        Booking savedExtension = bookingRepository.save(extension);
-
-        return mapToResponse(savedExtension);
+        return bookingRepository.save(nextSegment);
     }
 
     private void validatePaymentStatusTransition(PaymentStatus current, PaymentStatus next) {
