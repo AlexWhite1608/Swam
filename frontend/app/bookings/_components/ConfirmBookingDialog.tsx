@@ -1,20 +1,17 @@
 "use client";
 
-import { format } from "date-fns";
-import { it } from "date-fns/locale";
-import { Calendar, Check, Loader2, User } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { BookingInfoCard } from "@/components/common/BookingInfoCard";
 import { BaseDataDialog } from "@/components/dialog/BaseDataDialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useConfirmBooking } from "@/hooks/tanstack-query/useBookings";
-import { useResource } from "@/hooks/tanstack-query/useResources";
-import { NAV_ITEMS } from "@/lib/navigation";
-import { Booking } from "@/types/bookings/types";
 import { PaymentStatus } from "@/types/bookings/enums";
+import { Booking } from "@/types/bookings/types";
 
 interface ConfirmBookingDialogProps {
   isOpen: boolean;
@@ -30,9 +27,6 @@ export function ConfirmBookingDialog({
   const confirmMutation = useConfirmBooking();
   const [hasPaidDeposit, setHasPaidDeposit] = useState(false);
 
-  // fetch resource details
-  const { data: resource } = useResource(booking?.resourceId || "");
-
   // reset state when dialog opens and booking changes
   useEffect(() => {
     if (isOpen) {
@@ -47,10 +41,6 @@ export function ConfirmBookingDialog({
   const hasAlreadyPaidDeposit =
     booking.paymentStatus === PaymentStatus.DEPOSIT_PAID ||
     booking.paymentStatus === PaymentStatus.PAID_IN_FULL;
-
-  const ResourceIcon = NAV_ITEMS.find(
-    (item) => item.href === "/resources",
-  )?.icon;
 
   const handleConfirm = () => {
     confirmMutation.mutate(
@@ -74,31 +64,7 @@ export function ConfirmBookingDialog({
     >
       <div className="space-y-4 py-2">
         {/* info recap */}
-        <div className="bg-muted/20 p-3 rounded-md space-y-3 text-sm border">
-          <div className="flex items-center gap-3">
-            <User className="h-4 w-4 text-muted-foreground" />
-            <span className="font-semibold">
-              {booking.mainGuest.firstName} {booking.mainGuest.lastName}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-            <span>
-              {format(new Date(booking.checkIn), "d/MM/yyyy", { locale: it })} -{" "}
-              {format(new Date(booking.checkOut), "d/MM/yyyy", { locale: it })}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {ResourceIcon ? (
-              <ResourceIcon className="h-4 w-4 text-muted-foreground" />
-            ) : null}
-            <span>
-              Risorsa: <strong>{resource?.name}</strong>
-            </span>
-          </div>
-        </div>
+        <BookingInfoCard booking={booking} />
 
         <Separator />
 

@@ -44,6 +44,7 @@ export function BookingCheckInForm({
       documentType: booking.mainGuest.documentType || "ID_CARD",
       documentNumber: booking.mainGuest.documentNumber || "",
       documentPlaceOfIssue: booking.mainGuest.documentPlaceOfIssue || "",
+      notes: booking.notes || "",
       birthDate: booking.mainGuest.birthDate
         ? new Date(booking.mainGuest.birthDate)
         : undefined,

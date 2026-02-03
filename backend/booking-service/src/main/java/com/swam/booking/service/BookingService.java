@@ -127,13 +127,6 @@ public class BookingService {
             throw new IllegalStateException("Non puoi modificare una prenotazione conclusa o cancellata.");
         }
 
-        if (booking.getStatus() == BookingStatus.CHECKED_IN) {
-            // if already checked-in, cannot move check-in to future
-            if (request.getCheckIn().isAfter(LocalDate.now())) {
-                throw new InvalidBookingDateException("Il check-in non può essere spostato nel futuro per una prenotazione in corso.");
-            }
-        }
-
         // check availability if dates or resource changed (excluding current booking)
         boolean changed = !booking.getResourceId().equals(request.getResourceId()) ||
                 !booking.getCheckIn().equals(request.getCheckIn()) ||
@@ -254,6 +247,7 @@ public class BookingService {
         return mapToResponse(bookingRepository.save(booking));
     }
 
+    //TODO: gestione prenotazione split da unificare con check-out
     @Transactional
     public BookingResponse checkOut(String bookingId, CheckOutRequest request) {
         Booking booking = getBookingOrThrow(bookingId);
@@ -318,10 +312,11 @@ public class BookingService {
     }
 
     public List<BookingResponse> getAllBookings() {
-        return bookingRepository.findAll().stream()
+        return bookingRepository.findAllByOrderByCreatedAtDesc().stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
+
 
     // get unavailable periods for a resource (excluding optional booking)
     public List<UnavailablePeriodResponse> getUnavailablePeriods(String resourceId, String excludeBookingId) {
@@ -445,12 +440,13 @@ public class BookingService {
     // update booking guests during CHECKED_IN status
     @Transactional
     public BookingResponse updateBookingCheckIn(String bookingId, CheckInRequest request) {
-        Booking booking = getBookingOrThrow(bookingId);
+        Booking currentBooking = getBookingOrThrow(bookingId);
 
-        if (booking.getStatus() != BookingStatus.CHECKED_IN) {
+        if (currentBooking.getStatus() != BookingStatus.CHECKED_IN) {
             throw new IllegalStateException("Modifica consentita solo per prenotazioni nello stato CHECKED_IN.");
         }
 
+        // main guest customer data
         CreateCustomerRequest mainGuestData = CreateCustomerRequest.builder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
@@ -469,27 +465,123 @@ public class BookingService {
         CustomerResponse mainCustomer = customerService.registerOrUpdateCustomer(mainGuestData);
 
         Guest mainGuestSnapshot = customerService.createGuestSnapshot(mainCustomer, request.getGuestRole());
-        booking.setMainGuest(mainGuestSnapshot);
 
-        if (request.getNotes() != null) {
-            booking.setNotes(request.getNotes());
-        }
+        currentBooking.setNotes(request.getNotes());
 
         List<Guest> companionSnapshots = new ArrayList<>();
-
         if (request.getCompanions() != null) {
             for (CheckInRequest.CompanionData compData : request.getCompanions()) {
                 CustomerResponse compCustomer = customerService.registerOrUpdateCompanion(compData);
-
                 Guest companionSnapshot = customerService.createGuestSnapshot(compCustomer, compData.getGuestRole());
                 companionSnapshots.add(companionSnapshot);
             }
         }
 
-        booking.setCompanions(companionSnapshots);
+        // find all bookings to update
+        List<Booking> bookingsToUpdate = new ArrayList<>();
 
-        booking.setUpdatedAt(LocalDateTime.now());
-        return mapToResponse(bookingRepository.save(booking));
+        if (currentBooking.getGroupId() != null) {
+            // if it's part of a group, update all bookings in the group
+            bookingsToUpdate.addAll(bookingRepository.findByGroupId(currentBooking.getGroupId()));
+        } else {
+            // otherwise, only the current booking
+            bookingsToUpdate.add(currentBooking);
+        }
+
+        // apply updates to all relevant bookings
+        for (Booking b : bookingsToUpdate) {
+            b.setMainGuest(mainGuestSnapshot);
+
+            b.setCompanions(new ArrayList<>(companionSnapshots));
+
+            b.setNotes(request.getNotes());
+
+            b.setUpdatedAt(LocalDateTime.now());
+        }
+
+        bookingRepository.saveAll(bookingsToUpdate);
+
+        Booking updatedCurrent = bookingsToUpdate.stream()
+                .filter(b -> b.getId().equals(bookingId))
+                .findFirst()
+                .orElse(currentBooking);
+
+        return mapToResponse(updatedCurrent);
+    }
+
+    // extend an existing booking by creating a new linked booking segment
+    @Transactional
+    public BookingResponse extendStayWithSplit(String currentBookingId, ExtendBookingRequest request) {
+        Booking currentBooking = getBookingOrThrow(currentBookingId);
+
+        LocalDate newSegmentStart = currentBooking.getCheckOut();
+        LocalDate newSegmentEnd = request.getNewCheckOutDate();
+
+        if (!newSegmentEnd.isAfter(newSegmentStart)) {
+            throw new InvalidBookingDateException("La data di fine estensione deve essere futura.");
+        }
+
+        // check availability for new segment
+        validateDates(request.getNewResourceId(), newSegmentStart, newSegmentEnd, null);
+
+        // build new linked booking segment
+        Booking extension = createLinkedSegment(currentBooking, request.getNewResourceId(), newSegmentStart, newSegmentEnd);
+
+        return mapToResponse(extension);
+    }
+
+    // split an existing booking into two linked segments at the specified date
+    @Transactional
+    public List<BookingResponse> splitBooking(String bookingId, SplitBookingRequest request) {
+        Booking original = getBookingOrThrow(bookingId);
+        LocalDate splitDate = request.getSplitDate();
+
+        // new resource must be free for the second part
+        validateDates(request.getNewResourceId(), splitDate, original.getCheckOut(), null);
+
+        LocalDate originalEndDate = original.getCheckOut();
+
+        // update original booking to end at split date
+        original.setCheckOut(splitDate);
+        Booking savedOriginal = bookingRepository.save(original);
+
+        // creates the second booking segment
+        Booking secondPart = createLinkedSegment(savedOriginal, request.getNewResourceId(), splitDate, originalEndDate);
+
+        return List.of(mapToResponse(savedOriginal), mapToResponse(secondPart));
+    }
+
+    // creates a new booking segment linked to the original booking
+    private Booking createLinkedSegment(Booking original, String newResourceId, LocalDate from, LocalDate to) {
+        // manage groupId
+        if (original.getGroupId() == null) {
+            original.setGroupId(java.util.UUID.randomUUID().toString());
+            bookingRepository.save(original);
+        }
+
+        // clone
+        Booking nextSegment = Booking.builder()
+                .resourceId(newResourceId)
+                .checkIn(from)
+                .checkOut(to)
+
+                .status(original.getStatus())
+                .paymentStatus(original.getPaymentStatus())
+
+                // guest and companions copy
+                .mainGuest(original.getMainGuest())
+                .companions(new ArrayList<>(original.getCompanions()))
+
+                // chaining
+                .groupId(original.getGroupId())
+                .parentBookingId(original.getId())
+
+                .priceBreakdown(original.getPriceBreakdown())
+
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        return bookingRepository.save(nextSegment);
     }
 
     private void validatePaymentStatusTransition(PaymentStatus current, PaymentStatus next) {
@@ -514,6 +606,8 @@ public class BookingService {
 
         return BookingResponse.builder()
                 .id(booking.getId())
+                .groupId(booking.getGroupId())
+                .parentBookingId(booking.getParentBookingId())
                 .resourceId(booking.getResourceId())
                 .checkIn(booking.getCheckIn())
                 .checkOut(booking.getCheckOut())
@@ -523,6 +617,7 @@ public class BookingService {
                 .mainGuest(booking.getMainGuest())
                 .companions(booking.getCompanions())
                 .extras(booking.getExtras())
+                .notes(booking.getNotes())
                 .createdAt(booking.getCreatedAt())
                 .updatedAt(booking.getUpdatedAt())
                 .build();

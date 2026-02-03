@@ -18,8 +18,8 @@ import { cn } from "@/lib/utils";
 import { CheckIcon, ChevronsUpDown } from "lucide-react";
 import * as React from "react";
 import * as RPNInput from "react-phone-number-input";
-import flags from "react-phone-number-input/flags";
 import italialLabels from "react-phone-number-input/locale/it.json";
+import { FlagComponent } from "../common/FlagComponent";
 
 type PhoneInputProps = Omit<
   React.ComponentProps<"input">,
@@ -197,16 +197,6 @@ const CountrySelectOption = ({
         className={`ml-auto size-4 ${country === selectedCountry ? "opacity-100" : "opacity-0"}`}
       />
     </CommandItem>
-  );
-};
-
-export const FlagComponent = ({ country, countryName }: RPNInput.FlagProps) => {
-  const Flag = flags[country];
-
-  return (
-    <span className="flex h-4 w-6 overflow-hidden rounded-sm bg-foreground/20 [&_svg:not([class*='size-'])]:size-full">
-      {Flag && <Flag title={countryName} />}
-    </span>
   );
 };
 

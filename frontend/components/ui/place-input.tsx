@@ -124,8 +124,10 @@ export function PlaceInput({
                       className,
                     )}
                   >
-                    {field.value ? field.value : "Comune"}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    <span className="truncate text-left flex-1 mr-2">
+                      {field.value ? field.value : "Comune"}
+                    </span>
+                    <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
 
@@ -195,7 +197,7 @@ export function PlaceInput({
               </Popover>
             ) : (
               <CountrySelect
-                value={field.value || citizenship}
+                value={field.value}
                 onChange={field.onChange}
                 className={className}
                 placeholder="Stato"
