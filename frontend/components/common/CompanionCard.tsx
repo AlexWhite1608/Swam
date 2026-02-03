@@ -55,7 +55,7 @@ export function CompanionCard({
 
       <div className="grid grid-cols-12 gap-3 pr-6">
         {/* Riga 1: Nome, Cognome, Sesso, Data Nascita */}
-        <div className="col-span-3">
+        <div className="col-span-3 min-w-0">
           <FormField
             control={control}
             name={`companions.${index}.firstName`}
@@ -75,7 +75,7 @@ export function CompanionCard({
           />
         </div>
 
-        <div className="col-span-3">
+        <div className="col-span-3 min-w-0">
           <FormField
             control={control}
             name={`companions.${index}.lastName`}
@@ -95,7 +95,7 @@ export function CompanionCard({
           />
         </div>
 
-        <div className="col-span-3">
+        <div className="col-span-3 min-w-0">
           <FormField
             control={control}
             name={`companions.${index}.sex`}
@@ -125,7 +125,7 @@ export function CompanionCard({
           />
         </div>
 
-        <div className="col-span-3">
+        <div className="col-span-3 min-w-0">
           <FormField
             control={control}
             name={`companions.${index}.birthDate`}
@@ -147,7 +147,7 @@ export function CompanionCard({
         </div>
 
         {/* Riga 2: Cittadinanza, Luogo Nascita, Fascia Età, Ruolo */}
-        <div className="col-span-3">
+        <div className="col-span-3 min-w-0">
           <FormField
             control={control}
             name={`companions.${index}.citizenship`}
@@ -165,7 +165,7 @@ export function CompanionCard({
           />
         </div>
 
-        <div className="col-span-3">
+        <div className="col-span-3 min-w-0">
           <PlaceInput
             control={control}
             nationalityField={`companions.${index}.citizenship`}
@@ -174,7 +174,7 @@ export function CompanionCard({
           />
         </div>
 
-        <div className="col-span-3">
+        <div className="col-span-3 min-w-0">
           <FormField
             control={control}
             name={`companions.${index}.guestType`}
@@ -204,7 +204,7 @@ export function CompanionCard({
           />
         </div>
 
-        <div className="col-span-3">
+        <div className="col-span-3 min-w-0">
           <FormField
             control={control}
             name={`companions.${index}.guestRole`}

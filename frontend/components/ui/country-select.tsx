@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { FlagComponent } from "./phone-input";
+import { FlagComponent } from "../common/FlagComponent";
 
 countries.registerLocale(itLocale);
 
@@ -65,9 +65,11 @@ export function CountrySelect({
     const query = searchQuery.toLowerCase();
 
     return countryList
-      .filter(({ name, code }) =>
-        // find both by name and code
-        name.toLowerCase().includes(query) || code.toLowerCase().includes(query)
+      .filter(
+        ({ name, code }) =>
+          // find both by name and code
+          name.toLowerCase().includes(query) ||
+          code.toLowerCase().includes(query),
       )
       .sort((a, b) => {
         const nameA = a.name.toLowerCase();
@@ -98,32 +100,33 @@ export function CountrySelect({
           aria-expanded={open}
           disabled={disabled}
           className={cn(
-            "w-full justify-between pl-3 text-left font-normal",
+            "w-full justify-between pl-3 text-left font-normal min-w-0 overflow-hidden",
             !value && "text-muted-foreground",
             className,
           )}
         >
-          <div className="flex items-center gap-2 truncate">
+          <div className="flex items-center gap-2 min-w-0 flex-1 mr-2">
             {value ? (
               <>
                 <FlagComponent
                   country={value as RPNInput.Country}
                   countryName={value}
+                  className="shrink-0"
                 />
                 <span className="truncate">{selectedCountryName}</span>
               </>
             ) : (
-              <span>{placeholder}</span>
+              <span className="truncate">{placeholder}</span>
             )}
           </div>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
 
       <PopoverContent className="w-[280px] p-0" align="start">
         <Command shouldFilter={false}>
-          <CommandInput 
-            placeholder="Cerca nazione..." 
+          <CommandInput
+            placeholder="Cerca nazione..."
             value={searchQuery}
             onValueChange={setSearchQuery}
           />
@@ -143,13 +146,17 @@ export function CountrySelect({
                       setSearchQuery("");
                     }}
                   >
-                    <div className="flex items-center gap-2 w-full">
-                      <FlagComponent country={code} countryName={name} />
+                    <div className="flex items-center gap-2 w-full min-w-0">
+                      <FlagComponent
+                        country={code}
+                        countryName={name}
+                        className="shrink-0"
+                      />
 
-                      <span className="truncate flex-1">{name}</span>
+                      <span className="truncate flex-1 min-w-0">{name}</span>
 
                       {value === code && (
-                        <Check className="ml-auto h-4 w-4 opacity-100" />
+                        <Check className="ml-auto h-4 w-4 shrink-0 opacity-100" />
                       )}
                     </div>
                   </CommandItem>
