@@ -3,17 +3,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format, isAfter, isBefore, parseISO } from "date-fns";
 import { it } from "date-fns/locale";
-import {
-  AlertTriangle,
-  Calendar,
-  CalendarPlus,
-  Loader2,
-  Split,
-  User,
-} from "lucide-react";
-import { useEffect, useState } from "react";
+import { AlertTriangle, CalendarPlus, Loader2, Split } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 
 import { BaseDataDialog } from "@/components/dialog/BaseDataDialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -38,27 +30,24 @@ import {
 } from "@/hooks/tanstack-query/useBookings";
 import { useResources } from "@/hooks/tanstack-query/useResources";
 import { useDisabledDays } from "@/hooks/useDisabledDays";
-import { NAV_ITEMS } from "@/lib/navigation";
+import {
+  ExtendFormValues,
+  extendSchema,
+  OperationMode,
+  SplitFormValues,
+  splitSchema,
+} from "@/schemas/extendSplitSchema";
 import { Booking } from "@/types/bookings/types";
+import { BookingInfoCard } from "@/components/common/BookingInfoCard";
+import { useConflictDetection } from "@/hooks/useConflictDetection";
+import { useResourceValidation } from "@/hooks/useResourceValidation";
+import { ResourceValidationAlert } from "@/components/common/ResourceValidationAlert";
 
-//fixme: riordinare
-const extendSchema = z.object({
-  newCheckOut: z.date({ error: "" }),
-  newResourceId: z.string().optional(),
-});
-
-const splitSchema = z.object({
-  splitDate: z.date({ error: "" }),
-  newResourceId: z.string().min(1, "Seleziona una nuova risorsa"),
-});
-
-interface EditStayDialogProps {
+export interface EditStayDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   booking: Booking | null;
 }
-
-type OperationMode = "extend" | "split"; // extend or change resource (split)
 
 export function EditStayDialog({
   isOpen,
@@ -66,29 +55,23 @@ export function EditStayDialog({
   booking,
 }: EditStayDialogProps) {
   const { data: resources, isLoading: isLoadingRes } = useResources();
+  const [mode, setMode] = useState<OperationMode>("extend");
 
+  // Mutations
   const extendSplitMutation = useExtendBookingWithSplit();
   const updateStayMutation = useUpdateStay();
   const splitMutation = useSplitBooking();
 
-  const [mode, setMode] = useState<OperationMode>("extend");
-  const [isConflict, setIsConflict] = useState(false);
-  const [isNewResourceInvalid, setIsNewResourceInvalid] = useState(false);
-
-  const ResourceIcon = NAV_ITEMS.find(
-    (item) => item.href === "/resources",
-  )?.icon;
-
-  // extend booking form
-  const extendForm = useForm<z.infer<typeof extendSchema>>({
+  // Forms
+  const extendForm = useForm<ExtendFormValues>({
     resolver: zodResolver(extendSchema),
     defaultValues: {
+      newCheckOut: undefined,
       newResourceId: "",
     },
   });
 
-  // change resource (split) form
-  const splitForm = useForm<z.infer<typeof splitSchema>>({
+  const splitForm = useForm<SplitFormValues>({
     resolver: zodResolver(splitSchema),
     defaultValues: {
       splitDate: undefined,
@@ -96,7 +79,13 @@ export function EditStayDialog({
     },
   });
 
-  // reset on open
+  // Watch form values
+  const newCheckOut = extendForm.watch("newCheckOut");
+  const extendResourceId = extendForm.watch("newResourceId");
+  const splitDate = splitForm.watch("splitDate");
+  const splitResourceId = splitForm.watch("newResourceId");
+
+  // Reset forms on open
   useEffect(() => {
     if (isOpen && booking) {
       extendForm.reset({
@@ -107,21 +96,40 @@ export function EditStayDialog({
         splitDate: undefined,
         newResourceId: "",
       });
-      setIsConflict(false);
-      setIsNewResourceInvalid(false);
       setMode("extend");
     }
   }, [isOpen, booking, extendForm, splitForm]);
 
-  // === EXTEND MODE LOGIC ===
-  const newCheckOut = extendForm.watch("newCheckOut");
-  const extendResourceId = extendForm.watch("newResourceId");
+  // Derived values
+  const assignedResource = useMemo(
+    () => resources?.find((r) => r.id === booking?.resourceId),
+    [resources, booking?.resourceId],
+  );
 
-  const assignedResource = resources?.find((r) => r.id === booking?.resourceId);
+  const fixedCheckIn = booking ? parseISO(booking.checkIn) : new Date();
+  const currentCheckOut = booking ? parseISO(booking.checkOut) : new Date();
 
-  // Determine which resource to check for extend mode
+  // === EXTEND MODE ===
+  const { data: currentResourceUnavailable } = useUnavailableDates(
+    booking?.resourceId,
+    booking?.id,
+  );
+
+  const hasConflict = useConflictDetection(
+    booking,
+    newCheckOut,
+    currentResourceUnavailable,
+  );
+
+  // Auto-clear resource selection when conflict is resolved
+  useEffect(() => {
+    if (mode === "extend" && !hasConflict && extendResourceId) {
+      extendForm.setValue("newResourceId", "");
+    }
+  }, [mode, hasConflict, extendResourceId, extendForm]);
+
   const extendResourceToCheck =
-    isConflict && extendResourceId ? extendResourceId : booking?.resourceId;
+    hasConflict && extendResourceId ? extendResourceId : booking?.resourceId;
 
   const extendExcludeId =
     extendResourceToCheck === booking?.resourceId ? booking?.id : undefined;
@@ -135,79 +143,19 @@ export function EditStayDialog({
     extendUnavailablePeriods,
   );
 
-  // Get unavailable dates for current resource (conflict detection for extend)
-  const { data: currentResourceUnavailable } = useUnavailableDates(
-    booking?.resourceId,
-    booking?.id,
-  );
-
-  // Conflict detection for extend mode
-  useEffect(() => {
-    if (
-      mode !== "extend" ||
-      !booking ||
-      !newCheckOut ||
-      !currentResourceUnavailable
-    )
-      return;
-
-    const currentCheckOut = parseISO(booking.checkOut);
-
-    if (!isAfter(newCheckOut, currentCheckOut)) {
-      setIsConflict(false);
-      return;
-    }
-
-    const hasConflict = currentResourceUnavailable.some((p) => {
-      const busyStart = parseISO(p.start);
-      return (
-        isBefore(busyStart, newCheckOut) &&
-        isAfter(parseISO(p.end), currentCheckOut)
-      );
-    });
-
-    setIsConflict(hasConflict);
-
-    if (!hasConflict && extendForm.getValues("newResourceId") !== "") {
-      extendForm.setValue("newResourceId", "");
-    }
-  }, [mode, newCheckOut, currentResourceUnavailable, booking, extendForm]);
-
-  // Validate new resource for extend mode
-  useEffect(() => {
-    if (
-      mode !== "extend" ||
-      !isConflict ||
-      !extendResourceId ||
-      !extendUnavailablePeriods ||
-      !booking
-    )
-      return;
-
-    const currentCheckOut = parseISO(booking.checkOut);
-
-    const isBlocked = extendUnavailablePeriods.some((p) => {
-      const busyStart = parseISO(p.start);
-      return (
-        isBefore(busyStart, newCheckOut) &&
-        isAfter(parseISO(p.end), currentCheckOut)
-      );
-    });
-
-    setIsNewResourceInvalid(isBlocked);
-  }, [
-    mode,
-    isConflict,
+  const isExtendResourceValid = useResourceValidation(
+    "extend",
+    booking,
+    newCheckOut,
     extendResourceId,
     extendUnavailablePeriods,
-    newCheckOut,
-    booking,
-  ]);
+  );
 
-  // === SPLIT MODE LOGIC ===
-  const splitDate = splitForm.watch("splitDate");
-  const splitResourceId = splitForm.watch("newResourceId");
+  const extendResourceToShow = resources?.find(
+    (r) => r.id === extendResourceToCheck,
+  );
 
+  // === SPLIT MODE ===
   const { data: splitUnavailablePeriods } = useUnavailableDates(
     splitResourceId || undefined,
     undefined,
@@ -217,47 +165,29 @@ export function EditStayDialog({
     splitUnavailablePeriods,
   );
 
-  // Validate new resource for split mode
-  const [isSplitResourceInvalid, setIsSplitResourceInvalid] = useState(false);
+  const isSplitResourceValid = useResourceValidation(
+    "split",
+    booking,
+    splitDate,
+    splitResourceId,
+    splitUnavailablePeriods,
+  );
 
-  useEffect(() => {
-    if (
-      mode !== "split" ||
-      !splitDate ||
-      !splitResourceId ||
-      !splitUnavailablePeriods ||
-      !booking
-    ) {
-      setIsSplitResourceInvalid(false);
-      return;
-    }
-
-    const originalCheckOut = parseISO(booking.checkOut);
-
-    const isBlocked = splitUnavailablePeriods.some((p) => {
-      const busyStart = parseISO(p.start);
-      const busyEnd = parseISO(p.end);
-      return (
-        isBefore(busyStart, originalCheckOut) && isAfter(busyEnd, splitDate)
-      );
-    });
-
-    setIsSplitResourceInvalid(isBlocked);
-  }, [mode, splitDate, splitResourceId, splitUnavailablePeriods, booking]);
+  const splitResourceToShow = resources?.find((r) => r.id === splitResourceId);
 
   // === SUBMIT HANDLERS ===
-  const onExtendSubmit = (values: z.infer<typeof extendSchema>) => {
+  const onExtendSubmit = (values: ExtendFormValues) => {
     if (!booking) return;
 
-    if (isNewResourceInvalid) return;
-
-    if (isConflict) {
+    if (hasConflict) {
       if (!values.newResourceId) {
         extendForm.setError("newResourceId", {
-          message: "Selezionare una nuova risorsa libera",
+          message: "Seleziona una nuova risorsa",
         });
         return;
       }
+
+      if (isExtendResourceValid === false) return;
 
       extendSplitMutation.mutate(
         {
@@ -284,10 +214,8 @@ export function EditStayDialog({
     }
   };
 
-  const onSplitSubmit = (values: z.infer<typeof splitSchema>) => {
-    if (!booking) return;
-
-    if (isSplitResourceInvalid) return;
+  const onSplitSubmit = (values: SplitFormValues) => {
+    if (!booking || isSplitResourceValid === false) return;
 
     splitMutation.mutate(
       {
@@ -308,15 +236,6 @@ export function EditStayDialog({
 
   if (!booking) return null;
 
-  const fixedCheckIn = parseISO(booking.checkIn);
-  const currentCheckOut = parseISO(booking.checkOut);
-  const resourceToCheckForExtend = resources?.find(
-    (r) => r.id === extendResourceToCheck,
-  );
-  const resourceToCheckForSplit = resources?.find(
-    (r) => r.id === splitResourceId,
-  );
-
   return (
     <BaseDataDialog
       isOpen={isOpen}
@@ -325,56 +244,23 @@ export function EditStayDialog({
       className="sm:max-w-[550px]"
     >
       <div className="space-y-4">
-        {/* Current booking info */}
-        <div className="space-y-2">
-          <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            Prenotazione Attuale
-          </h4>
-          <div className="bg-muted/20 p-3 rounded-md space-y-3 text-sm border">
-            <div className="flex items-center gap-3">
-              <User className="h-4 w-4 text-muted-foreground" />
-              <span className="font-semibold">
-                {booking.mainGuest.firstName} {booking.mainGuest.lastName}
-              </span>
-            </div>
+        {/* //fixme: aggiusta */}
+        <BookingInfoCard booking={booking} />
 
-            <div className="flex items-center gap-3">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-              <span>
-                {format(new Date(booking.checkIn), "d/MM/yyyy", { locale: it })}{" "}
-                -{" "}
-                {format(new Date(booking.checkOut), "d/MM/yyyy", {
-                  locale: it,
-                })}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-3">
-              {ResourceIcon ? (
-                <ResourceIcon className="h-4 w-4 text-muted-foreground" />
-              ) : null}
-              <span>
-                Risorsa: <strong>{assignedResource?.name}</strong>
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Tabs for operation mode */}
         <Tabs value={mode} onValueChange={(v) => setMode(v as OperationMode)}>
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="extend">
-              <CalendarPlus className="h-4 w-4 " />
+              <CalendarPlus className="h-4 w-4" />
               Modifica Date
             </TabsTrigger>
             <TabsTrigger value="split">
-              <Split className="h-4 w-4 " />
+              <Split className="h-4 w-4" />
               Cambia Risorsa
             </TabsTrigger>
           </TabsList>
 
-          {/* EXTEND MODE */}
-          <TabsContent value="extend" className="space-y-4 mt-2">
+          {/* EXTEND TAB */}
+          <TabsContent value="extend" className="space-y-4 mt-4">
             <Form {...extendForm}>
               <form
                 onSubmit={extendForm.handleSubmit(onExtendSubmit)}
@@ -390,10 +276,11 @@ export function EditStayDialog({
                         buttonClassName="w-full h-9 border border-input hover:bg-background text-muted-foreground justify-start text-left"
                         occupiedDates={extendOccupiedMatchers}
                         disabledDates={(date) => isBefore(date, fixedCheckIn)}
-                        date={{
-                          from: fixedCheckIn,
-                          to: field.value,
-                        }}
+                        date={
+                          field.value
+                            ? { from: fixedCheckIn, to: field.value }
+                            : undefined
+                        }
                         setDate={(range) => {
                           const clickedDate = range?.to || range?.from;
                           if (
@@ -409,18 +296,17 @@ export function EditStayDialog({
                   )}
                 />
 
-                {isConflict && (
-                  <Alert className="bg-amber-50 border-amber-200">
-                    <AlertDescription className="text-amber-800">
-                      <strong>{assignedResource?.name}</strong> è occupata nel
-                      nuovo periodo selezionato. Scegli una risorsa alternativa
-                      per completare la modifica del soggiorno.
-                    </AlertDescription>
-                  </Alert>
-                )}
+                {hasConflict && (
+                  <>
+                    <Alert className="bg-amber-50 border-amber-200">
+                      <div className="flex gap-2">
+                        <AlertDescription className="text-amber-800 text-sm">
+                          <strong>{assignedResource?.name}</strong> è occupata
+                          nel nuovo periodo. Seleziona una risorsa alternativa.
+                        </AlertDescription>
+                      </div>
+                    </Alert>
 
-                {isConflict && (
-                  <div className="space-y-3">
                     <FormField
                       control={extendForm.control}
                       name="newResourceId"
@@ -440,26 +326,14 @@ export function EditStayDialog({
                       )}
                     />
 
-                    {extendResourceId && !isNewResourceInvalid && (
-                      <Alert className="bg-green-50 border-green-200">
-                        <AlertDescription className="text-green-800">
-                          <strong>{resourceToCheckForExtend?.name}</strong> è
-                          libera per l&apos;intero periodo. Puoi procedere con
-                          lo spostamento.
-                        </AlertDescription>
-                      </Alert>
+                    {extendResourceId && (
+                      <ResourceValidationAlert
+                        isValid={isExtendResourceValid}
+                        resourceName={extendResourceToShow?.name}
+                        type="extend"
+                      />
                     )}
-
-                    {isNewResourceInvalid && extendResourceId && (
-                      <Alert className="bg-red-50 border-red-200">
-                        <AlertDescription className="text-red-800">
-                          <strong>{resourceToCheckForExtend?.name}</strong> non
-                          è disponibile per il periodo indicato. Seleziona
-                          un&apos;altra risorsa o modifica le date.
-                        </AlertDescription>
-                      </Alert>
-                    )}
-                  </div>
+                  </>
                 )}
 
                 <div className="flex justify-end gap-2 pt-4">
@@ -474,18 +348,21 @@ export function EditStayDialog({
                     type="submit"
                     disabled={
                       isPending ||
-                      isNewResourceInvalid ||
-                      (isConflict && !extendResourceId)
+                      !newCheckOut ||
+                      (hasConflict && !extendResourceId) ||
+                      isExtendResourceValid === false
                     }
                   >
-                    {isPending && <Loader2 className=" h-4 w-4 animate-spin" />}
-                    {isConflict ? (
+                    {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                    {hasConflict ? (
                       <>
-                        <Split className="h-4 w-4 " /> Conferma Spostamento
+                        <Split className="h-4 w-4" />
+                        Conferma Spostamento
                       </>
                     ) : (
                       <>
-                        <CalendarPlus className="h-4 w-4 " /> Modifica Soggiorno
+                        <CalendarPlus className="h-4 w-4" />
+                        Modifica Soggiorno
                       </>
                     )}
                   </Button>
@@ -494,7 +371,7 @@ export function EditStayDialog({
             </Form>
           </TabsContent>
 
-          {/* SPLIT MODE */}
+          {/* SPLIT TAB */}
           <TabsContent value="split" className="space-y-4 mt-4">
             <Form {...splitForm}>
               <form
@@ -542,45 +419,30 @@ export function EditStayDialog({
                 />
 
                 {splitDate && splitResourceId && (
-                  <div className="bg-muted/20 p-3 rounded-md space-y-2 text-sm border">
-                    <p className="font-medium">Riepilogo:</p>
-                    <ul className="space-y-1 text-muted-foreground">
-                      <li>
-                        • Parte 1:{" "}
-                        <strong>{assignedResource?.name || "-"}</strong> fino al{" "}
-                        {format(splitDate, "d/MM/yyyy", { locale: it })}
-                      </li>
-                      <li>
-                        • Parte 2:{" "}
-                        <strong>{resourceToCheckForSplit?.name || "-"}</strong>{" "}
-                        dal {format(splitDate, "d/MM/yyyy", { locale: it })} al{" "}
-                        {format(currentCheckOut, "d/MM/yyyy", { locale: it })}
-                      </li>
-                    </ul>
-                  </div>
-                )}
+                  <>
+                    <div className="bg-muted/20 p-3 rounded-md space-y-2 text-sm border">
+                      <p className="font-medium">Riepilogo:</p>
+                      <ul className="space-y-1 text-muted-foreground">
+                        <li>
+                          • Parte 1: <strong>{assignedResource?.name}</strong>{" "}
+                          fino al{" "}
+                          {format(splitDate, "d/MM/yyyy", { locale: it })}
+                        </li>
+                        <li>
+                          • Parte 2:{" "}
+                          <strong>{splitResourceToShow?.name}</strong> dal{" "}
+                          {format(splitDate, "d/MM/yyyy", { locale: it })} al{" "}
+                          {format(currentCheckOut, "d/MM/yyyy", { locale: it })}
+                        </li>
+                      </ul>
+                    </div>
 
-                {splitResourceId && !isSplitResourceInvalid && splitDate && (
-                  <Alert className="bg-green-50 border-green-200">
-                    <AlertDescription className="text-green-800">
-                      <strong>{resourceToCheckForSplit?.name}</strong> è
-                      disponibile per il periodo richiesto.
-                    </AlertDescription>
-                  </Alert>
-                )}
-
-                {isSplitResourceInvalid && splitResourceId && (
-                  <Alert className="bg-red-50 border-red-200">
-                    <AlertTriangle className="h-4 w-4 text-red-600" />
-                    <AlertTitle className="text-red-900">
-                      Risorsa Occupata
-                    </AlertTitle>
-                    <AlertDescription className="text-red-800">
-                      <strong>{resourceToCheckForSplit?.name}</strong> non è
-                      disponibile per il periodo indicato. Seleziona
-                      un&apos;altra risorsa o modifica la data.
-                    </AlertDescription>
-                  </Alert>
+                    <ResourceValidationAlert
+                      isValid={isSplitResourceValid}
+                      resourceName={splitResourceToShow?.name}
+                      type="split"
+                    />
+                  </>
                 )}
 
                 <div className="flex justify-end gap-2 pt-4">
@@ -597,13 +459,11 @@ export function EditStayDialog({
                       isPending ||
                       !splitDate ||
                       !splitResourceId ||
-                      isSplitResourceInvalid
+                      isSplitResourceValid === false
                     }
                   >
-                    {isPending && (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    )}
-                    <Split className="h-4 w-4 " />
+                    {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                    <Split className="h-4 w-4" />
                     Conferma
                   </Button>
                 </div>
