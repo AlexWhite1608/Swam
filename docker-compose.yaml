@@ -1,5 +1,7 @@
 services:
-  # --- BACKEND SERVICES ---
+  # --- BACKEND DB ---
+
+  #MongoDB
   mongodb:
     image: mongo:6.0
     container_name: swam-mongo
@@ -15,6 +17,49 @@ services:
       timeout: 10s
       retries: 5
 
+  #Postgres-Keycloak
+  postgres-keycloak:
+    image: postgres:15
+    container_name: swam-keycloak-db
+    volumes:
+      - postgres_keycloak_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${KC_DB_NAME}
+      POSTGRES_USER: ${KC_DB_USER}
+      POSTGRES_PASSWORD: ${KC_DB_PASSWORD}
+    networks:
+      - swam-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${KC_DB_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  #Keycloak
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0
+    container_name: swam-keycloak
+    command: start-dev --import-realm #TODO start-dev only for development purposes
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres-keycloak:5432/${KC_DB_NAME}
+      KC_DB_USERNAME: ${KC_DB_USER}
+      KC_DB_PASSWORD: ${KC_DB_PASSWORD}
+      KEYCLOAK_ADMIN: ${KC_ADMIN_USER}
+      KEYCLOAK_ADMIN_PASSWORD: ${KC_ADMIN_PASSWORD}
+      KC_HEALTH_ENABLED: "true"
+      KC_HOSTNAME: localhost 
+      KC_HOSTNAME_PORT: 8180 # keycloak port
+    ports:
+      - "8180:8080" #8080 Gateway
+    depends_on:
+      postgres-keycloak:
+        condition: service_healthy
+    networks:
+      - swam-network
+
+
+  # --- BACKEND SERVICES --- 
   resource-service:
     build: ./backend/resource-service
     container_name: swam-resource
@@ -23,7 +68,7 @@ services:
       - SPRING_DATA_MONGODB_URI=mongodb://swam-mongo:27017/resource_db
     depends_on:
       mongodb:
-        condition: service_healthy
+        condition: service_healthy  
     networks:
       - swam-network
 
@@ -64,10 +109,13 @@ services:
       - RESOURCE_URI=http://swam-resource:8081
       - PRICING_URI=http://swam-pricing:8082
       - BOOKING_URI=http://swam-booking:8083
+      - ISSUER_URI=http://localhost:8180/realms/swam-realm # to verify tokens
+      - JWK_SET_URI=http://keycloak:8080/realms/swam-realm/protocol/openid-connect/certs # for downloading public keys
     depends_on:
       - resource-service
       - pricing-service
       - booking-service
+      - keycloak
     networks:
       - swam-network
 
@@ -86,6 +134,7 @@ services:
       - swam-network
     depends_on:
       - gateway
+      - keycloak
 
 networks:
   swam-network:
@@ -93,3 +142,4 @@ networks:
 
 volumes:
   mongo_data:
+  postgres_keycloak_data:
