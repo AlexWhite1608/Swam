@@ -31,6 +31,10 @@ public interface BookingRepository extends MongoRepository<Booking, String> {
             "}")
     List<Booking> findOverlaps(String resourceId, LocalDate newCheckIn, LocalDate newCheckOut);
 
+    // find all bookings ordered by creation date descending
+    List<Booking> findAllByOrderByCreatedAtDesc();
+
+
     /**
      * Finds bookings that overlap with the requested interval, excluding a specific booking.
      * Conflict rule: (StartA < EndB) AND (EndA > StartB)

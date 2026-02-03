@@ -312,10 +312,11 @@ public class BookingService {
     }
 
     public List<BookingResponse> getAllBookings() {
-        return bookingRepository.findAll().stream()
+        return bookingRepository.findAllByOrderByCreatedAtDesc().stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
+
 
     // get unavailable periods for a resource (excluding optional booking)
     public List<UnavailablePeriodResponse> getUnavailablePeriods(String resourceId, String excludeBookingId) {
