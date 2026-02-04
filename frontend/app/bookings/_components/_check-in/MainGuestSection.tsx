@@ -28,7 +28,7 @@ import {
   sexOptions,
 } from "@/types/bookings/options";
 import { isAfter, isBefore, parseISO } from "date-fns";
-import { AlertCircle, User } from "lucide-react";
+import { User } from "lucide-react";
 import { Control, useWatch } from "react-hook-form";
 import { Country } from "react-phone-number-input";
 
@@ -36,12 +36,14 @@ interface MainGuestSectionProps {
   control: Control<CheckInFormValues>;
   checkInDate: string;
   checkOutDate: string;
+  isChained: boolean;
 }
 
 export function MainGuestSection({
   control,
   checkInDate,
   checkOutDate,
+  isChained,
 }: MainGuestSectionProps) {
   // watch citizenship
   const citizenship = useWatch({
@@ -373,7 +375,7 @@ export function MainGuestSection({
                         placeholder="Seleziona data partenza"
                       />
                     </FormControl>
-                    {isDeparturePastCheckout && (
+                    {isDeparturePastCheckout && !isChained && (
                       <p className="text-sm text-destructive flex items-center gap-1">
                         La data di partenza supera il checkout della
                         prenotazione.

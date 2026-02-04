@@ -16,12 +16,14 @@ interface CompanionsSectionProps {
   control: Control<CheckInFormValues>;
   checkInDate: string;
   checkOutDate: string;
+  isChained: boolean;
 }
 
 export function CompanionsSection({
   control,
   checkInDate,
   checkOutDate,
+  isChained,
 }: CompanionsSectionProps) {
   const { fields, append, remove } = useFieldArray({
     control,
@@ -112,6 +114,7 @@ export function CompanionsSection({
             onRemove={() => remove(index)}
             checkInDate={checkInDate}
             checkOutDate={checkOutDate}
+            isChained={isChained}
           />
         ))}
         {fields.length === 0 && (

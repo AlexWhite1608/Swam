@@ -91,6 +91,7 @@ export function BookingCheckInForm({
               control={form.control}
               checkInDate={booking.checkIn}
               checkOutDate={booking.checkOut}
+              isChained={booking.groupId !== null}
             />
 
             <Separator />
@@ -100,6 +101,7 @@ export function BookingCheckInForm({
               control={form.control}
               checkInDate={booking.checkIn}
               checkOutDate={booking.checkOut}
+              isChained={booking.groupId !== null}
             />
           </div>
         </ScrollArea>

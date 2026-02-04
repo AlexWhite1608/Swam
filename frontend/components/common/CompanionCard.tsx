@@ -35,6 +35,7 @@ interface CompanionCardProps {
   control: Control<CheckInFormValues>;
   checkInDate: string;
   checkOutDate: string;
+  isChained: boolean;
   onRemove: () => void;
 }
 
@@ -43,6 +44,7 @@ export function CompanionCard({
   control,
   checkInDate,
   checkOutDate,
+  isChained,
   onRemove,
 }: CompanionCardProps) {
   return (
@@ -305,7 +307,7 @@ export function CompanionCard({
                       placeholder="Seleziona data partenza"
                     />
                   </FormControl>
-                  {isDeparturePastCheckout && (
+                  {isDeparturePastCheckout && !isChained && (
                     <p className="text-sm text-destructive flex items-center gap-1">
                       La data di partenza supera il checkout della prenotazione.
                     </p>
