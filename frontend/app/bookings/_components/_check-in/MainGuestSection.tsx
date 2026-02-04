@@ -28,7 +28,7 @@ import {
   sexOptions,
 } from "@/types/bookings/options";
 import { isAfter, isBefore, parseISO } from "date-fns";
-import { User } from "lucide-react";
+import { AlertCircle, User } from "lucide-react";
 import { Control, useWatch } from "react-hook-form";
 import { Country } from "react-phone-number-input";
 
@@ -343,6 +343,9 @@ export function MainGuestSection({
                   name: "arrivalDate",
                 });
 
+                const isDeparturePastCheckout =
+                  field.value && isAfter(field.value, parseISO(checkOutDate));
+
                 return (
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
@@ -370,6 +373,12 @@ export function MainGuestSection({
                         placeholder="Seleziona data partenza"
                       />
                     </FormControl>
+                    {isDeparturePastCheckout && (
+                      <p className="text-sm text-destructive flex items-center gap-1">
+                        La data di partenza supera il checkout della
+                        prenotazione.
+                      </p>
+                    )}
                     <FormMessage />
                   </FormItem>
                 );

@@ -277,6 +277,9 @@ export function CompanionCard({
                 name: `companions.${index}.arrivalDate`,
               });
 
+              const isDeparturePastCheckout =
+                field.value && isAfter(field.value, parseISO(checkOutDate));
+
               return (
                 <FormItem>
                   <FormLabel className="flex items-center gap-2">
@@ -302,6 +305,11 @@ export function CompanionCard({
                       placeholder="Seleziona data partenza"
                     />
                   </FormControl>
+                  {isDeparturePastCheckout && (
+                    <p className="text-sm text-destructive flex items-center gap-1">
+                      La data di partenza supera il checkout della prenotazione.
+                    </p>
+                  )}
                   <FormMessage />
                 </FormItem>
               );
