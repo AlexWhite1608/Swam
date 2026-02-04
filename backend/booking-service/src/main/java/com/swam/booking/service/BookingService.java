@@ -119,6 +119,38 @@ public class BookingService {
         return mapToResponse(bookingRepository.save(booking));
     }
 
+    // updates the extras of an existing booking
+    @Transactional
+    public BookingResponse updateBookingExtras(String bookingId, UpdateBookingExtrasRequest request) {
+        Booking booking = getBookingOrThrow(bookingId);
+
+        if (booking.getStatus() == BookingStatus.CANCELLED) {
+            throw new IllegalStateException("Non puoi modificare gli extra di una prenotazione cancellata.");
+        }
+
+        List<BookingExtra> newExtras = new ArrayList<>();
+
+        for (UpdateBookingExtrasRequest.ExtraItem item : request.getExtras()) {
+            // gets the current option data to snapshot name and price
+            ExtraOption option = extraOptionService.getExtraEntity(item.getExtraOptionId());
+
+            BookingExtra bookingExtra = BookingExtra.builder()
+                    .extraOptionId(option.getId())
+                    .nameSnapshot(option.getName())
+                    .descriptionSnapshot(option.getDescription())
+                    .priceSnapshot(option.getDefaultPrice())
+                    .quantity(item.getQuantity())
+                    .build();
+
+            newExtras.add(bookingExtra);
+        }
+
+        booking.setExtras(newExtras);
+
+        booking.setUpdatedAt(LocalDateTime.now());
+        return mapToResponse(bookingRepository.save(booking));
+    }
+
     // edit stay details (dates, resource) of an existing booking
     @Transactional
     public BookingResponse updateBookingStay(String bookingId, EditBookingStayRequest request) {

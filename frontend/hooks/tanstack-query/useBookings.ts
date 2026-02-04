@@ -151,6 +151,25 @@ export const useUpdateStay = () => {
   });
 };
 
+// updates extras (add/remove extras for a booking)
+export const useUpdateBookingExtras = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: bookingService.updateExtras,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: bookingKeys.all });
+      queryClient.invalidateQueries({ queryKey: bookingKeys.detail(data.id) });
+      toast.success("Extra aggiornati con successo");
+    },
+    onError: (error: any) => {
+      toast.error("Errore aggiornamento extra", {
+        description: getErrorMessage(error),
+      });
+    },
+  });
+};
+
 // Split booking given a split date and new resource
 export const useSplitBooking = () => {
   const queryClient = useQueryClient();

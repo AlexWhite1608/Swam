@@ -1,3 +1,4 @@
+import { BookingExtra } from "../extras/types";
 import type {
   BookingStatus,
   PaymentStatus,
@@ -45,14 +46,6 @@ export interface BookingGuest {
 
   taxExempt?: boolean;
   taxExemptReason?: string | null;
-}
-
-export interface BookingExtra {
-  extraOptionId?: string;
-  nameSnapshot: string;
-  descriptionSnapshot?: string;
-  priceSnapshot: number;
-  quantity: number;
 }
 
 export interface PriceBreakdown {
