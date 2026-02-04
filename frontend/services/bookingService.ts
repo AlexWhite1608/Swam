@@ -23,6 +23,8 @@ export interface CheckInCompanion {
   customerId?: string;
   firstName: string;
   lastName: string;
+  arrivalDate: string;
+  departureDate: string;
   sex: SexType;
   birthDate: string;
   email?: string;
@@ -40,6 +42,8 @@ export interface CheckInPayload {
   customerId?: string;
   firstName: string;
   lastName: string;
+  arrivalDate: string;
+  departureDate: string;
   sex: SexType;
   birthDate: string;
   email?: string;

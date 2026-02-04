@@ -34,6 +34,12 @@ public class CheckInRequest {
     private String lastName;
 
     @NotNull
+    private LocalDate arrivalDate;
+
+    @NotNull
+    private LocalDate departureDate;
+
+    @NotNull
     private Sex sex;
 
     @NotNull
@@ -82,6 +88,12 @@ public class CheckInRequest {
 
         @NotBlank
         private String lastName;
+
+        @NotNull
+        private LocalDate arrivalDate;
+
+        @NotNull
+        private LocalDate departureDate;
 
         @NotNull
         private Sex sex;

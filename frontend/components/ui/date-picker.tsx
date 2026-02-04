@@ -3,9 +3,9 @@
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -53,6 +53,7 @@ export function DatePicker({
         <Calendar
           mode="single"
           selected={value}
+          defaultMonth={value}
           onSelect={(date) => {
             onChange(date);
             setOpen(false);

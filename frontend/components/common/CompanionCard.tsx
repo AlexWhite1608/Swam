@@ -1,8 +1,7 @@
-// components/common/CompanionCard.tsx
 "use client";
 
 import { Trash2 } from "lucide-react";
-import { Control } from "react-hook-form";
+import { Control, useWatch } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -28,16 +27,22 @@ import {
   sexOptions,
 } from "@/types/bookings/options";
 import { CountrySelect } from "../ui/country-select";
+import { DatePicker } from "../ui/date-picker";
+import { isBefore, parseISO, isAfter } from "date-fns";
 
 interface CompanionCardProps {
   index: number;
   control: Control<CheckInFormValues>;
+  checkInDate: string;
+  checkOutDate: string;
   onRemove: () => void;
 }
 
 export function CompanionCard({
   index,
   control,
+  checkInDate,
+  checkOutDate,
   onRemove,
 }: CompanionCardProps) {
   return (
@@ -233,6 +238,74 @@ export function CompanionCard({
                 <FormMessage />
               </FormItem>
             )}
+          />
+        </div>
+
+        {/* arrival/departures dates */}
+        <div className="col-span-6 min-w-0">
+          <FormField
+            control={control}
+            name={`companions.${index}.arrivalDate`}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-2">
+                  Data di Arrivo
+                </FormLabel>
+                <FormControl>
+                  <DatePicker
+                    disabledDates={(date) =>
+                      isBefore(date, parseISO(checkInDate)) ||
+                      isAfter(date, parseISO(checkOutDate))
+                    }
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder="Seleziona data arrivo"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <div className="col-span-6 min-w-0">
+          <FormField
+            control={control}
+            name={`companions.${index}.departureDate`}
+            render={({ field }) => {
+              const arrivalDate = useWatch({
+                control,
+                name: `companions.${index}.arrivalDate`,
+              });
+
+              return (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-2">
+                    Data di Partenza
+                  </FormLabel>
+                  <FormControl>
+                    <DatePicker
+                      disabledDates={(date) => {
+                        // dates before booking check-in
+                        if (isBefore(date, parseISO(checkInDate))) return true;
+
+                        // dates after booking check-out
+                        if (isAfter(date, parseISO(checkOutDate))) return true;
+
+                        // if there is an arrival date, disable dates before it
+                        if (arrivalDate && isBefore(date, arrivalDate))
+                          return true;
+
+                        return false;
+                      }}
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Seleziona data partenza"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
           />
         </div>
       </div>

@@ -118,18 +118,33 @@ export function BookingDialog({
               isLoading={updateCheckInMutation.isPending}
               onCancel={() => onOpenChange(false)}
               onSubmit={(formData) => {
-                if (!formData.birthDate) return;
+                if (
+                  !formData.birthDate ||
+                  !formData.arrivalDate ||
+                  !formData.departureDate
+                )
+                  return;
 
                 const validCompanions = formData.companions?.filter(
-                  (c) => c.birthDate !== undefined,
+                  (c) =>
+                    c.birthDate !== undefined &&
+                    c.arrivalDate !== undefined &&
+                    c.departureDate !== undefined,
                 );
 
                 const payload = {
                   ...formData,
                   birthDate: format(formData.birthDate, "yyyy-MM-dd"),
+                  arrivalDate: format(formData.arrivalDate, "yyyy-MM-dd"),
+                  departureDate: format(formData.departureDate, "yyyy-MM-dd"),
                   companions: validCompanions?.map((companion) => ({
                     ...companion,
                     birthDate: format(companion.birthDate!, "yyyy-MM-dd"),
+                    arrivalDate: format(companion.arrivalDate!, "yyyy-MM-dd"),
+                    departureDate: format(
+                      companion.departureDate!,
+                      "yyyy-MM-dd",
+                    ),
                   })),
                 };
 
@@ -155,21 +170,32 @@ export function BookingDialog({
             isLoading={checkInMutation.isPending}
             onCancel={() => onOpenChange(false)}
             onSubmit={(formData) => {
-              if (!formData.birthDate) {
+              if (
+                !formData.birthDate ||
+                !formData.arrivalDate ||
+                !formData.departureDate
+              ) {
                 return;
               }
 
-              // Filter companions with valid birthdates
+              // Filter companions with valid birthdates and dates
               const validCompanions = formData.companions?.filter(
-                (c) => c.birthDate !== undefined,
+                (c) =>
+                  c.birthDate !== undefined &&
+                  c.arrivalDate !== undefined &&
+                  c.departureDate !== undefined,
               );
 
               const payload = {
                 ...formData,
                 birthDate: format(formData.birthDate, "yyyy-MM-dd"),
+                arrivalDate: format(formData.arrivalDate, "yyyy-MM-dd"),
+                departureDate: format(formData.departureDate, "yyyy-MM-dd"),
                 companions: validCompanions?.map((companion) => ({
                   ...companion,
                   birthDate: format(companion.birthDate!, "yyyy-MM-dd"),
+                  arrivalDate: format(companion.arrivalDate!, "yyyy-MM-dd"),
+                  departureDate: format(companion.departureDate!, "yyyy-MM-dd"),
                 })),
               };
 

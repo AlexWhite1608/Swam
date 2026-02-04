@@ -24,6 +24,9 @@ export interface BookingGuest {
   firstName: string;
   lastName: string;
 
+  arrivalDate?: string;
+  departureDate?: string;
+
   sex?: SexType | null;
   birthDate?: string | null;
 
@@ -40,7 +43,6 @@ export interface BookingGuest {
   guestType?: GuestTypeType;
   guestRole?: GuestRoleType | null;
 
-  daysOfStay?: number | null;
   taxExempt?: boolean;
   taxExemptReason?: string | null;
 }

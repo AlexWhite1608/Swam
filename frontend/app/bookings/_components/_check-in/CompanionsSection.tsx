@@ -1,7 +1,12 @@
 "use client";
 
 import { Plus, Users, AlertCircle, Trash } from "lucide-react";
-import { Control, useFieldArray, useWatch } from "react-hook-form";
+import {
+  Control,
+  useFieldArray,
+  useFormContext,
+  useWatch,
+} from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { CheckInFormValues } from "@/schemas/mainGuestCheckInSchema";
 import { CompanionCard } from "@/components/common/CompanionCard";
@@ -9,9 +14,15 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 interface CompanionsSectionProps {
   control: Control<CheckInFormValues>;
+  checkInDate: string;
+  checkOutDate: string;
 }
 
-export function CompanionsSection({ control }: CompanionsSectionProps) {
+export function CompanionsSection({
+  control,
+  checkInDate,
+  checkOutDate,
+}: CompanionsSectionProps) {
   const { fields, append, remove } = useFieldArray({
     control,
     name: "companions",
@@ -34,6 +45,9 @@ export function CompanionsSection({ control }: CompanionsSectionProps) {
     }
   };
 
+  // get form values to set default arrival and departure dates for new companions
+  const { getValues } = useFormContext<CheckInFormValues>();
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -50,9 +64,11 @@ export function CompanionsSection({ control }: CompanionsSectionProps) {
             append({
               firstName: "",
               lastName: "",
+              arrivalDate: new Date(checkInDate) || new Date(),
+              departureDate: new Date(checkOutDate) || new Date(),
               sex: "M",
               birthDate: undefined,
-              citizenship: "IT", //FIXME: dovrebbe essere di partenza la stessa cittadinanza del main guest
+              citizenship: getValues("citizenship") || "IT",
               placeOfBirth: "",
               guestType: "ADULT",
               guestRole: "MEMBER",
@@ -94,6 +110,8 @@ export function CompanionsSection({ control }: CompanionsSectionProps) {
             index={index}
             control={control}
             onRemove={() => remove(index)}
+            checkInDate={checkInDate}
+            checkOutDate={checkOutDate}
           />
         ))}
         {fields.length === 0 && (

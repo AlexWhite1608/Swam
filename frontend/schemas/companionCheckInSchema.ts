@@ -8,6 +8,9 @@ export const companionCheckInSchema = z
     firstName: z.string().min(1, { message: "" }),
     lastName: z.string().min(1, { message: "" }),
 
+    arrivalDate: z.date({ error: "" }),
+    departureDate: z.date({ error: "" }),
+
     sex: z.enum(Sex),
 
     birthDate: z.date().optional(),
@@ -21,4 +24,4 @@ export const companionCheckInSchema = z
   .refine((data) => data.birthDate !== undefined, {
     message: "",
     path: ["birthDate"],
-  });
+  })

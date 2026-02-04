@@ -28,12 +28,22 @@ export function BookingCheckInForm({
   onCancel,
   isLoading,
 }: BookingCheckInFormProps) {
+  // parse check-in and check-out dates for default form values
+  const defaultCheckIn = new Date(booking.checkIn);
+  const defaultCheckOut = new Date(booking.checkOut);
+
   const form = useForm<CheckInFormValues>({
     resolver: zodResolver(mainGuestCheckInSchema),
     defaultValues: {
       customerId: booking.mainGuest.customerId || undefined,
       firstName: booking.mainGuest.firstName || "",
       lastName: booking.mainGuest.lastName || "",
+      arrivalDate: booking.mainGuest.arrivalDate
+        ? new Date(booking.mainGuest.arrivalDate)
+        : defaultCheckIn,
+      departureDate: booking.mainGuest.departureDate
+        ? new Date(booking.mainGuest.departureDate)
+        : defaultCheckOut,
       email: booking.mainGuest.email || "",
       phone: booking.mainGuest.phone || "",
       sex: booking.mainGuest.sex || "M",
@@ -53,6 +63,10 @@ export function BookingCheckInForm({
           customerId: c.customerId || undefined,
           firstName: c.firstName,
           lastName: c.lastName,
+          arrivalDate: c.arrivalDate ? new Date(c.arrivalDate) : defaultCheckIn,
+          departureDate: c.departureDate
+            ? new Date(c.departureDate)
+            : defaultCheckOut,
           sex: c.sex || "M",
           birthDate: c.birthDate ? new Date(c.birthDate) : new Date(),
           citizenship: c.citizenship || "IT",
@@ -62,8 +76,6 @@ export function BookingCheckInForm({
         })) || [],
     },
   });
-
-  console.log(form.formState.errors);
 
   return (
     <Form {...form}>
@@ -75,12 +87,20 @@ export function BookingCheckInForm({
         <ScrollArea className="flex-1 max-h-[calc(80vh-16rem)] pr-4">
           <div className="space-y-4 p-1">
             {/* Main Guest */}
-            <MainGuestSection control={form.control} />
+            <MainGuestSection
+              control={form.control}
+              checkInDate={booking.checkIn}
+              checkOutDate={booking.checkOut}
+            />
 
             <Separator />
 
             {/* Companions */}
-            <CompanionsSection control={form.control} />
+            <CompanionsSection
+              control={form.control}
+              checkInDate={booking.checkIn}
+              checkOutDate={booking.checkOut}
+            />
           </div>
         </ScrollArea>
 
