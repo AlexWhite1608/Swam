@@ -119,7 +119,7 @@ public class BookingService {
         return mapToResponse(bookingRepository.save(booking));
     }
 
-    // updates the extras of an existing booking
+    // updates the extras of an existing booking (and linked group bookings)
     @Transactional
     public BookingResponse updateBookingExtras(String bookingId, UpdateBookingExtrasRequest request) {
         Booking booking = getBookingOrThrow(bookingId);
@@ -145,10 +145,31 @@ public class BookingService {
             newExtras.add(bookingExtra);
         }
 
-        booking.setExtras(newExtras);
+        // find with bookings to update (single or group)
+        List<Booking> bookingsToUpdate = new ArrayList<>();
 
-        booking.setUpdatedAt(LocalDateTime.now());
-        return mapToResponse(bookingRepository.save(booking));
+        if (booking.getGroupId() != null) {
+            bookingsToUpdate.addAll(bookingRepository.findByGroupId(booking.getGroupId()));
+        } else {
+            bookingsToUpdate.add(booking);
+        }
+
+        for (Booking b : bookingsToUpdate) {
+            if (b.getStatus() != BookingStatus.CANCELLED) {
+                b.setExtras(new ArrayList<>(newExtras));
+
+                b.setUpdatedAt(LocalDateTime.now());
+            }
+        }
+
+        bookingRepository.saveAll(bookingsToUpdate);
+
+        Booking updatedOriginal = bookingsToUpdate.stream()
+                .filter(b -> b.getId().equals(bookingId))
+                .findFirst()
+                .orElse(booking);
+
+        return mapToResponse(updatedOriginal);
     }
 
     // edit stay details (dates, resource) of an existing booking
@@ -624,6 +645,9 @@ public class BookingService {
                 // guest and companions copy
                 .mainGuest(original.getMainGuest())
                 .companions(new ArrayList<>(original.getCompanions()))
+
+                // extras copy
+                .extras(original.getExtras() != null ? new ArrayList<>(original.getExtras()) : new ArrayList<>())
 
                 // chaining
                 .groupId(original.getGroupId())

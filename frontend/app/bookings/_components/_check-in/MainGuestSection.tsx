@@ -27,7 +27,7 @@ import {
   guestTypeOptions,
   sexOptions,
 } from "@/types/bookings/options";
-import { isAfter, isBefore, parseISO } from "date-fns";
+import { isAfter, isBefore, isSameDay, parseISO, startOfDay } from "date-fns";
 import { User } from "lucide-react";
 import { Control, useWatch } from "react-hook-form";
 import { Country } from "react-phone-number-input";
@@ -346,7 +346,12 @@ export function MainGuestSection({
                 });
 
                 const isDeparturePastCheckout =
-                  field.value && isAfter(field.value, parseISO(checkOutDate));
+                  field.value &&
+                  !isSameDay(
+                    startOfDay(field.value),
+                    startOfDay(checkOutDate),
+                  ) &&
+                  isAfter(startOfDay(field.value), startOfDay(checkOutDate));
 
                 return (
                   <FormItem>

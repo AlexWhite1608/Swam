@@ -24,7 +24,7 @@ import {
   guestTypeOptions,
   sexOptions,
 } from "@/types/bookings/options";
-import { isAfter, isBefore, parseISO } from "date-fns";
+import { isAfter, isBefore, isSameDay, parseISO, startOfDay } from "date-fns";
 import { Trash } from "lucide-react";
 import { Control, useWatch } from "react-hook-form";
 import { CountrySelect } from "../ui/country-select";
@@ -280,7 +280,12 @@ export function CompanionCard({
               });
 
               const isDeparturePastCheckout =
-                field.value && isAfter(field.value, parseISO(checkOutDate));
+                  field.value &&
+                  !isSameDay(
+                    startOfDay(field.value),
+                    startOfDay(checkOutDate),
+                  ) &&
+                  isAfter(startOfDay(field.value), startOfDay(checkOutDate));
 
               return (
                 <FormItem>
