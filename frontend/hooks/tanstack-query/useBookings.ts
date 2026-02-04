@@ -141,7 +141,6 @@ export const useUpdateStay = () => {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: bookingKeys.all });
       queryClient.invalidateQueries({ queryKey: bookingKeys.detail(data.id) });
-      toast.success("Soggiorno modificato con successo");
     },
     onError: (error: any) => {
       toast.error("Errore modifica soggiorno", {

@@ -167,7 +167,9 @@ export function BookingDialog({
         return (
           <BookingCheckInForm
             booking={booking}
-            isLoading={checkInMutation.isPending}
+            isLoading={
+              checkInMutation.isPending || updateCheckInMutation.isPending
+            }
             onCancel={() => onOpenChange(false)}
             onSubmit={(formData) => {
               if (
@@ -199,14 +201,27 @@ export function BookingDialog({
                 })),
               };
 
-              checkInMutation.mutate(
-                { id: booking.id, payload },
-                {
-                  onSuccess: () => {
-                    onOpenChange(false);
+              if (booking.status === "CHECKED_IN") {
+                // if already checked-in, use update mutation
+                updateCheckInMutation.mutate(
+                  { id: booking.id, payload },
+                  {
+                    onSuccess: () => {
+                      onOpenChange(false);
+                    },
                   },
-                },
-              );
+                );
+              } else {
+                // else use check-in mutation
+                checkInMutation.mutate(
+                  { id: booking.id, payload },
+                  {
+                    onSuccess: () => {
+                      onOpenChange(false);
+                    },
+                  },
+                );
+              }
             }}
           />
         );

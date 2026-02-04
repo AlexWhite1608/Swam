@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { format, isAfter, isBefore, parseISO } from "date-fns";
+import { format, isAfter, isBefore, parseISO, startOfDay } from "date-fns";
 import { it } from "date-fns/locale";
 import { AlertTriangle, CalendarPlus, Loader2, Split } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -42,16 +42,19 @@ import { BookingInfoCard } from "@/components/common/BookingInfoCard";
 import { useConflictDetection } from "@/hooks/useConflictDetection";
 import { useResourceValidation } from "@/hooks/useResourceValidation";
 import { ResourceValidationAlert } from "@/components/common/ResourceValidationAlert";
+import { toast } from "sonner";
 
 export interface EditStayDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  onOpenCheckIn: (booking: Booking) => void;
   booking: Booking | null;
 }
 
 export function EditStayDialog({
   isOpen,
   onOpenChange,
+  onOpenCheckIn,
   booking,
 }: EditStayDialogProps) {
   const { data: resources, isLoading: isLoadingRes } = useResources();
@@ -179,6 +182,28 @@ export function EditStayDialog({
   const onExtendSubmit = (values: ExtendFormValues) => {
     if (!booking) return;
 
+    // Common success handler for both extend with and without split
+    const handleSuccess = (updatedBooking: Booking) => {
+      onOpenChange(false);
+
+      toast.message("", {
+        description:
+          "É possibile aggiornare le date di permanenza degli ospiti.",
+        duration: 8000,
+        action: (
+          <Button
+            variant="default"
+            onClick={() => {
+              onOpenCheckIn(updatedBooking);
+              toast.dismiss();
+            }}
+          >
+            Vai al check-in
+          </Button>
+        ),
+      });
+    };
+
     if (hasConflict) {
       if (!values.newResourceId) {
         extendForm.setError("newResourceId", {
@@ -197,7 +222,7 @@ export function EditStayDialog({
             newCheckOutDate: format(values.newCheckOut, "yyyy-MM-dd"),
           },
         },
-        { onSuccess: () => onOpenChange(false) },
+        { onSuccess: (data) => handleSuccess(data) },
       );
     } else {
       updateStayMutation.mutate(
@@ -209,7 +234,7 @@ export function EditStayDialog({
             checkOut: format(values.newCheckOut, "yyyy-MM-dd"),
           },
         },
-        { onSuccess: () => onOpenChange(false) },
+        { onSuccess: (data) => handleSuccess(data) },
       );
     }
   };

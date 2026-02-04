@@ -148,6 +148,7 @@ export default function BookingsPage() {
         isOpen={dialogs.isExtendSplitOpen}
         onOpenChange={actions.setExtendSplitOpen}
         booking={selections.bookingToExtend}
+        onOpenCheckIn={actions.openCheckInDialog}
       />
 
       {/* bulk delete */}
