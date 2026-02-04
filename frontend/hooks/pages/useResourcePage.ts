@@ -1,14 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import {
   useResources,
   useDeleteResource,
   useUpdateResourceStatus,
   useBulkDeleteResources,
 } from "@/hooks/tanstack-query/useResources";
-import { Resource, ResourceStatus } from "@/schemas/createResourceSchema";
-import { getResourceColumns } from "@/app/resources/_components/ResourceColumns";
+import { getResourceColumns } from "@/app/(protected)/resources/_components/ResourceColumns";
+import { Resource, ResourceStatusType } from "@/types/resources/types";
 
 export const useResourcesPage = () => {
   // fetch resources
@@ -38,21 +38,21 @@ export const useResourcesPage = () => {
     setIsDialogOpen(true);
   };
 
-  const openEditDialog = (resource: Resource) => {
+  const openEditDialog = useCallback((resource: Resource) => {
     setSelectedResource(resource);
     setIsDialogOpen(true);
-  };
+  }, []);
 
   // Status Change
-  const handleStatusChange = (resource: Resource, status: ResourceStatus) => {
+  const handleStatusChange = useCallback((resource: Resource, status: ResourceStatusType) => {
     updateStatusMutation.mutate({ id: resource.id, status });
-  };
+  }, [updateStatusMutation]);
 
   // Delete Single
-  const requestDelete = (resource: Resource) => {
+  const requestDelete = useCallback((resource: Resource) => {
     setResourceToDelete(resource);
     setIsDeleteDialogOpen(true);
-  };
+  }, []);
 
   const confirmDelete = () => {
     if (!resourceToDelete) return;
@@ -90,7 +90,7 @@ export const useResourcesPage = () => {
         onDelete: requestDelete,
         onStatusChange: handleStatusChange,
       }),
-    [] 
+    [openEditDialog, requestDelete, handleStatusChange]
   );
 
   return {
