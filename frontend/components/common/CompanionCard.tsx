@@ -1,9 +1,7 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
-import { Control, useWatch } from "react-hook-form";
+import { BirthDateInput } from "@/components/ui/birth-date-input";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   FormControl,
   FormField,
@@ -11,6 +9,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { PlaceInput } from "@/components/ui/place-input";
 import {
   Select,
   SelectContent,
@@ -18,17 +18,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { BirthDateInput } from "@/components/ui/birth-date-input";
-import { PlaceInput } from "@/components/ui/place-input";
 import { CheckInFormValues } from "@/schemas/mainGuestCheckInSchema";
 import {
   guestRoleOptions,
   guestTypeOptions,
   sexOptions,
 } from "@/types/bookings/options";
+import { isAfter, isBefore, parseISO } from "date-fns";
+import { Trash } from "lucide-react";
+import { Control, useWatch } from "react-hook-form";
 import { CountrySelect } from "../ui/country-select";
 import { DatePicker } from "../ui/date-picker";
-import { isBefore, parseISO, isAfter } from "date-fns";
 
 interface CompanionCardProps {
   index: number;
@@ -57,7 +57,7 @@ export function CompanionCard({
         className="absolute top-1 right-1 transition-opacity text-destructive"
         onClick={onRemove}
       >
-        <Trash2 className="h-4 w-4" />
+        <Trash className="h-4 w-4" />
       </Button>
 
       <div className="grid grid-cols-12 gap-3 pr-6">

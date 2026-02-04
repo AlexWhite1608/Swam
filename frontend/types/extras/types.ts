@@ -15,5 +15,5 @@ export interface ExtraOption {
   description?: string;
   defaultPrice: number;
   category: ExtraCategory;
-  isActive: boolean;
+  active: boolean;
 }
