@@ -38,6 +38,9 @@ services:
   #Keycloak
   keycloak:
     image: quay.io/keycloak/keycloak:23.0
+    volumes:
+      # custom theme
+      - ./backend/keycloak-theme:/opt/keycloak/themes
     container_name: swam-keycloak
     command: start-dev --import-realm #TODO start-dev only for development purposes
     environment:
