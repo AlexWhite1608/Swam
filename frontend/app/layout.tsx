@@ -1,11 +1,10 @@
+import ErrorBoundary from "@/components/common/ErrorBoundary";
+import { Toaster } from "@/components/ui/sonner";
+import AuthProvider from "@/providers/AuthProvider";
+import QueryProvider from "@/providers/QueryProvider";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import QueryProvider from "@/providers/QueryProvider";
-import AuthProvider from "@/providers/AuthProvider"; // <--- 1. Importa il provider
-import { MainLayout } from "@/components/layout/MainLayout";
-import ErrorBoundary from "@/components/common/ErrorBoundary";
-import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -27,9 +26,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <AuthProvider>
           <QueryProvider>
-            <ErrorBoundary>
-              <MainLayout>{children}</MainLayout>
-            </ErrorBoundary>
+            <ErrorBoundary>{children}</ErrorBoundary>
           </QueryProvider>
           <Toaster
             position="top-center"

@@ -1,51 +1,77 @@
 "use client";
 
+import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader2, Tent, LayoutDashboard } from "lucide-react";
+import { Logo } from "@/components/common/Logo";
 
 export default function LoginPage() {
+  const [isLoading, setIsLoading] = useState(false);
+
+  // login handler
   const handleLogin = async () => {
-    // Aggiungiamo un log per vedere se parte
-    console.log("Tentativo di login...");
-    
+    setIsLoading(true);
+
     try {
-      // 1. Specifica 'keycloak' (deve coincidere con l'id nel route.ts)
-      // 2. redirect: false ci permette di vedere l'errore in console se fallisce
-      const result = await signIn("keycloak", { 
-        callbackUrl: "/bookings", // o "/" se hai messo il redirect nella home
-        redirect: false 
+      const result = await signIn("keycloak", {
+        callbackUrl: "/dashboard",
+        redirect: false,
       });
 
-      console.log("Risultato SignIn:", result);
-
       if (result?.error) {
-        console.error("Errore Login NextAuth:", result.error);
-        alert("Errore Login: " + result.error);
+        console.error("Errore Login:", result.error);
+        alert("Errore durante l'accesso SSO. Riprova.");
+        setIsLoading(false);
       } else if (result?.url) {
-        // Se va tutto bene, forziamo il redirect manuale
         window.location.href = result.url;
       }
     } catch (e) {
-      console.error("Eccezione durante il login:", e);
+      console.error("Eccezione login:", e);
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex h-screen items-center justify-center bg-gray-100">
-      <Card className="w-[350px]">
-        <CardHeader>
-          <CardTitle className="text-center">Swam Management</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <p className="text-center text-sm text-gray-500">
-            Area riservata al personale.
-          </p>
-          <Button onClick={handleLogin} className="w-full">
-            Accedi con Keycloak
+    // main container
+    <div className="flex min-h-screen w-full items-center justify-center bg-background px-4">
+      {/* container card */}
+      <div className="w-full max-w-sm space-y-6 rounded-lg border bg-white p-6 shadow-sm sm:p-8">
+        {/* header + logo */}
+        <div className="flex flex-col space-y-2 text-center">
+          <div className="flex items-center justify-center mb-2 space-x-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <Logo />
+            </div>
+            <h1 className="text-primary text-2xl font-semibold tracking-tight">
+              Camplendar
+            </h1>
+          </div>
+        </div>
+
+        {/* Form Area */}
+        <div className="grid gap-4">
+          <Button
+            onClick={handleLogin}
+            className="w-full h-11 font-medium"
+            size="lg"
+            disabled={isLoading}
+          >
+            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isLoading ? "Connessione..." : "Accedi al sistema"}
           </Button>
-        </CardContent>
-      </Card>
+
+          <p className="text-center text-xs text-muted-foreground px-2 pt-2">
+            Verrai reindirizzato al sistema di autenticazione per completare
+            l'accesso.
+          </p>
+        </div>
+
+        {/* Footer */}
+        <div className="text-center text-xs text-muted-foreground pt-4 border-t">
+          &copy; {new Date().getFullYear()} Camplendar
+        </div>
+      </div>
     </div>
   );
 }

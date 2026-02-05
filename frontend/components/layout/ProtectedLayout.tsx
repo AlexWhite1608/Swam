@@ -2,11 +2,12 @@ import { AppSidebar } from "./AppSidebar";
 import { AppHeader } from "./AppHeader";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 
-interface MainLayoutProps {
+interface ProtectedLayoutProps {
   children: React.ReactNode;
 }
 
-export function MainLayout({ children }: MainLayoutProps) {
+export function ProtectedLayout
+({ children }: ProtectedLayoutProps) {
   return (
     <SidebarProvider>
       <div className="flex h-screen w-full overflow-hidden">

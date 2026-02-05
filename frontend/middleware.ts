@@ -28,8 +28,7 @@ export default withAuth(
 // CONFIGURAZIONE CHIAVE
 export const config = {
   matcher: [
-    "/",
-    "/dashboard/:path*", //TODO: sposta la home su /dashboard e proteggi tutto quello che c'è sotto
+    "/dashboard/:path*", 
     "/bookings/:path*",
     "/pricing/:path*",   
     "/resources/:path*", 
