@@ -7,9 +7,10 @@
     --card: 0 0% 100%;
     --card-foreground: 240 10% 3.9%;
     
-    /* Primary (Il bottone scuro che usi) */
-    --primary: 240 5.9% 10%; 
-    --primary-foreground: 0 0% 98%;
+    /* --- MODIFICA COLORE PRIMARIO --- */
+    /* Usiamo direttamente il valore colore, non i numeri HSL, così supportiamo oklch */
+    --primary: oklch(0.4445 0.0443 176.56); 
+    --primary-foreground: #ffffff; /* Testo bianco su sfondo scuro */
     
     /* Muted / Input borders */
     --muted: 240 4.8% 95.9%;
@@ -17,11 +18,12 @@
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
     
-    /* Radius */
     --radius: 0.5rem; 
-    
-    /* Font */
     --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+#kc-locale {
+    display: none !important;
 }
 
 body {
@@ -36,7 +38,7 @@ body {
 }
 
 .login-pf-page {
-    padding-top: 0 !important; /* vertical centering */
+    padding-top: 0 !important;
 }
 
 #kc-header {
@@ -45,19 +47,19 @@ body {
     justify-content: center;
 }
 
+/* --- MODIFICA LOGO --- */
 #kc-header-wrapper {
-    /* hides original realm text */
     color: transparent !important; 
     font-size: 0 !important;
     
-    /* logoso */
-    background-image: url('../logo/logo.svg');
+    background-image: url('../logo/logo.svg'); /* Assicurati che il percorso sia corretto */
     background-repeat: no-repeat;
     background-position: center;
     background-size: contain;
     
-    width: 200px;  
-    height: 60px; 
+    /* Aumentate dimensioni */
+    width: 300px;  
+    height: 120px; 
     display: block;
 }
 
@@ -65,47 +67,51 @@ body {
     background: hsl(var(--card)) !important;
     border: 1px solid hsl(var(--border)) !important;
     border-radius: var(--radius) !important;
-    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important; /* shadow-sm */
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important;
     padding: 2rem !important;
     width: 100%;
     max-width: 400px;
     margin: 0 auto;
 }
 
+/* --- MODIFICA TITOLO (Colore Primario) --- */
 #kc-page-title {
     font-size: 1.5rem;
     font-weight: 600;
     text-align: center;
-    color: hsl(var(--foreground));
+    
+    /* Usa il colore primario */
+    color: var(--primary) !important;
+    
     margin-bottom: 1.5rem;
     letter-spacing: -0.025em;
 }
 
-/* input */
+/* Input styles */
 .pf-c-form-control, 
 input.form-control {
     display: flex !important;
-    height: 2.5rem !important; /* h-10 */
+    height: 2.5rem !important;
     width: 100% !important;
     border-radius: var(--radius) !important;
     border: 1px solid hsl(var(--input)) !important;
     background-color: transparent !important;
     padding: 0.5rem 0.75rem !important;
-    font-size: 0.875rem !important; /* text-sm */
+    font-size: 0.875rem !important;
     transition: all 0.2s;
     box-shadow: none !important;
 }
 
-/* ring effect on focus */
+/* Ring effect on focus */
 .pf-c-form-control:focus, 
 input.form-control:focus {
     outline: 2px solid transparent !important;
     outline-offset: 2px !important;
-    border-color: hsl(var(--foreground)) !important; /* O usa primary */
-    box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--foreground)) !important; /* Ring simile a shadcn */
+    /* Usa il primario per il bordo al focus */
+    border-color: var(--primary) !important; 
+    box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px var(--primary) !important; /* Ring colorato */
 }
 
-/* Labels */
 label.control-label {
     font-size: 0.875rem;
     font-weight: 500;
@@ -113,38 +119,44 @@ label.control-label {
     margin-bottom: 0.5rem;
 }
 
-/* primary button */
-#kc-login {
+/* --- BOTTONE PRIMARIO (Login & Registrazione) --- */
+/* Aggiunto .pf-c-button.pf-m-primary per colpire anche il tasto "Registrati" */
+#kc-login,
+.pf-c-button.pf-m-primary {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
     border-radius: var(--radius) !important;
     font-size: 0.875rem !important;
     font-weight: 500 !important;
-    height: 2.5rem !important; /* h-10 */
+    height: 2.5rem !important;
     padding-left: 1rem !important;
     padding-right: 1rem !important;
     width: 100% !important;
     cursor: pointer;
-    transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 150ms;
+    transition: all 150ms;
     
-    /* Colori */
-    background-color: hsl(var(--primary)) !important;
-    color: hsl(var(--primary-foreground)) !important;
+    /* Colore Primario Custom */
+    background-color: var(--primary) !important;
+    color: var(--primary-foreground) !important;
     border: none !important;
     background-image: none !important;
+    
+    /* Per sovrascrivere eventuali stili specifici di PatternFly */
+    box-shadow: none !important;
 }
 
-#kc-login:hover {
-    background-color: hsl(var(--primary) / 0.9) !important; /* primary/90 */
+#kc-login:hover,
+.pf-c-button.pf-m-primary:hover {
+    opacity: 0.9;
 }
 
-/* links */
+/* Links wrappers (Register link, Forgot Password, Back to Login) */
 #kc-registration, 
 #kc-form-options {
     margin-top: 1.5rem;
+    /* AGGIUNTA: Stacca il link dal bottone sottostante nella pag. registrazione */
+    margin-bottom: 1.5rem; 
     text-align: center;
     font-size: 0.875rem;
 }
@@ -154,11 +166,15 @@ label.control-label {
     color: hsl(var(--muted-foreground));
 }
 
+/* --- MODIFICA LINK (Forgot Password / Register) --- */
 a {
-    color: hsl(var(--foreground)) !important; /* O primary */
-    text-decoration: underline;
-    text-underline-offset: 4px;
+    color: var(--primary) !important; /* Colore primario */
+    text-decoration: none !important; /* Rimuovo sottolineatura default */
     font-weight: 500;
+}
+
+a:hover {
+    text-decoration: underline !important;
 }
 
 .pficon { display: none; }
