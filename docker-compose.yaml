@@ -126,6 +126,10 @@ services:
       - "3000:3000"
     env_file:
       - ./frontend/.env.local
+    environment:
+      - KEYCLOAK_ISSUER=http://localhost:8180/realms/swam-realm
+      - KEYCLOAK_DOCKER_ISSUER=http://keycloak:8080/realms/swam-realm
+      - BACKEND_INTERNAL_URL=http://gateway:8080
     volumes:
       - ./frontend:/app
       - /app/node_modules

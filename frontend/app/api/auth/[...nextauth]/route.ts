@@ -8,9 +8,6 @@ interface KeycloakToken {
   };
 }
 
-// Configurazione Dinamica:
-// Se siamo dentro Docker (esiste la var KEYCLOAK_DOCKER_ISSUER), usiamo quella per le chiamate server-side.
-// Altrimenti (se sviluppi in locale senza docker) usa quella standard.
 const keycloakInternalUrl = process.env.KEYCLOAK_DOCKER_ISSUER || process.env.KEYCLOAK_ISSUER;
 
 export const authOptions: NextAuthOptions = {
@@ -18,21 +15,18 @@ export const authOptions: NextAuthOptions = {
     KeycloakProvider({
       clientId: process.env.KEYCLOAK_CLIENT_ID!,
       clientSecret: process.env.KEYCLOAK_CLIENT_SECRET!,
-      issuer: process.env.KEYCLOAK_ISSUER, // Questo deve restare "localhost" per matchare il token
-      
-      // SOVRASCRIVIAMO GLI ENDPOINT PER USARE LA RETE DOCKER
+      issuer: process.env.KEYCLOAK_ISSUER, 
+      wellKnown: `${keycloakInternalUrl}/.well-known/openid-configuration`,
+
       authorization: {
         params: {
           scope: "openid email profile roles",
         },
-        // Il browser deve andare su localhost
         url: `${process.env.KEYCLOAK_ISSUER}/protocol/openid-connect/auth`,
       },
-      // Il server Next.js deve chiamare il container "keycloak"
       token: `${keycloakInternalUrl}/protocol/openid-connect/token`,
       userinfo: `${keycloakInternalUrl}/protocol/openid-connect/userinfo`,
       
-      // Anche le chiavi pubbliche (JWKS) vanno prese internamente
       jwks_endpoint: `${keycloakInternalUrl}/protocol/openid-connect/certs`,
     }),
   ],
@@ -65,6 +59,7 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: "/login", 
   },
+  debug: true, 
 };
 
 const handler = NextAuth(authOptions);
