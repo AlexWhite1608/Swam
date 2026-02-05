@@ -1,5 +1,6 @@
 "use client";
 
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,9 +9,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { signOut, useSession } from "next-auth/react";
 import { LogOut, User } from "lucide-react";
+import { signOut, useSession } from "next-auth/react";
 
 export function UserAvatar() {
   const { data: session } = useSession();
@@ -26,11 +26,28 @@ export function UserAvatar() {
         .substring(0, 2)
     : "U";
 
-  const handleLogout = () => {
-    // sign out and redirect to login page
-    signOut({ callbackUrl: "/login" });
+  const handleLogout = async () => {
+    // local logout from NextAuth
+    await signOut({ redirect: false });
 
-    // todo: logout from keycloak too
+    // url config for Keycloak logout
+    const issuerUrl =
+      process.env.NEXT_PUBLIC_KEYCLOAK_ISSUER ||
+      "http://localhost:8180/realms/swam-realm";
+    const logoutUrl = `${issuerUrl}/protocol/openid-connect/logout`;
+
+    const params = new URLSearchParams();
+    params.set("post_logout_redirect_uri", window.location.origin + "/login");
+    
+    if (session?.idToken) {
+      params.set("id_token_hint", session.idToken);
+    } else {
+      params.set("client_id", "swam-frontend");
+      params.set("ui_locales", "it");
+    }
+
+    // redirect to Keycloak logout
+    window.location.href = `${logoutUrl}?${params.toString()}`;
   };
 
   return (

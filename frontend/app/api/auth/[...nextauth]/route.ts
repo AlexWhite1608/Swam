@@ -8,14 +8,15 @@ interface KeycloakToken {
   };
 }
 
-const keycloakInternalUrl = process.env.KEYCLOAK_DOCKER_ISSUER || process.env.KEYCLOAK_ISSUER;
+const keycloakInternalUrl =
+  process.env.KEYCLOAK_DOCKER_ISSUER || process.env.KEYCLOAK_ISSUER;
 
 export const authOptions: NextAuthOptions = {
   providers: [
     KeycloakProvider({
       clientId: process.env.KEYCLOAK_CLIENT_ID!,
       clientSecret: process.env.KEYCLOAK_CLIENT_SECRET!,
-      issuer: process.env.KEYCLOAK_ISSUER, 
+      issuer: process.env.KEYCLOAK_ISSUER,
       wellKnown: `${keycloakInternalUrl}/.well-known/openid-configuration`,
 
       authorization: {
@@ -26,7 +27,7 @@ export const authOptions: NextAuthOptions = {
       },
       token: `${keycloakInternalUrl}/protocol/openid-connect/token`,
       userinfo: `${keycloakInternalUrl}/protocol/openid-connect/userinfo`,
-      
+
       jwks_endpoint: `${keycloakInternalUrl}/protocol/openid-connect/certs`,
     }),
   ],
@@ -38,28 +39,35 @@ export const authOptions: NextAuthOptions = {
         token.accessToken = account.access_token;
         token.refreshToken = account.refresh_token;
         token.expiresAt = account.expires_at;
+        token.idToken = account.id_token;
+
+        token.refreshToken = account.refresh_token;
+        token.expiresAt = account.expires_at;
 
         if (account.access_token) {
-            try {
-                const decoded = jwtDecode<KeycloakToken>(account.access_token);
-                token.roles = decoded.realm_access?.roles || [];
-            } catch (error) {
-                console.error("Errore decodifica token", error);
-            }
+          try {
+            const decoded = jwtDecode<KeycloakToken>(account.access_token);
+            token.roles = decoded.realm_access?.roles || [];
+          } catch (error) {
+            console.error("Errore decodifica token", error);
+          }
         }
       }
       return token;
     },
     async session({ session, token }) {
-      session.accessToken = token.accessToken;
-      session.user.roles = token.roles;
+      session.accessToken =
+        typeof token.accessToken === "string" ? token.accessToken : undefined;
+      session.idToken =
+        typeof token.idToken === "string" ? token.idToken : undefined;
+      session.user.roles = Array.isArray(token.roles) ? token.roles : [];
       return session;
     },
   },
   pages: {
-    signIn: "/login", 
+    signIn: "/login",
   },
-  debug: true, 
+  debug: true,
 };
 
 const handler = NextAuth(authOptions);
