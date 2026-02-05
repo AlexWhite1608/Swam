@@ -1,5 +1,5 @@
 target/
-!.mvn/wrapper/maven-wrapper.jar
+!**/.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
 .kotlin
@@ -23,11 +23,11 @@ target/
 .sts4-cache
 
 ### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
+nbproject/private/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
 build/
 !**/src/main/**/build/
 !**/src/test/**/build/
@@ -38,4 +38,9 @@ build/
 ### Mac OS ###
 .DS_Store
 .idea/
-.mvn/
+
+### Environment Variables ###
+.env
+
+# realm config files
+backend/keycloak-config/
