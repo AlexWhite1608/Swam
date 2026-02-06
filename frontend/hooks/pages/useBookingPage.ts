@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 
 import { useResources } from "@/hooks/tanstack-query/useResources";
-import { getBookingColumns } from "@/app/bookings/_components/BookingColumns";
+import { getBookingColumns } from "@/app/(protected)/bookings/_components/BookingColumns";
 import {
   useBookings,
   useBulkDeleteBookings,

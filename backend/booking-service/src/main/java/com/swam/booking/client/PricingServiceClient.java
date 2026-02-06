@@ -6,7 +6,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-// "url" prende l'indirizzo dalla configurazione
+// "url" takes the value of the configuration
 @FeignClient(name = "pricing-service", url = "${PRICING_URI:http://localhost:8082}")
 public interface PricingServiceClient {
 

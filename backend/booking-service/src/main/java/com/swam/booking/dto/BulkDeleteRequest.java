@@ -1,4 +1,4 @@
-package com.swam.resource.dto;
+package com.swam.booking.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

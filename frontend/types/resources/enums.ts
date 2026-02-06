@@ -11,3 +11,5 @@ export const ResourceStatus = {
   MAINTENANCE: "MAINTENANCE",
   OUT_OF_ORDER: "OUT_OF_ORDER",
 } as const;
+
+export type ResourceType = typeof ResourceType[keyof typeof ResourceType];
