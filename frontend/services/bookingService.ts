@@ -23,6 +23,8 @@ export interface CheckInCompanion {
   customerId?: string;
   firstName: string;
   lastName: string;
+  arrivalDate: string;
+  departureDate: string;
   sex: SexType;
   birthDate: string;
   email?: string;
@@ -40,6 +42,8 @@ export interface CheckInPayload {
   customerId?: string;
   firstName: string;
   lastName: string;
+  arrivalDate: string;
+  departureDate: string;
   sex: SexType;
   birthDate: string;
   email?: string;
@@ -88,6 +92,13 @@ export interface BookingSearchParams {
   customerId?: string;
 }
 
+export interface UpdateExtrasPayload {
+  extras: {
+    extraOptionId: string;
+    quantity: number;
+  }[];
+}
+
 export const bookingService = {
   // Get all bookings
   getAll: async (): Promise<Booking[]> => {
@@ -128,6 +139,18 @@ export const bookingService = {
     payload: UpdateStayPayload;
   }): Promise<Booking> => {
     const { data } = await api.patch(`/api/bookings/${id}/stay`, payload);
+    return data;
+  },
+
+  // Update Extras (add/remove extras for a booking)
+  updateExtras: async ({
+    id,
+    payload,
+  }: {
+    id: string;
+    payload: UpdateExtrasPayload;
+  }): Promise<Booking> => {
+    const { data } = await api.put(`/api/bookings/${id}/extras`, payload);
     return data;
   },
 

@@ -47,6 +47,7 @@ export const useBookingsPage = () => {
   const [isConfirmDepositDialogOpen, setIsConfirmDepositDialogOpen] =
     useState(false);
   const [isExtendSplitOpen, setIsExtendSplitOpen] = useState(false);
+  const [isExtrasDialogOpen, setIsExtrasDialogOpen] = useState(false);
 
   // dialog for managing different modes (CREATE, EDIT, CHECKIN, CHECKOUT)
   const [dialogMode, setDialogMode] = useState<BookingDialogMode>("CREATE");
@@ -64,6 +65,7 @@ export const useBookingsPage = () => {
   const [bookingToUpdateStay, setBookingToUpdateStay] =
     useState<Booking | null>(null);
   const [bookingToExtend, setBookingToExtend] = useState<Booking | null>(null);
+  const [bookingToManageExtras, setBookingToManageExtras] = useState<Booking | null>(null); 
 
   // table reset callback
   const [resetSelectionTrigger, setResetSelectionTrigger] = useState(0);
@@ -106,6 +108,12 @@ export const useBookingsPage = () => {
     setSelectedBooking(booking);
     setDialogMode("CHECKOUT");
     setIsDialogOpen(true);
+  };
+
+  // opens the dialog to manage extras
+  const openExtrasDialog = (booking: Booking) => {
+    setBookingToManageExtras(booking);
+    setIsExtrasDialogOpen(true);
   };
 
   // opens the confirm booking dialog
@@ -176,6 +184,7 @@ export const useBookingsPage = () => {
         onConfirm: openConfirmDialog,
         onCancel: openCancelDialog,
         onConfirmDeposit: handleConfirmDeposit,
+        onManageExtras: openExtrasDialog,
         onExtendSplit: openExtendSplitDialog,
       }),
     [resources],
@@ -200,6 +209,7 @@ export const useBookingsPage = () => {
       isBulkDeleteOpen: isBulkDeleteDialogOpen,
       isConfirmDepositOpen: isConfirmDepositDialogOpen,
       isExtendSplitOpen: isExtendSplitOpen,
+      isExtrasDialogOpen: isExtrasDialogOpen,
     },
 
     // Data State
@@ -211,6 +221,7 @@ export const useBookingsPage = () => {
       bookingForDeposit,
       bookingToUpdateStay,
       bookingToExtend,
+      bookingToManageExtras,
     },
 
     // Mutation State
@@ -230,6 +241,7 @@ export const useBookingsPage = () => {
       setBulkDeleteOpen: setIsBulkDeleteDialogOpen,
       setConfirmDepositOpen: setIsConfirmDepositDialogOpen,
       setExtendSplitOpen: setIsExtendSplitOpen,
+      setExtrasDialogOpen: setIsExtrasDialogOpen,
 
       openCreateDialog,
       openEditDialog,
@@ -241,6 +253,7 @@ export const useBookingsPage = () => {
       confirmCancel,
       requestBulkDelete,
       confirmBulkDelete,
+      openExtrasDialog,
     },
   };
 };

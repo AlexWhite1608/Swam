@@ -14,6 +14,7 @@ import {
   LogIn,
   LogOut,
   MoreHorizontal,
+  ShoppingBag,
   Split,
   Trash,
   User,
@@ -51,6 +52,7 @@ interface GetBookingColumnsProps {
   onConfirm: (booking: Booking) => void;
   onCancel: (booking: Booking) => void;
   onConfirmDeposit: (booking: Booking) => void;
+  onManageExtras: (booking: Booking) => void;
   onExtendSplit: (booking: Booking) => void;
 }
 
@@ -63,6 +65,7 @@ export const getBookingColumns = ({
   onConfirm,
   onCancel,
   onConfirmDeposit,
+  onManageExtras,
   onExtendSplit,
 }: GetBookingColumnsProps): ColumnDef<Booking>[] => [
   // select
@@ -444,7 +447,6 @@ export const getBookingColumns = ({
         (breakdown?.depositAmount ?? 0) > 0 && !isDepositPaid;
       const isCancelled = row.original.status === "CANCELLED";
       const isCheckedIn = row.original.status === "CHECKED_IN";
-      const isConfirmed = row.original.status === "CONFIRMED";
 
       return (
         <div onClick={(e) => e.stopPropagation()}>
@@ -475,6 +477,13 @@ export const getBookingColumns = ({
                 <DropdownMenuItem onClick={() => onConfirm(row.original)}>
                   <Check className="h-4 w-4 hover:text-foreground" />
                   Conferma Prenotazione
+                </DropdownMenuItem>
+              )}
+
+              {!isCancelled && isCheckedIn && (
+                <DropdownMenuItem onClick={() => onManageExtras(row.original)}>
+                  <ShoppingBag className="h-4 w-4 hover:text-foreground" />
+                  Gestione Extra
                 </DropdownMenuItem>
               )}
 

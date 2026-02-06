@@ -118,18 +118,33 @@ export function BookingDialog({
               isLoading={updateCheckInMutation.isPending}
               onCancel={() => onOpenChange(false)}
               onSubmit={(formData) => {
-                if (!formData.birthDate) return;
+                if (
+                  !formData.birthDate ||
+                  !formData.arrivalDate ||
+                  !formData.departureDate
+                )
+                  return;
 
                 const validCompanions = formData.companions?.filter(
-                  (c) => c.birthDate !== undefined,
+                  (c) =>
+                    c.birthDate !== undefined &&
+                    c.arrivalDate !== undefined &&
+                    c.departureDate !== undefined,
                 );
 
                 const payload = {
                   ...formData,
                   birthDate: format(formData.birthDate, "yyyy-MM-dd"),
+                  arrivalDate: format(formData.arrivalDate, "yyyy-MM-dd"),
+                  departureDate: format(formData.departureDate, "yyyy-MM-dd"),
                   companions: validCompanions?.map((companion) => ({
                     ...companion,
                     birthDate: format(companion.birthDate!, "yyyy-MM-dd"),
+                    arrivalDate: format(companion.arrivalDate!, "yyyy-MM-dd"),
+                    departureDate: format(
+                      companion.departureDate!,
+                      "yyyy-MM-dd",
+                    ),
                   })),
                 };
 
@@ -152,35 +167,61 @@ export function BookingDialog({
         return (
           <BookingCheckInForm
             booking={booking}
-            isLoading={checkInMutation.isPending}
+            isLoading={
+              checkInMutation.isPending || updateCheckInMutation.isPending
+            }
             onCancel={() => onOpenChange(false)}
             onSubmit={(formData) => {
-              if (!formData.birthDate) {
+              if (
+                !formData.birthDate ||
+                !formData.arrivalDate ||
+                !formData.departureDate
+              ) {
                 return;
               }
 
-              // Filter companions with valid birthdates
+              // Filter companions with valid birthdates and dates
               const validCompanions = formData.companions?.filter(
-                (c) => c.birthDate !== undefined,
+                (c) =>
+                  c.birthDate !== undefined &&
+                  c.arrivalDate !== undefined &&
+                  c.departureDate !== undefined,
               );
 
               const payload = {
                 ...formData,
                 birthDate: format(formData.birthDate, "yyyy-MM-dd"),
+                arrivalDate: format(formData.arrivalDate, "yyyy-MM-dd"),
+                departureDate: format(formData.departureDate, "yyyy-MM-dd"),
                 companions: validCompanions?.map((companion) => ({
                   ...companion,
                   birthDate: format(companion.birthDate!, "yyyy-MM-dd"),
+                  arrivalDate: format(companion.arrivalDate!, "yyyy-MM-dd"),
+                  departureDate: format(companion.departureDate!, "yyyy-MM-dd"),
                 })),
               };
 
-              checkInMutation.mutate(
-                { id: booking.id, payload },
-                {
-                  onSuccess: () => {
-                    onOpenChange(false);
+              if (booking.status === "CHECKED_IN") {
+                // if already checked-in, use update mutation
+                updateCheckInMutation.mutate(
+                  { id: booking.id, payload },
+                  {
+                    onSuccess: () => {
+                      onOpenChange(false);
+                    },
                   },
-                },
-              );
+                );
+              } else {
+                // else use check-in mutation
+                checkInMutation.mutate(
+                  { id: booking.id, payload },
+                  {
+                    onSuccess: () => {
+                      onOpenChange(false);
+                    },
+                  },
+                );
+              }
             }}
           />
         );

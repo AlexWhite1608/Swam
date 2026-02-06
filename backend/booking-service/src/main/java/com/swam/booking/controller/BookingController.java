@@ -97,7 +97,13 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.splitBooking(id, request));
     }
 
-    //TODO: endpoint PUT /api/bookings/{id}/extras per modifica extra del booking
+    // updates the extras of an existing booking
+    @PutMapping("/{id}/extras")
+    public ResponseEntity<BookingResponse> updateBookingExtras(
+            @PathVariable String id,
+            @Valid @RequestBody UpdateBookingExtrasRequest request) {
+        return ResponseEntity.ok(bookingService.updateBookingExtras(id, request));
+    }
 
     // cancels an existing booking by setting its status to CANCELLED
     @PatchMapping("/{id}/cancel")

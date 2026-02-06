@@ -17,7 +17,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { X, Trash2 } from "lucide-react";
+import { Trash, X } from "lucide-react";
 import * as React from "react";
 
 import { Button } from "@/components/ui/button";
@@ -29,8 +29,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import { DataTablePagination } from "@/components/data-table/data-table-pagination";
 import { DataTableFiltersDialog } from "@/components/data-table/data-table-filters-dialog";
+import { DataTablePagination } from "@/components/data-table/data-table-pagination";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -188,7 +188,7 @@ export function DataTable<TData, TValue>({
             className="text-red-600 focus:text-red-600 focus:bg-red-50 hover:bg-red-50"
             onClick={handleBulkDelete}
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash className="h-4 w-4" />
             Rimuovi ({selectedRows.length})
           </Button>
         )}

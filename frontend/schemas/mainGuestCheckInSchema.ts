@@ -1,4 +1,3 @@
-// mainGuestCheckInSchema.ts
 import {
   DocumentType,
   GuestRole,
@@ -10,11 +9,14 @@ import { companionCheckInSchema } from "./companionCheckInSchema";
 
 export const mainGuestCheckInSchema = z
   .object({
-    // main guest details
     customerId: z.string().optional(),
-    
+
     firstName: z.string().min(1, { message: "" }),
     lastName: z.string().min(1, { message: "" }),
+
+    arrivalDate: z.date({ error: "" }),
+    departureDate: z.date({ error: "" }),
+
     sex: z.enum(Sex),
     birthDate: z.date().optional(),
 
@@ -41,6 +43,6 @@ export const mainGuestCheckInSchema = z
   .refine((data) => data.birthDate !== undefined, {
     message: "",
     path: ["birthDate"],
-  });
+  })
 
 export type CheckInFormValues = z.infer<typeof mainGuestCheckInSchema>;

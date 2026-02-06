@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -116,6 +117,59 @@ public class BookingService {
 
         booking.setUpdatedAt(LocalDateTime.now());
         return mapToResponse(bookingRepository.save(booking));
+    }
+
+    // updates the extras of an existing booking (and linked group bookings)
+    @Transactional
+    public BookingResponse updateBookingExtras(String bookingId, UpdateBookingExtrasRequest request) {
+        Booking booking = getBookingOrThrow(bookingId);
+
+        if (booking.getStatus() == BookingStatus.CANCELLED) {
+            throw new IllegalStateException("Non puoi modificare gli extra di una prenotazione cancellata.");
+        }
+
+        List<BookingExtra> newExtras = new ArrayList<>();
+
+        for (UpdateBookingExtrasRequest.ExtraItem item : request.getExtras()) {
+            // gets the current option data to snapshot name and price
+            ExtraOption option = extraOptionService.getExtraEntity(item.getExtraOptionId());
+
+            BookingExtra bookingExtra = BookingExtra.builder()
+                    .extraOptionId(option.getId())
+                    .nameSnapshot(option.getName())
+                    .descriptionSnapshot(option.getDescription())
+                    .priceSnapshot(option.getDefaultPrice())
+                    .quantity(item.getQuantity())
+                    .build();
+
+            newExtras.add(bookingExtra);
+        }
+
+        // find with bookings to update (single or group)
+        List<Booking> bookingsToUpdate = new ArrayList<>();
+
+        if (booking.getGroupId() != null) {
+            bookingsToUpdate.addAll(bookingRepository.findByGroupId(booking.getGroupId()));
+        } else {
+            bookingsToUpdate.add(booking);
+        }
+
+        for (Booking b : bookingsToUpdate) {
+            if (b.getStatus() != BookingStatus.CANCELLED) {
+                b.setExtras(new ArrayList<>(newExtras));
+
+                b.setUpdatedAt(LocalDateTime.now());
+            }
+        }
+
+        bookingRepository.saveAll(bookingsToUpdate);
+
+        Booking updatedOriginal = bookingsToUpdate.stream()
+                .filter(b -> b.getId().equals(bookingId))
+                .findFirst()
+                .orElse(booking);
+
+        return mapToResponse(updatedOriginal);
     }
 
     // edit stay details (dates, resource) of an existing booking
@@ -216,6 +270,9 @@ public class BookingService {
 
         // main guest snapshot for booking, adds guestRole
         Guest mainGuestSnapshot = customerService.createGuestSnapshot(mainCustomer, request.getGuestRole());
+        mainGuestSnapshot.setArrivalDate(request.getArrivalDate());
+        mainGuestSnapshot.setDepartureDate(request.getDepartureDate());
+
         booking.setMainGuest(mainGuestSnapshot);
 
         // set eventual notes
@@ -234,6 +291,9 @@ public class BookingService {
 
                 // companion snapshot
                 Guest companionSnapshot = customerService.createGuestSnapshot(compCustomer, compData.getGuestRole());
+
+                companionSnapshot.setArrivalDate(compData.getArrivalDate());
+                companionSnapshot.setDepartureDate(compData.getDepartureDate());
 
                 companionSnapshots.add(companionSnapshot);
             }
@@ -279,14 +339,19 @@ public class BookingService {
         // mapping to GuestProfile for pricing request
         List<PriceCalculationRequest.GuestProfile> guestProfiles = allGuests.stream()
                 .map(g -> {
-                    int realDays = (g.getDaysOfStay() == null || g.getDaysOfStay() <= 0)
-                            ? maxBookingDays
-                            : Math.min(g.getDaysOfStay(), maxBookingDays);
+                    // get effective stay dates for the guest
+                    LocalDate guestStart = g.getArrivalDate() != null ? g.getArrivalDate() : booking.getCheckIn();
+                    LocalDate guestEnd = g.getDepartureDate() != null ? g.getDepartureDate() : booking.getCheckOut();
+
+                    // calculate days of stay, capped to booking max days
+                    int calculatedDays = (int) ChronoUnit.DAYS.between(guestStart, guestEnd);
+
+                    if (calculatedDays < 0) calculatedDays = 0;
 
                     return PriceCalculationRequest.GuestProfile.builder()
                             .type(g.getGuestType())
                             .taxExempt(g.isTaxExempt())
-                            .days(realDays)
+                            .days(calculatedDays)
                             .taxExemptMotivation(g.getTaxExemptReason())
                             .build();
                 })
@@ -466,6 +531,10 @@ public class BookingService {
 
         Guest mainGuestSnapshot = customerService.createGuestSnapshot(mainCustomer, request.getGuestRole());
 
+        // Set arrival and departure dates for main guest
+        mainGuestSnapshot.setArrivalDate(request.getArrivalDate());
+        mainGuestSnapshot.setDepartureDate(request.getDepartureDate());
+
         currentBooking.setNotes(request.getNotes());
 
         List<Guest> companionSnapshots = new ArrayList<>();
@@ -473,6 +542,11 @@ public class BookingService {
             for (CheckInRequest.CompanionData compData : request.getCompanions()) {
                 CustomerResponse compCustomer = customerService.registerOrUpdateCompanion(compData);
                 Guest companionSnapshot = customerService.createGuestSnapshot(compCustomer, compData.getGuestRole());
+
+                // Set arrival and departure dates for companion
+                companionSnapshot.setArrivalDate(compData.getArrivalDate());
+                companionSnapshot.setDepartureDate(compData.getDepartureDate());
+
                 companionSnapshots.add(companionSnapshot);
             }
         }
@@ -571,6 +645,9 @@ public class BookingService {
                 // guest and companions copy
                 .mainGuest(original.getMainGuest())
                 .companions(new ArrayList<>(original.getCompanions()))
+
+                // extras copy
+                .extras(original.getExtras() != null ? new ArrayList<>(original.getExtras()) : new ArrayList<>())
 
                 // chaining
                 .groupId(original.getGroupId())

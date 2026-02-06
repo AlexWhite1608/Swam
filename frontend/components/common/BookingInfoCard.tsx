@@ -1,5 +1,6 @@
 import { useResource } from "@/hooks/tanstack-query/useResources";
 import { NAV_ITEMS } from "@/lib/navigation";
+import { cn } from "@/lib/utils";
 import { Booking } from "@/types/bookings/types";
 import { format, parseISO } from "date-fns";
 import { it } from "date-fns/locale";
@@ -77,22 +78,21 @@ export function BookingInfoCard({
             <ResourceIcon className="h-4 w-4 text-muted-foreground shrink-0" />
           )}
           <div className="flex items-center gap-2 flex-wrap min-w-0 flex-1">
-            <span className="truncate">
-              Risorsa:{" "}
-              <strong
-                className={
-                  hasResourceChange
-                    ? "line-through text-muted-foreground font-normal"
-                    : ""
-                }
-              >
-                {resource?.name}
-              </strong>
-            </span>
+            <span className="shrink-0">Risorsa:</span>
+            <strong
+              className={cn(
+                "truncate min-w-0",
+                hasResourceChange
+                  ? "line-through text-muted-foreground font-normal"
+                  : "",
+              )}
+            >
+              {resource?.name}
+            </strong>
             {hasResourceChange && (
               <>
                 <ArrowRight className="h-3 w-3 text-primary shrink-0" />
-                <strong className="text-primary truncate">
+                <strong className="text-primary truncate min-w-0">
                   {newResource?.name}
                 </strong>
               </>

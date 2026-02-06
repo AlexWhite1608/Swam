@@ -141,10 +141,28 @@ export const useUpdateStay = () => {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: bookingKeys.all });
       queryClient.invalidateQueries({ queryKey: bookingKeys.detail(data.id) });
-      toast.success("Soggiorno modificato con successo");
     },
     onError: (error: any) => {
       toast.error("Errore modifica soggiorno", {
+        description: getErrorMessage(error),
+      });
+    },
+  });
+};
+
+// updates extras (add/remove extras for a booking)
+export const useUpdateBookingExtras = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: bookingService.updateExtras,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: bookingKeys.all });
+      queryClient.invalidateQueries({ queryKey: bookingKeys.detail(data.id) });
+      toast.success("Extra aggiornati con successo");
+    },
+    onError: (error: any) => {
+      toast.error("Errore aggiornamento extra", {
         description: getErrorMessage(error),
       });
     },
@@ -260,6 +278,7 @@ export const useUnavailableDates = (
     queryFn: () =>
       bookingService.getUnavailablePeriods(resourceId!, excludeBookingId),
     staleTime: 1000 * 60 * 5,
+    enabled: !!resourceId,
   });
 };
 
