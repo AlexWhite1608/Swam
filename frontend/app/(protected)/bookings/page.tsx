@@ -15,6 +15,9 @@ import { useBookingsPage } from "@/hooks/pages/useBookingPage";
 import { BookingDialog } from "./_components/BookingDialog";
 import { BookingTableFilters } from "./_components/BookingTableFilters";
 import { ConfirmBookingDialog } from "./_components/ConfirmBookingDialog";
+import { ConfirmDepositDialog } from "./_components/ConfirmDepositDialog";
+import { EditStayDialog } from "./_components/EditStayDialog";
+import { BookingExtrasDialog } from "./_components/BookingExtraDialog";
 
 export default function BookingsPage() {
   const {
@@ -91,6 +94,13 @@ export default function BookingsPage() {
         booking={selections.selectedBooking}
       />
 
+      {/* Confirm deposit dialog */}
+      <ConfirmDepositDialog
+        isOpen={dialogs.isConfirmDepositOpen}
+        onOpenChange={actions.setConfirmDepositOpen}
+        booking={selections.bookingForDeposit}
+      />
+
       {/* Single system Delete Confirmation */}
       <ConfirmDialog
         isOpen={dialogs.isDeleteOpen}
@@ -126,6 +136,19 @@ export default function BookingsPage() {
         }
         confirmText="Conferma"
         isLoading={isCanceling}
+      />
+
+      <BookingExtrasDialog
+        isOpen={dialogs.isExtrasDialogOpen}
+        onOpenChange={actions.setExtrasDialogOpen}
+        booking={selections.bookingToManageExtras}
+      />
+
+      <EditStayDialog
+        isOpen={dialogs.isExtendSplitOpen}
+        onOpenChange={actions.setExtendSplitOpen}
+        booking={selections.bookingToExtend}
+        onOpenCheckIn={actions.openCheckInDialog}
       />
 
       {/* bulk delete */}

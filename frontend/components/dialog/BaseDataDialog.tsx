@@ -1,3 +1,4 @@
+// BaseDataDialog.tsx
 "use client";
 
 import {
@@ -7,11 +8,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ReactNode } from "react";
 
 interface BaseDataDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  title: string;
+  title: string | ReactNode;
   description?: string;
   children: React.ReactNode;
   className?: string;
@@ -24,7 +26,7 @@ interface BaseDataDialogProps {
  *
  * @param isOpen - Boolean indicating whether the dialog is open.
  * @param onOpenChange - Callback function triggered when the dialog's open state changes.
- * @param title - The title text displayed at the top of the dialog.
+ * @param title - The title text or React component displayed at the top of the dialog.
  * @param description - Optional description text displayed below the title.
  * @param children - React nodes to be rendered as the dialog's main content.
  * @param className - Optional additional CSS classes for customizing the dialog's appearance.
@@ -44,7 +46,9 @@ export function BaseDataDialog({
         onInteractOutside={(e) => e.preventDefault()}
       >
         <DialogHeader>
-          <DialogTitle className="text-primary">{title}</DialogTitle>
+          <DialogTitle className="text-primary">
+            {typeof title === "string" ? title : <div>{title}</div>}
+          </DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
         <div className="mt-2">{children}</div>

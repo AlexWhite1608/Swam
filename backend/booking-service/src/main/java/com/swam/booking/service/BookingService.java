@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -111,15 +112,90 @@ public class BookingService {
 
         booking.setMainGuest(updatedGuest);
 
-        // customer sync (if linked)
-        if (updatedGuest.getCustomerId() != null) {
-            // TODO: Implementare aggiornamento anagrafica cliente nella tabella Customer?
-        }
-
         // update deposit amount
         booking.getPriceBreakdown().setDepositAmount(request.getDepositAmount());
 
         booking.setUpdatedAt(LocalDateTime.now());
+        return mapToResponse(bookingRepository.save(booking));
+    }
+
+    // updates the extras of an existing booking (and linked group bookings)
+    @Transactional
+    public BookingResponse updateBookingExtras(String bookingId, UpdateBookingExtrasRequest request) {
+        Booking booking = getBookingOrThrow(bookingId);
+
+        if (booking.getStatus() == BookingStatus.CANCELLED) {
+            throw new IllegalStateException("Non puoi modificare gli extra di una prenotazione cancellata.");
+        }
+
+        List<BookingExtra> newExtras = new ArrayList<>();
+
+        for (UpdateBookingExtrasRequest.ExtraItem item : request.getExtras()) {
+            // gets the current option data to snapshot name and price
+            ExtraOption option = extraOptionService.getExtraEntity(item.getExtraOptionId());
+
+            BookingExtra bookingExtra = BookingExtra.builder()
+                    .extraOptionId(option.getId())
+                    .nameSnapshot(option.getName())
+                    .descriptionSnapshot(option.getDescription())
+                    .priceSnapshot(option.getDefaultPrice())
+                    .quantity(item.getQuantity())
+                    .build();
+
+            newExtras.add(bookingExtra);
+        }
+
+        // find with bookings to update (single or group)
+        List<Booking> bookingsToUpdate = new ArrayList<>();
+
+        if (booking.getGroupId() != null) {
+            bookingsToUpdate.addAll(bookingRepository.findByGroupId(booking.getGroupId()));
+        } else {
+            bookingsToUpdate.add(booking);
+        }
+
+        for (Booking b : bookingsToUpdate) {
+            if (b.getStatus() != BookingStatus.CANCELLED) {
+                b.setExtras(new ArrayList<>(newExtras));
+
+                b.setUpdatedAt(LocalDateTime.now());
+            }
+        }
+
+        bookingRepository.saveAll(bookingsToUpdate);
+
+        Booking updatedOriginal = bookingsToUpdate.stream()
+                .filter(b -> b.getId().equals(bookingId))
+                .findFirst()
+                .orElse(booking);
+
+        return mapToResponse(updatedOriginal);
+    }
+
+    // edit stay details (dates, resource) of an existing booking
+    @Transactional
+    public BookingResponse updateBookingStay(String bookingId, EditBookingStayRequest request) {
+        Booking booking = getBookingOrThrow(bookingId);
+
+        if (booking.getStatus() == BookingStatus.CANCELLED || booking.getStatus() == BookingStatus.CHECKED_OUT) {
+            throw new IllegalStateException("Non puoi modificare una prenotazione conclusa o cancellata.");
+        }
+
+        // check availability if dates or resource changed (excluding current booking)
+        boolean changed = !booking.getResourceId().equals(request.getResourceId()) ||
+                !booking.getCheckIn().equals(request.getCheckIn()) ||
+                !booking.getCheckOut().equals(request.getCheckOut());
+
+        if (changed) {
+            validateDates(request.getResourceId(), request.getCheckIn(), request.getCheckOut(), bookingId);
+
+            booking.setResourceId(request.getResourceId());
+            booking.setCheckIn(request.getCheckIn());
+            booking.setCheckOut(request.getCheckOut());
+
+            booking.setUpdatedAt(LocalDateTime.now());
+        }
+
         return mapToResponse(bookingRepository.save(booking));
     }
 
@@ -194,6 +270,9 @@ public class BookingService {
 
         // main guest snapshot for booking, adds guestRole
         Guest mainGuestSnapshot = customerService.createGuestSnapshot(mainCustomer, request.getGuestRole());
+        mainGuestSnapshot.setArrivalDate(request.getArrivalDate());
+        mainGuestSnapshot.setDepartureDate(request.getDepartureDate());
+
         booking.setMainGuest(mainGuestSnapshot);
 
         // set eventual notes
@@ -213,6 +292,9 @@ public class BookingService {
                 // companion snapshot
                 Guest companionSnapshot = customerService.createGuestSnapshot(compCustomer, compData.getGuestRole());
 
+                companionSnapshot.setArrivalDate(compData.getArrivalDate());
+                companionSnapshot.setDepartureDate(compData.getDepartureDate());
+
                 companionSnapshots.add(companionSnapshot);
             }
         }
@@ -225,6 +307,7 @@ public class BookingService {
         return mapToResponse(bookingRepository.save(booking));
     }
 
+    //TODO: gestione prenotazione split da unificare con check-out
     @Transactional
     public BookingResponse checkOut(String bookingId, CheckOutRequest request) {
         Booking booking = getBookingOrThrow(bookingId);
@@ -256,14 +339,19 @@ public class BookingService {
         // mapping to GuestProfile for pricing request
         List<PriceCalculationRequest.GuestProfile> guestProfiles = allGuests.stream()
                 .map(g -> {
-                    int realDays = (g.getDaysOfStay() == null || g.getDaysOfStay() <= 0)
-                            ? maxBookingDays
-                            : Math.min(g.getDaysOfStay(), maxBookingDays);
+                    // get effective stay dates for the guest
+                    LocalDate guestStart = g.getArrivalDate() != null ? g.getArrivalDate() : booking.getCheckIn();
+                    LocalDate guestEnd = g.getDepartureDate() != null ? g.getDepartureDate() : booking.getCheckOut();
+
+                    // calculate days of stay, capped to booking max days
+                    int calculatedDays = (int) ChronoUnit.DAYS.between(guestStart, guestEnd);
+
+                    if (calculatedDays < 0) calculatedDays = 0;
 
                     return PriceCalculationRequest.GuestProfile.builder()
                             .type(g.getGuestType())
                             .taxExempt(g.isTaxExempt())
-                            .days(realDays)
+                            .days(calculatedDays)
                             .taxExemptMotivation(g.getTaxExemptReason())
                             .build();
                 })
@@ -289,10 +377,11 @@ public class BookingService {
     }
 
     public List<BookingResponse> getAllBookings() {
-        return bookingRepository.findAll().stream()
+        return bookingRepository.findAllByOrderByCreatedAtDesc().stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
+
 
     // get unavailable periods for a resource (excluding optional booking)
     public List<UnavailablePeriodResponse> getUnavailablePeriods(String resourceId, String excludeBookingId) {
@@ -413,6 +502,165 @@ public class BookingService {
         return mapToResponse(bookingRepository.save(booking));
     }
 
+    // update booking guests during CHECKED_IN status
+    @Transactional
+    public BookingResponse updateBookingCheckIn(String bookingId, CheckInRequest request) {
+        Booking currentBooking = getBookingOrThrow(bookingId);
+
+        if (currentBooking.getStatus() != BookingStatus.CHECKED_IN) {
+            throw new IllegalStateException("Modifica consentita solo per prenotazioni nello stato CHECKED_IN.");
+        }
+
+        // main guest customer data
+        CreateCustomerRequest mainGuestData = CreateCustomerRequest.builder()
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .sex(request.getSex())
+                .birthDate(request.getBirthDate())
+                .email(request.getEmail())
+                .phone(request.getPhone())
+                .placeOfBirth(request.getPlaceOfBirth())
+                .citizenship(request.getCitizenship())
+                .documentType(request.getDocumentType())
+                .documentNumber(request.getDocumentNumber())
+                .documentPlaceOfIssue(request.getDocumentPlaceOfIssue())
+                .guestType(request.getGuestType())
+                .build();
+
+        CustomerResponse mainCustomer = customerService.registerOrUpdateCustomer(mainGuestData);
+
+        Guest mainGuestSnapshot = customerService.createGuestSnapshot(mainCustomer, request.getGuestRole());
+
+        // Set arrival and departure dates for main guest
+        mainGuestSnapshot.setArrivalDate(request.getArrivalDate());
+        mainGuestSnapshot.setDepartureDate(request.getDepartureDate());
+
+        currentBooking.setNotes(request.getNotes());
+
+        List<Guest> companionSnapshots = new ArrayList<>();
+        if (request.getCompanions() != null) {
+            for (CheckInRequest.CompanionData compData : request.getCompanions()) {
+                CustomerResponse compCustomer = customerService.registerOrUpdateCompanion(compData);
+                Guest companionSnapshot = customerService.createGuestSnapshot(compCustomer, compData.getGuestRole());
+
+                // Set arrival and departure dates for companion
+                companionSnapshot.setArrivalDate(compData.getArrivalDate());
+                companionSnapshot.setDepartureDate(compData.getDepartureDate());
+
+                companionSnapshots.add(companionSnapshot);
+            }
+        }
+
+        // find all bookings to update
+        List<Booking> bookingsToUpdate = new ArrayList<>();
+
+        if (currentBooking.getGroupId() != null) {
+            // if it's part of a group, update all bookings in the group
+            bookingsToUpdate.addAll(bookingRepository.findByGroupId(currentBooking.getGroupId()));
+        } else {
+            // otherwise, only the current booking
+            bookingsToUpdate.add(currentBooking);
+        }
+
+        // apply updates to all relevant bookings
+        for (Booking b : bookingsToUpdate) {
+            b.setMainGuest(mainGuestSnapshot);
+
+            b.setCompanions(new ArrayList<>(companionSnapshots));
+
+            b.setNotes(request.getNotes());
+
+            b.setUpdatedAt(LocalDateTime.now());
+        }
+
+        bookingRepository.saveAll(bookingsToUpdate);
+
+        Booking updatedCurrent = bookingsToUpdate.stream()
+                .filter(b -> b.getId().equals(bookingId))
+                .findFirst()
+                .orElse(currentBooking);
+
+        return mapToResponse(updatedCurrent);
+    }
+
+    // extend an existing booking by creating a new linked booking segment
+    @Transactional
+    public BookingResponse extendStayWithSplit(String currentBookingId, ExtendBookingRequest request) {
+        Booking currentBooking = getBookingOrThrow(currentBookingId);
+
+        LocalDate newSegmentStart = currentBooking.getCheckOut();
+        LocalDate newSegmentEnd = request.getNewCheckOutDate();
+
+        if (!newSegmentEnd.isAfter(newSegmentStart)) {
+            throw new InvalidBookingDateException("La data di fine estensione deve essere futura.");
+        }
+
+        // check availability for new segment
+        validateDates(request.getNewResourceId(), newSegmentStart, newSegmentEnd, null);
+
+        // build new linked booking segment
+        Booking extension = createLinkedSegment(currentBooking, request.getNewResourceId(), newSegmentStart, newSegmentEnd);
+
+        return mapToResponse(extension);
+    }
+
+    // split an existing booking into two linked segments at the specified date
+    @Transactional
+    public List<BookingResponse> splitBooking(String bookingId, SplitBookingRequest request) {
+        Booking original = getBookingOrThrow(bookingId);
+        LocalDate splitDate = request.getSplitDate();
+
+        // new resource must be free for the second part
+        validateDates(request.getNewResourceId(), splitDate, original.getCheckOut(), null);
+
+        LocalDate originalEndDate = original.getCheckOut();
+
+        // update original booking to end at split date
+        original.setCheckOut(splitDate);
+        Booking savedOriginal = bookingRepository.save(original);
+
+        // creates the second booking segment
+        Booking secondPart = createLinkedSegment(savedOriginal, request.getNewResourceId(), splitDate, originalEndDate);
+
+        return List.of(mapToResponse(savedOriginal), mapToResponse(secondPart));
+    }
+
+    // creates a new booking segment linked to the original booking
+    private Booking createLinkedSegment(Booking original, String newResourceId, LocalDate from, LocalDate to) {
+        // manage groupId
+        if (original.getGroupId() == null) {
+            original.setGroupId(java.util.UUID.randomUUID().toString());
+            bookingRepository.save(original);
+        }
+
+        // clone
+        Booking nextSegment = Booking.builder()
+                .resourceId(newResourceId)
+                .checkIn(from)
+                .checkOut(to)
+
+                .status(original.getStatus())
+                .paymentStatus(original.getPaymentStatus())
+
+                // guest and companions copy
+                .mainGuest(original.getMainGuest())
+                .companions(new ArrayList<>(original.getCompanions()))
+
+                // extras copy
+                .extras(original.getExtras() != null ? new ArrayList<>(original.getExtras()) : new ArrayList<>())
+
+                // chaining
+                .groupId(original.getGroupId())
+                .parentBookingId(original.getId())
+
+                .priceBreakdown(original.getPriceBreakdown())
+
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        return bookingRepository.save(nextSegment);
+    }
+
     private void validatePaymentStatusTransition(PaymentStatus current, PaymentStatus next) {
         if (current == PaymentStatus.PAID_IN_FULL && next == PaymentStatus.DEPOSIT_PAID) {
             throw new IllegalStateException("Non puoi tornare a DEPOSIT_PAID da PAID_IN_FULL");
@@ -435,6 +683,8 @@ public class BookingService {
 
         return BookingResponse.builder()
                 .id(booking.getId())
+                .groupId(booking.getGroupId())
+                .parentBookingId(booking.getParentBookingId())
                 .resourceId(booking.getResourceId())
                 .checkIn(booking.getCheckIn())
                 .checkOut(booking.getCheckOut())
@@ -444,6 +694,7 @@ public class BookingService {
                 .mainGuest(booking.getMainGuest())
                 .companions(booking.getCompanions())
                 .extras(booking.getExtras())
+                .notes(booking.getNotes())
                 .createdAt(booking.getCreatedAt())
                 .updatedAt(booking.getUpdatedAt())
                 .build();

@@ -31,6 +31,10 @@ public interface BookingRepository extends MongoRepository<Booking, String> {
             "}")
     List<Booking> findOverlaps(String resourceId, LocalDate newCheckIn, LocalDate newCheckOut);
 
+    // find all bookings ordered by creation date descending
+    List<Booking> findAllByOrderByCreatedAtDesc();
+
+
     /**
      * Finds bookings that overlap with the requested interval, excluding a specific booking.
      * Conflict rule: (StartA < EndB) AND (EndA > StartB)
@@ -53,6 +57,9 @@ public interface BookingRepository extends MongoRepository<Booking, String> {
     // finds all active bookings (not CANCELLED) for a given resource
     @Query("{ 'resourceId': ?0, 'status': { $ne: 'CANCELLED' } }")
     List<Booking> findActiveByResourceId(String resourceId);
+
+    // find bookings by group id
+    List<Booking> findByGroupId(String groupId);
 
     // find bookings by main guest id
     List<Booking> findByMainGuestId(String guestId);

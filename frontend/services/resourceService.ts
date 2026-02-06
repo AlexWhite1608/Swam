@@ -1,9 +1,13 @@
 import { api } from "@/lib/api";
-import { Resource, ResourceStatus, ResourceType } from "@/schemas/createResourceSchema";
+import {
+  Resource,
+  ResourceStatusType,
+  ResourceTypeType,
+} from "@/types/resources/types";
 
 interface SearchResourcesParams {
-  type?: ResourceType;
-  status?: ResourceStatus;
+  type?: ResourceTypeType;
+  status?: ResourceStatusType;
   name?: string;
 }
 
@@ -45,7 +49,7 @@ export const resourceService = {
   },
 
   // Update resource status
-  updateStatus: async (id: string, status: ResourceStatus): Promise<void> => {
+  updateStatus: async (id: string, status: ResourceStatusType): Promise<void> => {
     await api.patch(`/api/resources/${id}/status`, { status });
   },
 

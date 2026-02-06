@@ -27,6 +27,10 @@ public class Guest {
     @NotBlank
     private String lastName;
 
+    private LocalDate arrivalDate;
+
+    private LocalDate departureDate;
+
     private Sex sex;
 
     private LocalDate birthDate;
@@ -49,9 +53,6 @@ public class Guest {
     private GuestType guestType; // ADULT, CHILD, INFANT
 
     private GuestRole guestRole; // HEAD_OF_FAMILY, MEMBER, HEAD_OF_GROUP
-
-    @Min(1)
-    private Integer daysOfStay; // effective days of stay, used for city tax calculation
 
     @Builder.Default
     private boolean taxExempt = false;

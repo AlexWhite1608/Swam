@@ -1,6 +1,12 @@
 import { api } from "@/lib/api";
 import { Booking, CreateBookingFormValues } from "@/types/bookings/types";
-import type { PaymentStatusType, SexType, DocumentTypeType, GuestTypeType, GuestRoleType } from "@/types/bookings/types";
+import type {
+  PaymentStatusType,
+  SexType,
+  DocumentTypeType,
+  GuestTypeType,
+  GuestRoleType,
+} from "@/types/bookings/types";
 
 export interface CreateBookingPayload {
   resourceId: string;
@@ -14,8 +20,30 @@ export interface CreateBookingPayload {
 }
 
 export interface CheckInCompanion {
+  customerId?: string;
   firstName: string;
   lastName: string;
+  arrivalDate: string;
+  departureDate: string;
+  sex: SexType;
+  birthDate: string;
+  email?: string;
+  phone?: string;
+  placeOfBirth?: string;
+  citizenship?: string;
+  documentType?: DocumentTypeType;
+  documentNumber?: string;
+  documentPlaceOfIssue?: string;
+  guestType: GuestTypeType;
+  guestRole: GuestRoleType;
+}
+
+export interface CheckInPayload {
+  customerId?: string;
+  firstName: string;
+  lastName: string;
+  arrivalDate: string;
+  departureDate: string;
   sex: SexType;
   birthDate: string;
   email?: string;
@@ -27,25 +55,19 @@ export interface CheckInCompanion {
   documentPlaceOfIssue?: string;
   guestType: GuestTypeType;
   guestRole: GuestRoleType;
-  notes?: string;
-}
-
-export interface CheckInPayload {
-  firstName: string;
-  lastName: string;
-  sex: SexType;
-  birthDate: string;
-  email?: string;
-  phone: string;
-  placeOfBirth?: string;
-  citizenship?: string;
-  documentType: DocumentTypeType;
-  documentNumber: string;
-  documentPlaceOfIssue?: string;
-  guestType: GuestTypeType;
-  guestRole: GuestRoleType;
   notes?: string; // refers to the booking
   companions?: CheckInCompanion[];
+}
+
+export interface UpdateStayPayload {
+  resourceId: string;
+  checkIn: string;
+  checkOut: string;
+}
+
+export interface ExtendBookingPayload {
+  newResourceId: string;
+  newCheckOutDate: string;
 }
 
 export interface UnavailablePeriod {
@@ -68,6 +90,13 @@ export interface CheckOutPayload {
 export interface BookingSearchParams {
   resourceId?: string;
   customerId?: string;
+}
+
+export interface UpdateExtrasPayload {
+  extras: {
+    extraOptionId: string;
+    quantity: number;
+  }[];
 }
 
 export const bookingService = {
@@ -98,6 +127,72 @@ export const bookingService = {
     payload: CreateBookingFormValues;
   }): Promise<Booking> => {
     const { data } = await api.put(`/api/bookings/${id}`, payload);
+    return data;
+  },
+
+  // Update Stay (change check-in/check-out dates or resource)
+  updateStay: async ({
+    id,
+    payload,
+  }: {
+    id: string;
+    payload: UpdateStayPayload;
+  }): Promise<Booking> => {
+    const { data } = await api.patch(`/api/bookings/${id}/stay`, payload);
+    return data;
+  },
+
+  // Update Extras (add/remove extras for a booking)
+  updateExtras: async ({
+    id,
+    payload,
+  }: {
+    id: string;
+    payload: UpdateExtrasPayload;
+  }): Promise<Booking> => {
+    const { data } = await api.put(`/api/bookings/${id}/extras`, payload);
+    return data;
+  },
+
+  // Extend or Split Booking by creating a new booking for the extended period
+  extendWithSplit: async ({
+    id,
+    payload,
+  }: {
+    id: string;
+    payload: ExtendBookingPayload;
+  }): Promise<Booking> => {
+    const { data } = await api.post(
+      `/api/bookings/${id}/extend-split`,
+      payload,
+    );
+    return data;
+  },
+
+  // Split booking given a split date and new resource
+  split: async ({
+    id,
+    payload,
+  }: {
+    id: string;
+    payload: { splitDate: string; newResourceId: string };
+  }): Promise<Booking> => {
+    const { data } = await api.post(`/api/bookings/${id}/split`, payload);
+    return data;
+  },
+
+  // Update Check-In details (for checked-in bookings)
+  updateCheckIn: async ({
+    id,
+    payload,
+  }: {
+    id: string;
+    payload: CheckInPayload;
+  }): Promise<Booking> => {
+    const { data } = await api.put(
+      `/api/bookings/${id}/update-check-in`,
+      payload,
+    );
     return data;
   },
 

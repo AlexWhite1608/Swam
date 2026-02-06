@@ -84,13 +84,28 @@ public class CustomerService {
 
     @Transactional
     public CustomerResponse registerOrUpdateCompanion(CheckInRequest.CompanionData data) {
-        // check if a Customer with the same firstName, lastName, and birthDate exists
+        // If customerId is provided, try to find and update that specific customer
+        if (data.getCustomerId() != null && !data.getCustomerId().isBlank()) {
+            Optional<Customer> existing = customerRepository.findById(data.getCustomerId());
+            if (existing.isPresent()) {
+                Customer customer = existing.get();
+                customer.setFirstName(data.getFirstName());
+                customer.setLastName(data.getLastName());
+                customer.setSex(data.getSex());
+                customer.setBirthDate(data.getBirthDate());
+                customer.setPlaceOfBirth(data.getPlaceOfBirth());
+                customer.setCitizenship(data.getCitizenship());
+                customer.setGuestType(data.getGuestType());
+                customer.setUpdatedAt(LocalDateTime.now());
+                return mapToResponse(customerRepository.save(customer));
+            }
+        }
+
+        // Otherwise, check if a Customer with the same firstName, lastName, and birthDate exists
         Optional<Customer> existing = customerRepository.findByFirstNameAndLastNameAndBirthDate(
                 data.getFirstName(), data.getLastName(), data.getBirthDate()
         );
 
-        // if already exists, update only the fields provided in the "light" check-in companion data
-        // FIXME: valutare se aggiornare anche firstName, lastName, birthDate
         if (existing.isPresent()) {
             Customer customer = existing.get();
             customer.setSex(data.getSex());

@@ -1,8 +1,3 @@
-import * as React from "react";
-import { CheckIcon, ChevronsUpDown } from "lucide-react";
-import * as RPNInput from "react-phone-number-input";
-import flags from "react-phone-number-input/flags";
-
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -20,6 +15,11 @@ import {
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { CheckIcon, ChevronsUpDown } from "lucide-react";
+import * as React from "react";
+import * as RPNInput from "react-phone-number-input";
+import italialLabels from "react-phone-number-input/locale/it.json";
+import { FlagComponent } from "../common/FlagComponent";
 
 type PhoneInputProps = Omit<
   React.ComponentProps<"input">,
@@ -30,7 +30,7 @@ type PhoneInputProps = Omit<
   };
 
 const PhoneInput: React.ForwardRefExoticComponent<PhoneInputProps> =
-  React.forwardRef<React.ElementRef<typeof RPNInput.default>, PhoneInputProps>(
+  React.forwardRef<React.ComponentRef<typeof RPNInput.default>, PhoneInputProps>(
     ({ className, onChange, value, ...props }, ref) => {
       return (
         <RPNInput.default
@@ -41,6 +41,8 @@ const PhoneInput: React.ForwardRefExoticComponent<PhoneInputProps> =
           inputComponent={InputComponent}
           smartCaret={false}
           value={value || undefined}
+          labels={italialLabels}
+          defaultCountry={props.defaultCountry || "IT"}
           /**
            * Handles the onChange event.
            *
@@ -118,7 +120,14 @@ const CountrySelect = ({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[300px] p-0">
-        <Command>
+        <Command
+          filter={(value, search) => {
+            const cleanSearch = search.toLowerCase();
+            const cleanValue = value.toLowerCase();
+            if (cleanValue.includes(cleanSearch)) return 1;
+            return 0;
+          }}
+        >
           <CommandInput
             value={searchValue}
             onValueChange={(value) => {
@@ -188,16 +197,6 @@ const CountrySelectOption = ({
         className={`ml-auto size-4 ${country === selectedCountry ? "opacity-100" : "opacity-0"}`}
       />
     </CommandItem>
-  );
-};
-
-const FlagComponent = ({ country, countryName }: RPNInput.FlagProps) => {
-  const Flag = flags[country];
-
-  return (
-    <span className="flex h-4 w-6 overflow-hidden rounded-sm bg-foreground/20 [&_svg:not([class*='size-'])]:size-full">
-      {Flag && <Flag title={countryName} />}
-    </span>
   );
 };
 

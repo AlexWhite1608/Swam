@@ -5,17 +5,21 @@ import { differenceInCalendarDays, format, parseISO } from "date-fns";
 import { it } from "date-fns/locale";
 import {
   ArrowRight,
+  BedDouble,
+  CalendarDays,
   Check,
   CircleX,
+  Euro,
+  Link,
   LogIn,
   LogOut,
   MoreHorizontal,
-  Pencil,
+  ShoppingBag,
+  Split,
   Trash,
+  User,
   Users,
 } from "lucide-react";
-
-import { Resource } from "@/schemas/createResourceSchema";
 
 import { BookingStatusBadge } from "@/components/common/badges/BookingStatusBadge";
 import { PaymentStatusBadge } from "@/components/common/badges/PaymentStatusBadge";
@@ -36,7 +40,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { dateRangeFilterFn, formatCurrency } from "@/lib/utils";
-import { Booking } from "@/schemas/createBookingSchema";
+import { Booking } from "@/types/bookings/types";
+import { Resource } from "@/types/resources/types";
 
 interface GetBookingColumnsProps {
   resources: Resource[];
@@ -46,6 +51,9 @@ interface GetBookingColumnsProps {
   onCheckOut: (booking: Booking) => void;
   onConfirm: (booking: Booking) => void;
   onCancel: (booking: Booking) => void;
+  onConfirmDeposit: (booking: Booking) => void;
+  onManageExtras: (booking: Booking) => void;
+  onExtendSplit: (booking: Booking) => void;
 }
 
 export const getBookingColumns = ({
@@ -56,6 +64,9 @@ export const getBookingColumns = ({
   onCheckOut,
   onConfirm,
   onCancel,
+  onConfirmDeposit,
+  onManageExtras,
+  onExtendSplit,
 }: GetBookingColumnsProps): ColumnDef<Booking>[] => [
   // select
   {
@@ -103,14 +114,95 @@ export const getBookingColumns = ({
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Ospite Principale" />
     ),
-    cell: ({ row }) => {
+    cell: ({ row, table }) => {
       const guest = row.original.mainGuest;
+      const isChained = !!row.original.groupId;
+      const parentBookingId = row.original.parentBookingId;
+      const groupId = row.original.groupId;
+
+      // Find related bookings in the same group
+      const allBookings = table
+        .getRowModel()
+        .rows.map((r: { original: any }) => r.original);
+      const linkedBookings = allBookings.filter(
+        (b: { groupId: string | undefined; id: string }) =>
+          b.groupId === groupId && b.id !== row.original.id,
+      );
+
+      // Find parent booking if exists
+      const parentBooking = parentBookingId
+        ? allBookings.find((b: { id: string }) => b.id === parentBookingId)
+        : null;
+
       return (
         <div className="flex items-center gap-3 min-w-0">
           <div className="flex flex-col min-w-0 flex-1">
-            <span className="font-medium text-sm leading-tight truncate mb-0.5">
-              {guest.lastName} {guest.firstName}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="font-medium text-sm leading-tight truncate">
+                {guest.lastName} {guest.firstName}
+              </span>
+
+              {/* show if booking is linked to another */}
+              {isChained && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <div className="bg-blue-100 text-blue-600 p-0.5 rounded-sm">
+                        <Link className="h-3 w-3" />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <div className="space-y-2 text-xs">
+                        <p className="font-semibold border-b pb-1">
+                          Prenotazione Collegata
+                        </p>
+
+                        <div className="space-y-1">
+                          {linkedBookings.length > 0 && (
+                            <>
+                              <div className="space-y-1.5 max-h-32 overflow-y-auto">
+                                {linkedBookings.map((linked: Booking) => (
+                                  <div
+                                    key={linked.id}
+                                    className="p-1.5 bg-muted/50 rounded text-[10px] space-y-0.5"
+                                  >
+                                    <div className="font-medium">
+                                      <User className="h-3 w-3 mr-1 mb-0.5 inline-block text-muted-foreground" />
+                                      {linked.mainGuest.lastName}{" "}
+                                      {linked.mainGuest.firstName}
+                                    </div>
+                                    <div className="text-muted-foreground">
+                                      <CalendarDays className="h-3 w-3 mr-1 mb-0.5 inline-block text-muted-foreground" />
+                                      {format(
+                                        parseISO(linked.checkIn),
+                                        "dd/MM/yy",
+                                        { locale: it },
+                                      )}{" "}
+                                      -{" "}
+                                      {format(
+                                        parseISO(linked.checkOut),
+                                        "dd/MM/yy",
+                                        { locale: it },
+                                      )}
+                                    </div>
+                                    <div className="text-muted-foreground">
+                                      <BedDouble className="h-3 w-3 mr-1 mb-0.5 inline-block text-muted-foreground" />
+                                      {resources.find(
+                                        (r) => r.id === linked.resourceId,
+                                      )?.name || "-"}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </div>
             <span className="text-xs text-muted-foreground truncate ">
               {guest.email || guest.phone || "-"}
             </span>
@@ -193,6 +285,9 @@ export const getBookingColumns = ({
       const infants = allGuests.filter((g) => g.guestType === "INFANT");
 
       const totalCount = allGuests.length;
+      const hasNotCheckIn =
+        row.original.status === "PENDING" ||
+        row.original.status === "CONFIRMED";
 
       return (
         <TooltipProvider>
@@ -201,11 +296,16 @@ export const getBookingColumns = ({
               <div className="flex items-center gap-1 cursor-help w-fit">
                 <Users className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm font-medium">{totalCount}</span>
+                {hasNotCheckIn && (
+                  <span className="h-2 w-2 ml-2 rounded-full bg-yellow-300 border border-yellow-300" />
+                )}
               </div>
             </TooltipTrigger>
             <TooltipContent>
               <div className="text-xs space-y-2">
-                <p className="font-semibold border-b pb-1">Lista Ospiti:</p>
+                <p className="font-semibold border-b pb-1">
+                  Lista Ospiti {hasNotCheckIn && "(in attesa di check-in)"}
+                </p>
 
                 {adults.length > 0 && (
                   <div>
@@ -340,61 +440,95 @@ export const getBookingColumns = ({
   {
     id: "actions",
     header: () => <span>Azioni</span>,
-    cell: ({ row }) => (
-      <div onClick={(e) => e.stopPropagation()}>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="h-8 w-8 p-0">
-              <span className="sr-only">Apri menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onEdit(row.original)}>
-              <Pencil className="h-4 w-4 hover:text-foreground" />
-              Modifica
-            </DropdownMenuItem>
+    cell: ({ row }) => {
+      const breakdown = row.original.priceBreakdown;
+      const isDepositPaid = row.original.paymentStatus === "DEPOSIT_PAID";
+      const hasDepositToPay =
+        (breakdown?.depositAmount ?? 0) > 0 && !isDepositPaid;
+      const isCancelled = row.original.status === "CANCELLED";
+      const isCheckedIn = row.original.status === "CHECKED_IN";
 
-            {row.original.status === "PENDING" && (
-              <DropdownMenuItem onClick={() => onConfirm(row.original)}>
-                <Check className="h-4 w-4 hover:text-foreground" />
-                Conferma
+      return (
+        <div onClick={(e) => e.stopPropagation()}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="h-8 w-8 p-0">
+                <span className="sr-only">Apri menu</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {/* //fixme: rimuovi?? */}
+              {/* <DropdownMenuItem onClick={() => onEdit(row.original)}>
+                <Pencil className="h-4 w-4 hover:text-foreground" />
+                Modifica
+              </DropdownMenuItem> */}
+
+              {hasDepositToPay && !isCancelled && (
+                <DropdownMenuItem
+                  onClick={() => onConfirmDeposit(row.original)}
+                >
+                  <Euro className="h-4 w-4 hover:text-foreground" />
+                  Conferma Acconto
+                </DropdownMenuItem>
+              )}
+
+              {row.original.status === "PENDING" && (
+                <DropdownMenuItem onClick={() => onConfirm(row.original)}>
+                  <Check className="h-4 w-4 hover:text-foreground" />
+                  Conferma Prenotazione
+                </DropdownMenuItem>
+              )}
+
+              {!isCancelled && isCheckedIn && (
+                <DropdownMenuItem onClick={() => onManageExtras(row.original)}>
+                  <ShoppingBag className="h-4 w-4 hover:text-foreground" />
+                  Gestione Extra
+                </DropdownMenuItem>
+              )}
+
+              {/* cannot extend if it is not check in */}
+              {row.original.status === "CHECKED_IN" && (
+                <DropdownMenuItem onClick={() => onExtendSplit(row.original)}>
+                  <Split className="h-4 w-4 hover:text-foreground" />
+                  Modifica Soggiorno
+                </DropdownMenuItem>
+              )}
+
+              {row.original.status === "CONFIRMED" && (
+                <DropdownMenuItem onClick={() => onCheckIn(row.original)}>
+                  <LogIn className="h-4 w-4 hover:text-foreground" /> Esegui
+                  Check-in
+                </DropdownMenuItem>
+              )}
+
+              {row.original.status === "CHECKED_IN" && (
+                <DropdownMenuItem onClick={() => onCheckOut(row.original)}>
+                  <LogOut className="h-4 w-4 hover:text-foreground" /> Esegui
+                  Check-out
+                </DropdownMenuItem>
+              )}
+
+              {(row.original.status === "PENDING" ||
+                row.original.status === "CONFIRMED") && (
+                <DropdownMenuItem onClick={() => onCancel(row.original)}>
+                  <CircleX className="h-4 w-4 hover:text-foreground" />
+                  Cancella Prenotazione
+                </DropdownMenuItem>
+              )}
+
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => onDelete(row.original)}
+                className="text-red-600 focus:text-red-600 focus:bg-red-50"
+              >
+                <Trash className="h-4 w-4 text-red-600/70" />
+                Rimuovi
               </DropdownMenuItem>
-            )}
-
-            {row.original.status === "CONFIRMED" && (
-              <DropdownMenuItem onClick={() => onCheckIn(row.original)}>
-                <LogIn className="h-4 w-4 hover:text-foreground" /> Esegui
-                Check-in
-              </DropdownMenuItem>
-            )}
-
-            {row.original.status === "CHECKED_IN" && (
-              <DropdownMenuItem onClick={() => onCheckOut(row.original)}>
-                <LogOut className="h-4 w-4 hover:text-foreground" /> Esegui
-                Check-out
-              </DropdownMenuItem>
-            )}
-
-            {(row.original.status === "PENDING" ||
-              row.original.status === "CONFIRMED") && (
-              <DropdownMenuItem onClick={() => onCancel(row.original)}>
-                <CircleX className="h-4 w-4 hover:text-foreground" />
-                Cancella Prenotazione
-              </DropdownMenuItem>
-            )}
-
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => onDelete(row.original)}
-              className="text-red-600 focus:text-red-600 focus:bg-red-50"
-            >
-              <Trash className="h-4 w-4 text-red-600/70" />
-              Rimuovi
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-    ),
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      );
+    },
   },
 ];

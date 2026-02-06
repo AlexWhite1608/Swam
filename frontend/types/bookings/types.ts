@@ -1,7 +1,17 @@
-import type { BookingStatus, PaymentStatus, DocumentType, GuestType, Sex, GuestRole } from "./enums";
+import { BookingExtra } from "../extras/types";
+import type {
+  BookingStatus,
+  PaymentStatus,
+  DocumentType,
+  GuestType,
+  Sex,
+  GuestRole,
+} from "./enums";
 
-export type BookingStatusType = (typeof BookingStatus)[keyof typeof BookingStatus];
-export type PaymentStatusType = (typeof PaymentStatus)[keyof typeof PaymentStatus];
+export type BookingStatusType =
+  (typeof BookingStatus)[keyof typeof BookingStatus];
+export type PaymentStatusType =
+  (typeof PaymentStatus)[keyof typeof PaymentStatus];
 export type DocumentTypeType = (typeof DocumentType)[keyof typeof DocumentType];
 export type GuestTypeType = (typeof GuestType)[keyof typeof GuestType];
 export type SexType = (typeof Sex)[keyof typeof Sex];
@@ -11,37 +21,31 @@ export type GuestRoleType = (typeof GuestRole)[keyof typeof GuestRole];
 export interface BookingGuest {
   id?: string;
   customerId?: string;
-  
+
   firstName: string;
   lastName: string;
-  
+
+  arrivalDate?: string;
+  departureDate?: string;
+
   sex?: SexType | null;
   birthDate?: string | null;
-  
+
   placeOfBirth?: string | null;
   citizenship?: string | null;
-  
+
   email?: string;
   phone?: string;
-  
+
   documentType?: DocumentTypeType | null;
   documentNumber?: string | null;
   documentPlaceOfIssue?: string | null;
-  
+
   guestType?: GuestTypeType;
   guestRole?: GuestRoleType | null;
-  
-  daysOfStay?: number | null;
+
   taxExempt?: boolean;
   taxExemptReason?: string | null;
-}
-
-export interface BookingExtra {
-  extraOptionId?: string;
-  nameSnapshot: string;
-  descriptionSnapshot?: string;
-  priceSnapshot: number;
-  quantity: number;
 }
 
 export interface PriceBreakdown {
@@ -56,6 +60,8 @@ export interface PriceBreakdown {
 
 export interface Booking {
   id: string;
+  groupId?: string;
+  parentBookingId?: string;
   resourceId: string;
   mainGuest: BookingGuest;
   checkIn: string;

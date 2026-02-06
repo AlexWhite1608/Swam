@@ -3,11 +3,11 @@ import { z } from "zod";
 
 export const createResourceSchema = z.object({
   id: z.string(),
-  name: z.string().min(2, "Il nome deve avere almeno 2 caratteri"),
-  type: z.enum(ResourceType, "Seleziona un tipo di risorsa valido"),
+  name: z.string().min(1, { message: "" }),
+  type: z.enum(ResourceType),
   capacity: z
     .number()
     .int()
-    .positive("Capacità deve essere un numero positivo"),
-  status: z.enum(ResourceStatus, "Seleziona uno stato valido"),
+    .positive(),
+  status: z.enum(ResourceStatus),
 });

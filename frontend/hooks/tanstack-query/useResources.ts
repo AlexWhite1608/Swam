@@ -1,7 +1,7 @@
 import { getErrorMessage } from "@/lib/api";
 import { resourceKeys } from "@/lib/query-keys";
-import { ResourceStatus } from "@/schemas/createResourceSchema";
 import { resourceService } from "@/services/resourceService";
+import { ResourceStatusType } from "@/types/resources/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -76,7 +76,7 @@ export const useUpdateResourceStatus = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, status }: { id: string; status: ResourceStatus }) =>
+    mutationFn: ({ id, status }: { id: string; status: ResourceStatusType }) =>
       resourceService.updateStatus(id, status),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: resourceKeys.all });

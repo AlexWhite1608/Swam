@@ -13,6 +13,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.Id;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -23,11 +24,20 @@ import java.util.List;
 @AllArgsConstructor
 public class CheckInRequest {
 
+    @Id
+    private String customerId;
+
     @NotBlank
     private String firstName;
 
     @NotBlank
     private String lastName;
+
+    @NotNull
+    private LocalDate arrivalDate;
+
+    @NotNull
+    private LocalDate departureDate;
 
     @NotNull
     private Sex sex;
@@ -69,11 +79,21 @@ public class CheckInRequest {
     @AllArgsConstructor
     @Builder
     public static class CompanionData {
+
+        @Id
+        private String customerId;
+
         @NotBlank
         private String firstName;
 
         @NotBlank
         private String lastName;
+
+        @NotNull
+        private LocalDate arrivalDate;
+
+        @NotNull
+        private LocalDate departureDate;
 
         @NotNull
         private Sex sex;
