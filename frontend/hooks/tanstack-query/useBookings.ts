@@ -278,6 +278,7 @@ export const useUnavailableDates = (
     queryFn: () =>
       bookingService.getUnavailablePeriods(resourceId!, excludeBookingId),
     staleTime: 1000 * 60 * 5,
+    enabled: !!resourceId,
   });
 };
 

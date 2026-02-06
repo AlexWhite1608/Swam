@@ -1,14 +1,16 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { format, isAfter, isBefore, parseISO, startOfDay } from "date-fns";
+import { format, isAfter, isBefore, parseISO } from "date-fns";
 import { it } from "date-fns/locale";
-import { AlertTriangle, CalendarPlus, Loader2, Split } from "lucide-react";
+import { CalendarPlus, Loader2, Split } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 
+import { BookingInfoCard } from "@/components/common/BookingInfoCard";
+import { ResourceValidationAlert } from "@/components/common/ResourceValidationAlert";
 import { BaseDataDialog } from "@/components/dialog/BaseDataDialog";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
@@ -29,7 +31,9 @@ import {
   useUpdateStay,
 } from "@/hooks/tanstack-query/useBookings";
 import { useResources } from "@/hooks/tanstack-query/useResources";
+import { useConflictDetection } from "@/hooks/useConflictDetection";
 import { useDisabledDays } from "@/hooks/useDisabledDays";
+import { useResourceValidation } from "@/hooks/useResourceValidation";
 import {
   ExtendFormValues,
   extendSchema,
@@ -38,10 +42,6 @@ import {
   splitSchema,
 } from "@/schemas/extendSplitSchema";
 import { Booking } from "@/types/bookings/types";
-import { BookingInfoCard } from "@/components/common/BookingInfoCard";
-import { useConflictDetection } from "@/hooks/useConflictDetection";
-import { useResourceValidation } from "@/hooks/useResourceValidation";
-import { ResourceValidationAlert } from "@/components/common/ResourceValidationAlert";
 import { toast } from "sonner";
 
 export interface EditStayDialogProps {
